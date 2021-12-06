@@ -1,0 +1,512 @@
+table3_long <- recreate_dataset(table3,ciguselevels3)
+table4_long <- recreate_dataset(table4,ciguselevels4)
+table5_long <- recreate_dataset(table5,ciguselevels5)
+table6_long <- recreate_dataset(table6,ciguselevels6)
+cor.test(table1_long$smk, table1_long$ecig, method="spearman", exact=FALSE)
+result <- cor.test(table1_long$smk, table1_long$ecig, method="spearman", exact=FALSE)
+names(result)
+result$statistic
+result$estimate
+?cor.test
+load("C:/Users/jamietam/Dropbox/Data/Linked/NHIS/nhis_linked_merged_97_09.rda")  # n = 366376
+load("C:/Users/jamietam/Dropbox/Data/NHIS/nhis_linked_merged_97_09.rda")  # n = 366376
+load("C:/Users/jamietam/Dropbox/Data/NHIS/Dataframes/nhis_linked_merged_97_09.rda")  # n = 366376
+names(nhis_pooled)
+attach(nhis_pooled)
+table(ALC1YR)
+table(ALCLIFE)
+table(ALC12MNO)
+nhis_pooled$ALC1YR[nhis_pooled$ALC1YR>2] <- NA # unknown
+table(ALC1YR)
+table(nhis_pooled$ALC1YR)
+detach()
+nhis_pooled$ALC12MN[nhis_pooled$ALC12MN>365] <- NA #
+table(nhis_pooled$ALC12MN)
+View(nhis_pooled)
+table(SRVY_YR, ALC12MN)
+table(nhis_pooled$SRVY_YR, nhis_pooled$ALC12MN)
+table(nhis_pooled$SRVY_YR, nhis_pooled$ALC12MNO)
+head(nhis_pooled$ALC12MN)
+head(nhis_pooled$ALC12MNO)
+table(nhis_pooled$ALC12MNO)
+table(nhis_pooled$ALC12MN)
+nhis_pooled$ALC12MNO[nhis_pooled$ALC12MNO>365] <- NA #
+table(nhis_pooled$ALC12MNO)
+tail(nhis_pooled$ALC12MNO)
+tail(nhis_pooled$ALC12MN)
+table(nhis_pooled$ALC12AMT)
+table(nhis_pooled$ALCAMT)
+table(nhis_pooled$ALCAMT, nhis_pooled$SRVY_YR)
+table(nhis_pooled$ALCAMT)
+6   + 8  +  3+   15 +  12  +  4  +  6  +  2   + 2  +  0  +  3   + 0   + 3
+table(nhis_pooled$ALC12MYR)
+table(nhis_pooled$ALC12MNO)
+table(nhis_pooled$ALC12MYR)
+nhis_pooled$ALC12MYR[nhis_pooled$ALC12MYR>365] <- NA # 0-365 = days per year, 997 = Refused , 998= Not ascertained, 999=Don't know
+nhis_pooled$ALCAMT[nhis_pooled$ALCAMT>95] <- NA # 1-94 = 1094 drinks, 95= 95+ drinks, 97= Refused, 98=Not ascertained, 99= Don't know
+nhis_pooled$avgdrinkswk <- nhis_pooled$ALC12MYR * nhis_pooled$ALCAMT * 7 / 365
+table(nhis_pooled$avgdrinkswk)
+nhis_pooled$currentdrinker <- ifelse(nhis_pooled$ALCLIFE==1 & nhis_pooled$ALC12MYR >=1, 1, 0 )
+table(nhis_pooled$currentdrinker)
+nhis_pooled$avgdrinkswk <- ifelse(nhis_pooled$currentdrinker==1, (nhis_pooled$ALC12MYR * nhis_pooled$ALCAMT * 7 / 365), 0)
+table(nhis_pooled$avgdrinkswk)
+table(nhis_pooled$SEX)
+table(nhis_pooled$male)
+nhis_pooled$male <- ifelse(nhis_pooled$SEX==1, 1,0)# recode gender
+table(nhis_pooled$male)
+table(nhis_pooled$currentdrinker,nhis_pooled$ALCSTAT1)
+table(nhis_pooled$ALCSTAT1)
+table(nhis_pooled$currentdrinker,nhis_pooled$ALC12MYR)
+table(nhis_pooled$currentdrinker)
+table(nhis_pooled$currentdrinker,nhis_pooled$ALCLIFE)
+nhis_pooled$ALCLIFE[nhis_pooled$ALCLIFE>2] <- NA #
+table(nhis_pooled$currentdrinker,nhis_pooled$ALCLIFE)
+nhis_pooled$currentdrinker <- ifelse(nhis_pooled$ALCLIFE==1 & nhis_pooled$ALC12MYR >=1, 1, 0 ) # current drinker has had at least 12 drinks in lifetime and at least 1 drink in past year
+nhis_pooled$avgdrinkswk <- ifelse(nhis_pooled$currentdrinker==1, (nhis_pooled$ALC12MYR * nhis_pooled$ALCAMT * 7 / 365), 0)
+table(nhis_pooled$currentdrinker,nhis_pooled$ALCLIFE)
+table(nhis_pooled$currentdrinker,nhis_pooled$avgdrinkswk)
+table(is.na(nhis_pooled$male))
+head(nhis_pooled$male)
+if(nhis_pooled$male==1){ # more than 3 and up to and including 14 drinks per week for men
+nhis_pooled$moddrinker <- ifelse(nhis_pooled$avgdrinkswk>3 & nhis_pooled$avgdrinkswk<=14,1,0)
+} else { # more than 3 and up to and including 7 drinks per week for women, on average
+nhis_pooled$moddrinker <- ifelse(nhis_pooled$avgdrinkswk>3 & nhis_pooled$avgdrinkswk<=7,1,0)
+}
+nhis_pooled$moddrinker <- ifelse(nhis_pooled$male==1,
+ifelse(nhis_pooled$avgdrinkswk>3 & nhis_pooled$avgdrinkswk<=14,1,0),
+ifelse(nhis_pooled$avgdrinkswk>3 & nhis_pooled$avgdrinkswk<=7,1,0))
+table(nhis_pooled$moddrinker)
+nhis_pooled$moddrinker <- ifelse(nhis_pooled$male==1,
+ifelse(nhis_pooled$avgdrinkswk>3 & nhis_pooled$avgdrinkswk<=14,1,99),
+ifelse(nhis_pooled$avgdrinkswk>3 & nhis_pooled$avgdrinkswk<=7,1,0))
+table(nhis_pooled$moddrinker)
+read.table("C:/Users/jamietam/Box Sync/Data Sources/IHIS/ihis_00001.dat",header=TRUE)  # n = 366376
+read.table("C:/Users/jamietam/Box Sync/Data Sources/IHIS/ihis_00001.dat",header=TRUE)  # n = 366376
+read.delim("C:/Users/jamietam/Box Sync/Data Sources/IHIS/ihis_00001.dat",header=TRUE)  # n = 366376
+data <- read.delim("C:/Users/jamietam/Box Sync/Data Sources/IHIS/ihis_00001.dat")
+library(foreign)
+ihisdata <- read.dta("C:/Users/jamietam/Box Sync/Data Sources/IHIS/ihis_00002.dta")
+ihisdata <- read.dta("C:/Users/jamietam/Box Sync/Data Sources/IHIS/ihis_00002.dta/ihis_00002.dta")
+install.packages("readstata13")
+library(readstata13)
+ihisdata <- read.dta13("C:/Users/jamietam/Box Sync/Data Sources/IHIS/ihis_00002.dta/ihis_00002.dta")
+View(ihisdata)
+names(ihisdata)
+table(ihisdata$hispeth)
+table(ihisdata$educrec2)
+table(ihisdata$educrec1)
+names(ihisdata)
+table(ihisdata$year, ihisdata$pooryn)
+e^(2*1.3392)*0.6475
+rbind.match.columns <- function(input1, input2) {
+n.input1 <- ncol(input1)
+n.input2 <- ncol(input2)
+if (n.input2 < n.input1) {
+TF.names <- which(names(input2) %in% names(input1))
+column.names <- names(input2[, TF.names])
+} else {
+TF.names <- which(names(input1) %in% names(input2))
+column.names <- names(input1[, TF.names])
+}
+return(rbind(input1[, column.names], input2[, column.names]))
+}
+load("C:/Users/jamietam/Box Sync/Data Sources/NSDUH/icpsr/nsduh2005.rda")
+load("C:/Users/jamietam/Box Sync/Data Sources/NSDUH/icpsr/nsduh2006.rda")
+rm(nsduh2005,nsduh2006)
+load("C:/Users/jamietam/Box Sync/Data Sources/NSDUH/icpsr/nsduh2007.rda")
+rm(nsduh2007)
+load("C:/Users/jamietam/Box Sync/Data Sources/NSDUH/icpsr/nsduh2008.rda")
+load("C:/Users/jamietam/Box Sync/Data Sources/NSDUH/icpsr/nsduh2009.rda")
+rbind.match.columns <- function(input1, input2) {
+n.input1 <- ncol(input1)
+n.input2 <- ncol(input2)
+if (n.input2 < n.input1) {
+TF.names <- which(names(input2) %in% names(input1))
+column.names <- names(input2[, TF.names])
+} else {
+TF.names <- which(names(input1) %in% names(input2))
+column.names <- names(input1[, TF.names])
+}
+return(rbind(input1[, column.names], input2[, column.names]))
+}
+rbind.match.columns(nsduh2008, nsduh2009)
+help(memory.size)
+exp(0.129)
+exp(0.154)
+exp(-0.009)
+parameters <- matrix(NA, nrow = 2, ncol = 1, dimnames=list(c('RRcs_dep1', 'RRfs_dep1')))
+parameters
+parameters['RRfs_dep1']
+Edepr_smkinit = 1.41
+Edepr_smkinit
+parameters <- matrix(c(1.70,1.48,0.81,0.6,1.73,1.41,1.71,1.4838,0.4290,0.5000,0.0471,0.0471,0.0611,0.0070,0.02687,1), nrow = 2, ncol = 1, dimnames=list(
+c('RRcs_dep1', 'RRfs_dep1','ORhdepr_csquit','ORdepr_postquit','Ecs_depr','Edepr_smkinit','RRdepr_death',
+'smkinit_SF','smkcess_SF','fraction18dep1','dep1recov_rate','deprrecov_rate','dep1stayrecov_rate','dep1norecov_rate','depr_inc','dep1inc_SF')))
+c('RRcs_dep1', 'RRfs_dep1','ORhdepr_csquit','ORdepr_postquit','Ecs_depr','Edepr_smkinit','RRdepr_death',
+'smkinit_SF','smkcess_SF','fraction18dep1','dep1recov_rate','deprrecov_rate','dep1stayrecov_rate','dep1norecov_rate','depr_inc','dep1inc_SF')
+length(c('RRcs_dep1', 'RRfs_dep1','ORhdepr_csquit','ORdepr_postquit','Ecs_depr','Edepr_smkinit','RRdepr_death',
+'smkinit_SF','smkcess_SF','fraction18dep1','dep1recov_rate','deprrecov_rate','dep1stayrecov_rate','dep1norecov_rate','depr_inc','dep1inc_SF'))
+parameters <- matrix(c(1.70,1.48,0.81,0.6,1.73,1.41,1.71,1.4838,0.4290,0.5000,0.0471,0.0471,0.0611,0.0070,0.02687,1), nrow = 16, ncol = 1, dimnames=list(
+c('RRcs_dep1', 'RRfs_dep1','ORhdepr_csquit','ORdepr_postquit','Ecs_depr','Edepr_smkinit','RRdepr_death',
+'smkinit_SF','smkcess_SF','fraction18dep1','dep1recov_rate','deprrecov_rate','dep1stayrecov_rate','dep1norecov_rate','depr_inc','dep1inc_SF')))
+View(parameters)
+paramfix <- matrix(c(1.70,1.48,0.81,0.6,1.73,1.41,1.71,1.4838,0.4290,0.5000,0.0471,0.0471,0.0611,0.0070,0.02687,1), nrow = 16, ncol = 1, dimnames=list(
+c('RRcs_dep1', 'RRfs_dep1','ORhdepr_csquit','ORdepr_postquit','Ecs_depr','Edepr_smkinit','RRdepr_death',
+'smkinit_SF','smkcess_SF','fraction18dep1','dep1recov_rate','deprrecov_rate','dep1stayrecov_rate','dep1norecov_rate','depr_inc','dep1inc_SF')))
+library(digitizeR)
+wpd.launch()
+install.packages("runSHG")
+0.80/0.12
+0.70/12
+6/16
+10/28
+citation("splines")
+citation("Bhat")
+load("C:/Users/jamietam/Dropbox/depression_smoking_model/200N_50B_010918.rda")
+myLHS
+library(pse)
+myLHS
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(plyr)
+mdelhs <- as.data.frame(cbind(get.results(myLHS)[,1],"Females","Lifetime MDE"))
+mdelhs <- rbind(mdelhs,cbind(get.results(myLHS)[,2],"Males","Lifetime MDE"))
+colnames(mdelhs) <-c("prev","gender","status")
+mdelhs$prev <- as.numeric(as.character(mdelhs$prev))
+avg <- ddply(mdelhs, "gender", summarise, prev.mean=mean(prev))
+mdelhs_plot<-ggplot(data=mdelhs, aes(x=prev*100, fill=gender)) + geom_density(alpha=0.5) +
+labs(title="Lifetime MDE, ages 18-99")+
+geom_vline(data=avg, aes(xintercept=prev.mean*100,  colour=gender), linetype="dashed", size=1)+
+scale_x_continuous(name="Prevalence (%)",limits=c(min(mdelhs$prev*100-1),max(mdelhs$prev*100+1)),breaks=seq(0,max(mdelhs$prev*100+1),1)) +
+theme(legend.title = element_blank())
+forgotlhs <- as.data.frame(cbind(get.results(myLHS)[,3],"Females","Forgot MDE"))
+forgotlhs <- rbind(forgotlhs,cbind(get.results(myLHS)[,4],"Males","Forgot MDE"))
+colnames(forgotlhs) <-c("prev","gender","status")
+forgotlhs$prev <- as.numeric(as.character(forgotlhs$prev))
+avg2 <- ddply(forgotlhs, "gender", summarise, prev.mean=mean(prev))
+forgotlhs_plot<-ggplot(data=forgotlhs, aes(x=prev*100, fill=gender)) + geom_density(alpha=0.5) +
+labs(title="Forgot MDE, ages 18-99")+
+geom_vline(data=avg2, aes(xintercept=prev.mean*100,  colour=gender), linetype="dashed", size=1)+
+scale_x_continuous(name="Prevalence (%)",limits=c(0,max(forgotlhs$prev*100+1)),breaks=seq(0,max(forgotlhs$prev*100+1),1)) +
+theme(legend.title = element_blank())
+mdelhs_plot
+forgotlhs_plot
+name
+grid_arrange_shared_legend(list(mdelhs_plot,forgotlhs_plot),2,"Uncertainty distributions")
+citation("pse")
+0.173/2
+0.173*2
+load("C:/Users/jamietam/Dropbox/dep_smk_model/PSE_smkdep_050218_females_2015_200_50.rda")
+get.results(myLHS)[,1]
+library(pse)
+library(Bhat)
+library(openxlsx)
+get.results(myLHS)[,1]
+get.results(myLHS)[,2]
+value = get.results(myLHS)[,1]
+value[1]
+value[2]
+length(value)
+n = 200
+c(1:n)
+mean(value[1,2])
+mean(value[1,1])
+value[1,2]
+value[1]
+value[1:2]
+mean(value[1:2])
+meanest <- function(value,n){
+convergevals = NULL
+for (i in c(1:n)){
+convergevals[i] <- mean(value[1:i])
+}
+}
+meanest <- function(value,n){
+convergevals = NULL
+for (i in c(1:n)){
+convergevals[i] <- mean(value[1:i])
+}
+return(convergevals)
+}
+meanest(value,n)
+plot(meanest(value,n))
+plot(meanest(get.results(myLHS)[,1],200)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(plyr)
+smkprev <- as.data.frame(cbind(get.results(myLHS)[,1], "deppop"))
+colnames(smkprev) <-c("prev","population")
+smkprev$prev <- as.numeric(as.character(smkprev$prev))
+avg1 <- ddply(smkprev, "population", summarise, prev.mean=mean(prev))
+smkprevplot<-ggplot(data=smkprev, aes(x=prev*100, fill=population)) + geom_density(alpha=0.5) +
+labs(title=paste0("Smoking prevalence, ", whichgender))+
+geom_vline(data=avg1, aes(xintercept=prev.mean*100,  colour=population), linetype="dashed", size=1)+
+scale_x_continuous(name="Prevalence (%)",limits=c(min(smkprev$prev*100-1),max(smkprev$prev*100+1)),breaks=seq(0,max(smkprev$prev*100+1),5)) +
+theme(legend.title = element_blank())
+PR <- as.data.frame(cbind(get.results(myLHS)[,2],whichgender))
+colnames(PR) <-c("prevratio","gender")
+PR$prevratio <- as.numeric(as.character(PR$prevratio))
+avg2 <- ddply(PR, "gender", summarise, prev.mean=mean(prevratio))
+median2<-ddply(PR,"gender",summarise,prev.mean=median(prevratio))
+PRplot<-ggplot(data=PR, aes(x=prevratio)) + geom_density(alpha=0.5) +
+labs(title="current smoking PR - dep vs nevdeptrue")+
+geom_vline(data=avg2, aes(xintercept=prev.mean,  colour=gender),linetype="dashed", size=1)+
+geom_vline(data=median2, aes(xintercept=prev.mean,  colour=gender), linetype="solid", size=1)+
+scale_x_continuous(name="PR",limits=c(0,max(PR$prevratio)),breaks=seq(0,max(PR$prevratio),0.2)) +
+theme(legend.title = element_blank())
+SADdep <- as.data.frame(cbind(get.results(myLHS)[,3],whichgender,yearoutput))
+colnames(SADdep) <-c("numofdeaths","gender")
+SADdep$numofdeaths <-as.numeric(as.character(SADdep$numofdeaths))
+avg3 <- ddply(SADdep, "gender", summarise, prev.mean=mean(numofdeaths))
+median3<-ddply(SADdep, "gender", summarise, prev.mean=median(numofdeaths))
+SADnumplot<-ggplot(data=SADdep, aes(x=numofdeaths, fill=gender)) + geom_density(alpha=0.5) +
+labs(title="Smoking-attributable deaths - deppop")+
+geom_vline(data=avg3, aes(xintercept=prev.mean,  colour=gender), linetype="dashed", size=1)+
+geom_vline(data=median3, aes(xintercept=prev.mean, colour=gender),linetype="solid",size=1)+
+scale_x_continuous(name="# of deaths",limits=c(0,max(SADdep$numofdeaths)),breaks=seq(0,max(SADdep$numofdeaths),5000)) +
+theme(legend.title = element_blank())
+grid_arrange_shared_legend <- function(plots,columns,titletext) {
+g <- ggplotGrob(plots[[1]] + theme(legend.position="bottom"))$grobs
+legend <- g[[which(sapply(g, function(x) x$name) == "guide-box")]]
+lheight <- sum(legend$height)
+grid.arrange(arrangeGrob(grobs= lapply(plots, function(x)
+x + theme(legend.position="none", plot.title = element_text(size = rel(0.8)))),ncol=columns),
+legend,
+ncol = 1,
+heights = unit.c(unit(1, "npc") - lheight, lheight),
+top=textGrob(titletext,just="top", vjust=1,check.overlap=TRUE,gp=gpar(fontsize=9, fontface="bold"))
+)
+}
+#nevdepci = quantile(subset(smkprev,population=="nevdeppop")$prev,probs=c(.025,.975))
+#nevdeptrueci = quantile(subset(smkprev,population=="nevdeptruepop")$prev,probs=c(.025,.975))
+depci = quantile(subset(smkprev,population=="deppop")$prev,probs=c(.025,.975))
+#notdepci=quantile(subset(smkprev,population=="notdeppop")$prev,probs=c(.025,.975))
+PRci = quantile(PR$prevratio,probs=c(.025,.975))
+SADnumci=quantile(SADdep$numofdeaths,probs=c(.025,.975))
+pdf(file = paste0(name,"_",whichgender,"_",yearoutput ,".pdf"), width = 11, height = 8.5)
+plot(5:15, type = "n", xaxt="n", yaxt="n", bty="n", xlab = "", ylab = "",
+main = paste0("\n",
+"\n ",name,
+# "\n smkprev nevdep = ",formatC(avg1[1,2]*100,3),"% (",formatC(nevdepci*100,3)[1],"-",formatC(nevdepci*100,3)[2],")",
+# "\n smkprev nevdeptrue = ",formatC(avg1[2,2]*100,3),"% (",formatC(nevdeptrueci*100,3)[1],"-",formatC(nevdeptrueci*100,3)[2],")",
+"\n smkprev dep = ",formatC(avg1[1,2]*100,3),"% (",formatC(depci*100,3)[1],"-",formatC(depci*100,3)[2],")",
+# "\n smkprev notdep = ",formatC(avg1[4,2]*100,3),"% (",formatC(notdepci*100,3)[1],"-",formatC(notdepci*100,3)[2],")",
+"\n Prevratio dep vs nevdeptrue = ",formatC(avg2[1,2],3)," (",formatC(PRci,3)[1],"-",formatC(PRci,3)[2],")",
+"\n Number of SADs among deppop = ",formatC(avg3[1,2],8)," (",formatC(SADnumci,8)[1],"-",formatC(SADnumci,8)[2],")"),
+cex.lab=0.75, cex.axis=0.75, cex.main=0.75, cex.sub=0.75)
+grid.table(subset(allparams, rownames(allparams) %in% factors))
+grid_arrange_shared_legend(list(smkprevplot,PRplot),2,paste0("Uncertainty distributions: ",whichgender," ", yearoutput))
+PRplot
+# empirical  cumulative  distribution  function
+plotecdf(myLHS, stack=TRUE, index.res=c(1), main="Smoking prevalence: deppop")
+plotecdf(myLHS, stack=TRUE, index.res=c(2), main="CS Prevratio dep vs. nevdeptrue")
+plotecdf(myLHS, stack=TRUE, index.res=c(3), main="Number of SADs among deppop")
+# plotscatter(myLHS, index.res=c(1,2))
+plotscatter(myLHS, index.res=c(1))
+plotscatter(myLHS, index.res=c(2))
+plotscatter(myLHS, index.res=c(3))
+# partial (rank) correlation coefficient (pcc or prcc) measures how strong are the
+# linear associations between the result and each input parameter, after removing the
+# linear effect of the other parameters.
+plotprcc(myLHS)
+dev.off()
+jpeg(filename = paste0(name,"PRCC_",whichgender,"_",yearoutput ,".jpg"), width = 16, height =4, units="in",res=1000)
+plotprcc(myLHS)
+dev.off()
+plot(meanest(get.results(myLHS)[,1],200))
+plot(meanest(get.results(myLHS)[,2],200))
+plot(meanest(get.results(myLHS)[,3],200))
+max(value)
+min(value)
+# Sensitivity Analyses
+# using the 'pse' package: Parameter Space Exploration of deterministic models
+# Tutorial here: https://cran.r-project.org/web/packages/pse/vignettes/pse_tutorial.pdf
+library(pse)
+library(Bhat)
+library(openxlsx)
+load("C:/Users/jamietam/Dropbox/dep_smk_model/PSE_smkdep_050218_males_2015_200_50.rda")
+meanest <- function(value,n){
+convergevals = NULL
+for (i in c(1:n)){
+convergevals[i] <- mean(value[1:i])
+}
+return(convergevals)
+}
+plot(meanest(get.results(myLHS)[,1],200))
+meanest <- function(value,n){
+convergevals = NULL
+for (i in c(1:n)){
+convergevals[i] <- mean(value[1:i])
+}
+return(convergevals)
+}
+plot(meanest(get.results(myLHS)[,2],200))
+meanest <- function(value,n){
+convergevals = NULL
+for (i in c(1:n)){
+convergevals[i] <- mean(value[1:i])
+}
+return(convergevals)
+}
+plot(meanest(get.results(myLHS)[,3],200))
+meanest <- function(value,n){
+convergevals = NULL
+for (i in c(1:n)){
+convergevals[i] <- mean(value[1:i])
+}
+return(convergevals)
+}
+plot(meanest(get.results(myLHS)[,4],200))
+library(foreign)
+dataset = read.spss("C:/Users/jamietam/Downloads/Bigenderonly_IDEALS Time 2 Data Set all_plus_climate standardizations_pweighted_worldview groups_environ factors.sav")
+dataset = read.spss("C:/Users/jamietam/Downloads/Bigenderonly_IDEALS Time 2 Data Set all_plus_climate standardizations_pweighted_worldview groups_environ factors.sav", to.data.frame=TRUE)
+View(dataset)
+coercion =~ coerce_1_t2 + coerce_2_t2 + coerce_3_t2 + coerce_4_t2 + negint_2_t2
+install.packages("lavaan") #latentvariable modeling package
+library("lavaan")
+install.packages("semTools")
+library(semTools)
+coercion =~ coerce_1_t2 + coerce_2_t2 + coerce_3_t2 + coerce_4_t2 + negint_2_t2
+inscom =~ inscom_1_t2 + inscom_2_t2 + inscom_3_t2
+discrimination =~ discrim_1_t2 + discrim_2_t2 + discrim_3_t2 + discrim_4_t2
+neginteracts.model <- 'coercion =~ coerce_1_t2 + coerce_2_t2 + coerce_3_t2 + coerce_4_t2 + negint_2_t2
+''
+'
+library(haven)
+Bigenderonly_IDEALS_Time_2_Data_Set_all_plus_climate_standardizations_pweighted_worldview_groups_environ_factors <- read_sav("C:/Users/jamietam/Downloads/Bigenderonly_IDEALS Time 2 Data Set all_plus_climate standardizations_pweighted_worldview groups_environ factors.sav")
+View(Bigenderonly_IDEALS_Time_2_Data_Set_all_plus_climate_standardizations_pweighted_worldview_groups_environ_factors)
+remove(dataset)
+library('foreign')
+nsduh2002to2017 <- read.dta(file="C:/Users/jamietam/Box Sync/Data Sources/NSDUH/2002-2017/NSDUH_2002_2017.DTA")
+install.packages('RStata')
+library('RStata')
+install.packages("readstata13")
+library('readstata13')
+nsduh2002to2017 <- read.dta13(file="C:/Users/jamietam/Box Sync/Data Sources/NSDUH/2002-2017/NSDUH_2002_2017.DTA")
+help(memory.size)
+rm(list = ls())
+nsduh2002to2017 <- read.dta13(file="C:/Users/jamietam/Box Sync/Data Sources/NSDUH/2002-2017/NSDUH_2002_2017.DTA")
+library('readstata13')
+nsduh2002to2017 <- read.dta13(file="C:/Users/jamietam/Box Sync/Data Sources/NSDUH/2002-2017/NSDUH_2002_2017.DTA")
+225-125
+125+50
+175*3
+load("C:/Users/jamietam/Box Sync/Data Sources/NSDUH/2002-2017/nsduh2005-2017vars.Rda")
+View(nsduh0517vars)
+load("C:/Users/jamietam/Box Sync/Data Sources/NSDUH/2002-2017/nsduh2005-2017clean.Rda")
+View(nsduh)
+table(nsduh0517vars$YEAR)
+table(nsduh0517vars$AGE2)
+keepvars <- c("YEAR","AGE2","IRSEX","AMDELT","AMDEYR","VESTR","VEREP","ANALWT_C")
+nsduh <- nsduh0517vars[keepvars]
+library(data.table)
+nsduh <- nsduh0517vars[keepvars]
+library(reshape)
+library(plyr)
+nsduh <- nsduh0517vars[keepvars]
+nsduh <- nsduh0517vars[keepvars,]
+nsduh <- nsduh0517vars[,keepvars]
+keepvars
+nsduh <- nsduh0517vars[c("YEAR")]
+nsduh <- nsduh0517vars[c("YEAR","AGE2","IRSEX","AMDELT","AMDEYR","VESTR","VEREP","ANALWT_C")]
+keepvars <- c("YEAR","AGE2","IRSEX","AMDELT","AMDEYR","VESTR","VEREP","ANALWT1")
+nsduh <- nsduh0517vars[keepvars]
+nsduh <- nsduh0517vars[c("YEAR","AGE2","IRSEX","AMDELT","AMDEYR","VESTR","VEREP","ANALWTC1")]
+# Load NSDUH 2002-2018 data (may take some time as this is a large file)
+# load("NSDUH_2002_2018.RData")
+load("C:/Users/jamietam/Dropbox/Analysis/R/NSDUH/NSDUH_2002_2018.RData")
+install.packages("installR")
+citation()
+citation('pse')
+install.packages('pse')
+citation('pse')
+citation('survey')
+install.packages("darth")
+install.packages("darth")
+install.packages("devtools")
+load("C:/Users/jamietam/Dropbox/GitHub/web-interface-shg-policy/brfss_2018_data.Rda")
+View(brfssvars)
+2020-1970
+2020-1980
+2020-65
+devtools::install_github("DARTH-git/darthpack")
+install.packages("devtools")
+devtools::install_github("DARTH-git/dampack")
+library(doParallel)
+vignette("foreach")
+cl <- makeCluster(2)
+registerDoParallel(cl)
+library(foreach)
+res <- foreach(i=1:5) %dopar% {
+i*i
+}
+res
+spin<-function(sec) {
+start<-proc.time()[[3]]
+while (TRUE) {
+z=1;
+for (i in 1:100000) {
+z<-z+1
+}
+now<-proc.time()[[3]]
+if (now-start > sec) { break }
+}
+now-start
+}
+spin(3)
+f<-function(i){
+spin(5)
+i*i
+}
+system.time(
+res<-foreach (i=1:8) %dopar%
+{
+f(i)
+}
+)
+res
+f<-function(i){
+spin(5)
+i*i
+}
+system.time(
+res<-foreach (i=1:8) %dopar%
+{
+f(i)
+}
+)
+res
+library(lodown)
+install.packages("lodown")
+library(lodown)
+install.packages(lodown)
+install.packages('lodown')
+version
+library(lodown)
+install.packages("lowdown")
+install.packages("lowdown")
+install.packages("lodown")
+library(lodown)
+library('lodown')
+install.packages('lodown')
+install.packages('Rtools')
+version
+#     - Fernando Alarid-Escudero, PhD, <fernando.alarid@cide.edu>              #
+#     - Eline Krijkamp, MSc                                                    #
+#     - Petros Pechlivanoglou, PhD                                             #
+#     - Hawre Jalal, MD, PhD                                                   #
+#     - Eva A. Enns, PhD                                                       #
+################################################################################
+# The structure of this code is according to the DARTH framework               #
+# https://github.com/DARTH-git/Decision-Modeling-Framework                     #
+################################################################################
+# rm(list = ls()) # to clean the workspace
+setwd(file.path("C:/Users/jamietam/Dropbox/GitHub/mds-microsim"))
+install.packages("pkgdown")
+install.packages("darthpack")
+devtools::install_github("DARTH-git/dampack")
+remove.packages("glue", lib="~/R/win-library/4.0")
+devtools::install_github("DARTH-git/dampack")
+devtools::install_github("DARTH-git/darthpack")

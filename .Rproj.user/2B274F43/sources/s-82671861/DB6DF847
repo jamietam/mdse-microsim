@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1637344526649.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2941913893",
+    "id" : "DB6DF847",
+    "lastKnownWriteTime" : 1636614007,
+    "last_content_update" : 1636614007,
+    "path" : "C:/Users/jamietam/Dropbox/GitHub/Microsimulation-tutorial/mds_microsim.R",
+    "project_path" : null,
+    "properties" : {
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
