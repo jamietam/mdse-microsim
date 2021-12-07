@@ -59,11 +59,11 @@ smk_probs <- function(bc, t, M_it) { # updates the transition probabilities of e
     # M_it: health state occupied by individual i at cycle t (character variable)
     
     # Transition probabilities (per cycle) by birth cohort
-    p.NC <- round(diag(as.matrix(smk_init)[,(bc-1899):201]),8) # probability to become Current smoker when Never smoker
-    p.CF <- round(diag(as.matrix(smk_cess)[,(bc-1899):201]),8) # probability to become Former smoker when Current smoker
-    p.NX <- round(diag(as.matrix(death_ns)[,(bc-1899):201]),8) # probability to die when Never smoker
-    p.CX <- round(diag(as.matrix(death_cs)[,(bc-1899):201]),8) # probability to die when Current smoker
-    p.FX <- round(diag(as.matrix(death_fs)[,(bc-1899):201]),8) # probability to die when Former smoker
+    p.NC <- diag(smk_init[,(bc-1899):201]) # probability to become Current smoker when Never smoker
+    p.CF <- diag(smk_cess[,(bc-1899):201]) # probability to become Former smoker when Current smoker
+    p.NX <- diag(death_ns[,(bc-1899):201]) # probability to die when Never smoker
+    p.CX <- diag(death_cs[,(bc-1899):201]) # probability to die when Current smoker
+    p.FX <- diag(death_fs[,(bc-1899):201]) # probability to die when Former smoker
     
     p.NX[100] <- p.CX[100] <- p.FX[100] <- 1 # everyone dies after age 99
     p.NC[100] <- p.CF[100] <- 0 

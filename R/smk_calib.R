@@ -17,42 +17,39 @@ mainDir <- "C:/Users/jamietam/Dropbox/GitHub/mds-microsim"
 setwd(file.path(mainDir))
 namethisrun <- "smk_microsim_11.24"
 
-## Calibration Targets
-load("data/smk_microsim_targets_females.RData")
+## Inputs
+whichgender <- "females"
+load(paste0("data/smk_inputs_",whichgender,".RData")) # Load all smoking and mortality inputs as matrices
+n.i   <- 10                      # number of simulated individuals per run (cohort)
+n.t   <- 100                    # time horizon per person, number of years 
+v.n   <- c( "N","C","F","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), Dead (X)
+n.s   <- length(v.n)            # the number of health states
+v.M_1 <- rep("N", n.i)          # everyone begins in the Never smoker state  # v.M_1:   vector of initial states for individuals 
 
-## RUN THE SIMULATION ------------------------------------------------------
-	
+## Calibration Targets
+load(paste0("data/smk_microsim_targets_",whichgender,".RData"))
+
+## Load model functions
 source("R/smk_microsim.R", echo = FALSE) # microsimulation model and probability functions
 
 ## Run model for parameter calibration
 smk_calib_out <- function(smkinit_SF, smkcess_SF) {
-  ## Inputs
-  whichgender <- "females"
-  load(paste("data/death_ns_",whichgender,".Rda")) # Mortality inputs
-  load(paste("data/death_cs_",whichgender,".Rda"))
-  load(paste("data/death_fs_",whichgender,".Rda"))
-  load(paste("data/smk_init_cisnet_",whichgender,".Rda")) # Smoking inputs
-  load(paste("data/smk_cess_cisnet_",whichgender,".Rda"))
+
   smk_init = smkinit_SF*smk_init_cisnet # adjusted smoking inputs
   smk_cess = smkcess_SF*smk_cess_cisnet
   
-  source("R/smk_microsim.R", echo = FALSE) # microsimulation model and probability functions
-  # source("C:/Users/jamietam/Dropbox/GitHub/mds-microsim/R/smk_microsim.R", echo = FALSE)
-  
   cohorts <- 1900:2100
+  
   # Simulate for each birth cohort
-  m.cohortbyage<-foreach (i=cohorts, .combine='rbind', .export=c('smk_microsim','smk_probs','getprevs', 'smk_init','smk_cess','death_cs','death_ns','death_fs')) %dopar%
+  m.cohortbyage<-foreach (i=cohorts, .combine='rbind', 
+                          .export=c('smk_microsim','smk_probs','get_prevs', 
+                                    'smk_init','smk_cess','death_cs','death_ns','death_fs',
+                                    'n.i','n.t','v.n','n.s','v.M_1')) %dopar%
     {
-      n.i   <- 10                      # number of simulated individuals per run (cohort)
-      n.t   <- 100                    # time horizon per person, number of years 
-      v.n   <- c( "N","C","F","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), Dead (X)
-      n.s   <- length(v.n)            # the number of health states
-      v.M_1 <- rep("N", n.i)          # everyone begins in the Never smoker state  # v.M_1:   vector of initial states for individuals 
-      
       smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
     }
   
-  ## Convert matrix from cohort-age to cohort-year
+  # Convert matrix from cohort-age to cohort-year
   m.cohortbyyear <- matrix(nrow = n.i*length(cohorts), ncol = 301)
   for (b in 1:length(cohorts)){
     m.cohortbyyear[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.cohortbyage[(n.i*(b-1)+1):(n.i*b),]
@@ -60,7 +57,7 @@ smk_calib_out <- function(smkinit_SF, smkcess_SF) {
   colnames(m.cohortbyyear) <- c(1900:2200)
   rownames(m.cohortbyyear) <- paste(sort(rep(cohorts,n.i)),1:n.i, sep = ".") 
   
-  ## Output prevalence results as a list
+  # Output prevalence results as a list
   m.M.prevs <- NULL 
   for (i in c(v.n)){
     m.M.prevs = rbind(m.M.prevs, get_prevs(i, m.cohortbyyear,2005,2020))
