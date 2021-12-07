@@ -60,7 +60,7 @@ smk_probs <- function(bc, t, M_it) { # updates the transition probabilities of e
     
     # Transition probabilities (per cycle) by birth cohort
     p.NC <- round(diag(as.matrix(smk_init)[,(bc-1899):201]),8) # probability to become Current smoker when Never smoker
-    p.CF <- round(diag(as.matrix(smk_init)[,(bc-1899):201]),8) # probability to become Former smoker when Current smoker
+    p.CF <- round(diag(as.matrix(smk_cess)[,(bc-1899):201]),8) # probability to become Former smoker when Current smoker
     p.NX <- round(diag(as.matrix(death_ns)[,(bc-1899):201]),8) # probability to die when Never smoker
     p.CX <- round(diag(as.matrix(death_cs)[,(bc-1899):201]),8) # probability to die when Current smoker
     p.FX <- round(diag(as.matrix(death_fs)[,(bc-1899):201]),8) # probability to die when Former smoker
@@ -99,7 +99,32 @@ smk_probs <- function(bc, t, M_it) { # updates the transition probabilities of e
     ifelse(round(sum(v.p.it),8) == 1, return(v.p.it), print(paste("Probabilities do not sum to 1:", sum(v.p.it), "bc:",bc,"age:",t,"M_it:",M_it))) # rounds off to the eigth digit because otherwise you get 0.000000001 instead of 0
     return(v.p.it) 
 }       
-																				  
+
+## MODEL PREVALENCE RESULTS ------------------------------------------------
+# Get counts/prevalence of individuals in a health state by age group and year
+get_prevs <- function(state,m.cohortbyyear,minyear,maxyear){
+  agerownames<-c("18to25", "26to34", "35to49", "50to64",  "65plus", "total")
+  agegroupstart <- c(18,26,35,50,65,18)
+  agegroupend <- c(25,34,49,64,99,99)
+  m.M.prevs <- NULL 
+  for (age in 1:length(agegroupstart)){
+    for (year in minyear:maxyear){
+      cohortmin = year-agegroupend[age]
+      if(cohortmin<1900) {next}
+      cohortmax = year-agegroupstart[age]
+      select = m.cohortbyyear[(n.i*(cohortmin-1900)+1):(n.i*(cohortmax-1900)+n.i),paste(year)] # birth cohort 1905 begins in row 26, and birth cohort 1912 ends in row 65
+      alive <- sum(select!="X",na.rm=TRUE)
+      dead <- sum(select=="X",na.rm=TRUE) 
+      counts <- sum(str_count(select,state),na.rm=TRUE)
+      prev <- sum(str_count(select,state),na.rm=TRUE)/sum(select!="X",na.rm=TRUE)
+      m.M.prevs<-rbind(m.M.prevs,c(state,whichgender,agerownames[age],year, prev,counts,alive,dead))
+    }
+  }
+  colnames(m.M.prevs)<-c("state","gender","agegroup","year", "prev","counts","alive","dead")
+  return(m.M.prevs) 
+}
+
+
 ## PROBABILITY CHECKS ------------------------------------------------------
 # cohorts = c(1900:2100)
 # for (bc in cohorts){
