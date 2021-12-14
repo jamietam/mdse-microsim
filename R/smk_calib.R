@@ -14,6 +14,7 @@ cl <- makeCluster(detectCores()-2)
 registerDoParallel(cl)
 
 mainDir <- "C:/Users/jamietam/Dropbox/GitHub/mds-microsim"
+# mainDir <- "/gpfs/ysm/home/jt936/mds-microsim"
 setwd(file.path(mainDir))
 namethisrun <- "smk_microsim_11.24"
 
@@ -27,7 +28,7 @@ n.s   <- length(v.n)            # the number of health states
 v.M_1 <- rep("N", n.i)          # everyone begins in the Never smoker state  # v.M_1:   vector of initial states for individuals 
 
 ## Calibration Targets
-load(paste0("data/smk_microsim_targets_",whichgender,".RData"))
+load(paste0("data/smk_calib_targets_",whichgender,".RData"))
 
 ## Load model functions
 source("R/smk_microsim.R", echo = FALSE) # microsimulation model and probability functions
@@ -36,7 +37,7 @@ source("R/smk_microsim.R", echo = FALSE) # microsimulation model and probability
 smk_calib_out <- function(smkinit_SF, smkcess_SF) {
 
   smk_init = smkinit_SF*smk_init_cisnet # adjusted smoking inputs
-  smk_cess = smkcess_SF*smk_cess_cisnet
+  smk_cess = smkcess_SF*smk_cess_cisnet # how many parameters should I have here?
   
   cohorts <- 1900:2100
   
@@ -55,36 +56,13 @@ smk_calib_out <- function(smkinit_SF, smkcess_SF) {
     m.cohortbyyear[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.cohortbyage[(n.i*(b-1)+1):(n.i*b),]
   }
   colnames(m.cohortbyyear) <- c(1900:2200)
-  rownames(m.cohortbyyear) <- paste(sort(rep(cohorts,n.i)),1:n.i, sep = ".") 
-  
+
   # Output prevalence results as a list
-  m.M.prevs <- NULL 
-  for (i in c(v.n)){
-    m.M.prevs = rbind(m.M.prevs, get_prevs(i, m.cohortbyyear,2005,2020))
-  }
-  m.M.prevs <- as.data.frame(m.M.prevs)
-  m.M.prevs$prev <- as.numeric(m.M.prevs$prev)
-  m.M.prevs$year <- as.numeric(m.M.prevs$year)
-  model_res <- vector(mode = "list")
-  model_res$cstotal <- subset(m.M.prevs, agegroup=="total" & state=="C")[,c("year","prev")] 
-  model_res$cs18to25 <- subset(m.M.prevs, agegroup=="18to25" & state=="C")[,c("year","prev")] 
-  model_res$cs26to34 <- subset(m.M.prevs, agegroup=="26to34" & state=="C")[,c("year","prev")] 
-  model_res$cs35to49 <- subset(m.M.prevs, agegroup=="35to49" & state=="C")[,c("year","prev")] 
-  model_res$cs50to64 <- subset(m.M.prevs, agegroup=="50to64" & state=="C")[,c("year","prev")] 
-  model_res$cs65plus <- subset(m.M.prevs, agegroup=="65plus" & state=="C")[,c("year","prev")] 
-  model_res$nstotal <- subset(m.M.prevs, agegroup=="total" & state=="N")[,c("year","prev")] 
-  model_res$ns18to25 <- subset(m.M.prevs, agegroup=="18to25" & state=="N")[,c("year","prev")] 
-  model_res$ns26to34 <- subset(m.M.prevs, agegroup=="26to34" & state=="N")[,c("year","prev")] 
-  model_res$ns35to49 <- subset(m.M.prevs, agegroup=="35to49" & state=="N")[,c("year","prev")] 
-  model_res$ns50to64 <- subset(m.M.prevs, agegroup=="50to64" & state=="N")[,c("year","prev")] 
-  model_res$ns65plus <- subset(m.M.prevs, agegroup=="65plus" & state=="N")[,c("year","prev")] 
-  model_res$fstotal <- subset(m.M.prevs, agegroup=="total" & state=="F")[,c("year","prev")] 
-  model_res$fs18to25 <- subset(m.M.prevs, agegroup=="18to25" & state=="F")[,c("year","prev")] 
-  model_res$fs26to34 <- subset(m.M.prevs, agegroup=="26to34" & state=="F")[,c("year","prev")] 
-  model_res$fs35to49 <- subset(m.M.prevs, agegroup=="35to49" & state=="F")[,c("year","prev")] 
-  model_res$fs50to64 <- subset(m.M.prevs, agegroup=="50to64" & state=="F")[,c("year","prev")] 
-  model_res$fs65plus <- subset(m.M.prevs, agegroup=="65plus" & state=="F")[,c("year","prev")] 
-  
+  model_res <- lapply(v.n, get_prevs, m.cohortbyyear=m.cohortbyyear, minyear=2005, maxyear=2020)
+  names(model_res) <- v.n
+  model_res$N <- model_res$N[order(model_res$N[,"agegroup"],decreasing=FALSE),]
+  model_res$C <- model_res$C[order(model_res$C[,"agegroup"],decreasing=FALSE),]
+  model_res$F <- model_res$F[order(model_res$F[,"agegroup"],decreasing=FALSE),]
   return(model_res)
 }
 
@@ -118,8 +96,9 @@ n_target <- length(v_target_names)
 
 ## Calibration Functions ---------------------------------------------------
 
-# Write function to sample from prior
-sample_prior <- function(n_samp){
+## IMIS Required Function sample.prior(x) draws n samples from the prior distribution
+# Write function to sample from prior 
+sample.prior <- function(n_samp){
   m_lhs_unit   <- randomLHS(n = n_samp, k = n_param)
   m_param_samp <- matrix(nrow = n_samp, ncol = n_param)
   colnames(m_param_samp) <- v_param_names
@@ -132,7 +111,7 @@ sample_prior <- function(n_samp){
 }
 
 # view resulting parameter set samples
-pairs.panels(sample_prior(1000))
+pairs.panels(sample.prior(1000))
 
 ###  PRIOR  ### 
 # Write functions to evaluate log-prior and prior
@@ -154,21 +133,22 @@ calc_log_prior <- function(v_params){
   return(lprior)
 }
 
-
 v_params_test = c(smkinit_SF = 1, smkcess_SF = 1)
+
 # Run simulation by passing arguments as a numeric vector to the model function
 do.call(smk_calib_out, as.list(v_params_test)) # It works!
 
 calc_log_prior(v_params = v_params_test)
-calc_log_prior(v_params = sample_prior(10))
+calc_log_prior(v_params = sample.prior(10))
 
 
-# function that calculates the (non-log) prior
-calc_prior <- function(v_params) { 
+## IMIS Required Function prior(x) calculates prior density of x
+# function that calculates the (non-log) prior 
+prior <- function(v_params) { 
   exp(calc_log_prior(v_params)) 
 }
-calc_prior(v_params = v_params_test)
-calc_prior(v_params = sample_prior(10))
+prior(v_params = v_params_test)
+prior(v_params = sample.prior(10))
 
 
 ###  LIKELIHOOD  ###
@@ -189,15 +169,12 @@ calc_log_lik <- function(v_params){
       model_res <- do.call(smk_calib_out, as.list(v_params[j, ]))
       
       ###  Calculate log-likelihood of model outputs to targets  ###
-      # Loop through all calibration targets in lst_smktargets (18 total):
-      # "cstotal"  "cs18to25" "cs26to34" "cs35to49" "cs50to64" "cs65plus" 
-      # "nstotal"  "ns18to25" "ns26to34" "ns35to49" "ns50to64" "ns65plus" 
-      # "fstotal"  "fs18to25" "fs26to34" "fs35to49" "fs50to64" "fs65plus"
+      # Loop through all calibration targets in lst_smktargets (N, C, F):
       # log likelihood 
       for (r in 1:length(lst_smktargets)){
-        v_llik[j, r] <- sum(dnorm(x = lst_smktargets[[r]]$prev,
-                                  mean = model_res[[r]]$prev,
-                                  sd = lst_smktargets[[r]]$se,
+        v_llik[j, r] <- sum(dnorm(x = lst_smktargets[[r]][,"prev"],
+                                  mean = model_res[[r]][,"prev"],
+                                  sd = lst_smktargets[[r]][,"se"],
                                   log = T))
       }
       
@@ -210,15 +187,15 @@ calc_log_lik <- function(v_params){
   return(llik_overall)
 }
 calc_log_lik(v_params = v_params_test)
-calc_log_lik(v_params = sample_prior(10))
+calc_log_lik(v_params = sample.prior(10))
 
-
-# function to calculate the (non-log) likelihood
-calc_likelihood <- function(v_params){ 
+## IMIS Required Function likelihood(x) calculates the likelihood of x
+# function to calculate the (non-log) likelihood 
+likelihood <- function(v_params){  
   exp(calc_log_lik(v_params)) 
 }
-calc_likelihood(v_params = v_params_test)
-calc_likelihood(v_params = sample_prior(10))
+likelihood(v_params = v_params_test)
+likelihood(v_params = sample.prior(10))
 
 
 ###  POSTERIOR  ###
@@ -230,7 +207,7 @@ calc_log_post <- function(v_params) {
   return(lpost) 
 }
 calc_log_post(v_params = v_params_test)
-calc_log_post(v_params = sample_prior(10))
+calc_log_post(v_params = sample.prior(10))
 
 
 # function that calculates the (non-log) posterior
@@ -238,26 +215,20 @@ calc_post <- function(v_params) {
   exp(calc_log_post(v_params)) 
 }
 calc_post(v_params = v_params_test)
-calc_post(v_params = sample_prior(10))
+calc_post(v_params = sample.prior(10))
 
 
 ####################################################################
 ######  Calibrate!  ######
 ####################################################################
-# record start time of calibration
-t_init <- Sys.time()
+###  Bayesian calibration using IMIS - must define three functions needed by IMIS: prior(x), likelihood(x), sample.prior(n)
 
-###  Bayesian calibration using IMIS  ###
-# define three functions needed by IMIS: prior(x), likelihood(x), sample.prior(n)
-prior <- calc_prior
-likelihood <- calc_likelihood
-sample.prior <- sample_prior
-
+t_init <- Sys.time() # record start time of calibration
 # run IMIS
-fit_imis <- IMIS(B = 1000, # the incremental sample size at each iteration of IMIS
-                 B.re = n_resamp, # the desired posterior sample size
+fit_imis <- IMIS(B = 10, # the incremental sample size at each iteration of IMIS
+                 B.re = n_resamp, # the desired posterior sample size at the resample stage
                  number_k = 10, # the maximum number of iterations in IMIS
-                 D = 0) 
+                 D = 0)  # the number of optimizers
 
 # obtain draws from posterior
 m_calib_res <- fit_imis$resample

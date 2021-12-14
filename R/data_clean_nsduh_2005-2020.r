@@ -159,9 +159,9 @@ getprevsbyage <- function(groupvar, subpop){
     svy <-svydesign(id=~verep, strata=~vestr, nest=TRUE, weights=~ANALWC1, data=subset(subpop,year==y))
 
     prev <-svymean(as.formula(paste("~",groupvar)),design=svy,na.rm=TRUE) 
-    alladults  <- rbind(alladults, data.frame(y,"total",groupvar, deparse(substitute(subpop)), prev[1],SE(prev), confint(prev)[1,1], confint(prev)[1,2]))          
+    alladults  <- rbind(alladults, data.frame(y,18.99,groupvar, deparse(substitute(subpop)), prev[1],SE(prev), confint(prev)[1,1], confint(prev)[1,2]))          
     
-    agegroupnames <- c("18to25", "26to34","35to49", "50to64","65plus")
+    agegroupnames <- c(18.25, 26.34,35.49, 50.64, 65.99)
     for (k in 2:6){
       prev <-svymean(as.formula(paste("~",groupvar)),design=subset(svy,CATAG6==k),na.rm=TRUE) # 
       byagegroup <- rbind(byagegroup, data.frame(y,agegroupnames[k-1],groupvar, deparse(substitute(subpop)), prev[1],SE(prev),confint(prev)[1,1], confint(prev)[1,2]))          
@@ -254,6 +254,6 @@ depsmkprevs_by_year$prev=as.numeric(depsmkprevs_by_year$prev)
 depsmkprevs_by_year$se=as.numeric(depsmkprevs_by_year$se)
 depsmkprevs_by_year$prev_highCI=as.numeric(depsmkprevs_by_year$prev_highCI)
 depsmkprevs_by_year$prev_lowCI=as.numeric(depsmkprevs_by_year$prev_lowCI)
-depsmkprevs_by_year$group <- paste(depsmkprevs_by_year$gender, depsmkprevs_by_year$status, depsmkprevs_by_year$age, sep="_")
+# depsmkprevs_by_year$group <- paste(depsmkprevs_by_year$gender, depsmkprevs_by_year$status, depsmkprevs_by_year$age, sep="_")
 
 save(depsmkprevs_by_year, file="depsmkprevs_2005-2020.rda")

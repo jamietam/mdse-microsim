@@ -101,11 +101,10 @@ smk_probs <- function(bc, t, M_it) { # updates the transition probabilities of e
 }       
 
 ## MODEL PREVALENCE RESULTS ------------------------------------------------
-# Get counts/prevalence of individuals in a health state by age group and year
-get_prevs <- function(state,m.cohortbyyear,minyear,maxyear){
-  agerownames<-c("18to25", "26to34", "35to49", "50to64",  "65plus", "total")
-  agegroupstart <- c(18,26,35,50,65,18)
-  agegroupend <- c(25,34,49,64,99,99)
+get_prevs <- function(state,m.cohortbyyear,minyear,maxyear){ # Get counts/prevalence of individuals in a health state by age group and year
+  agerownames<-c(18.99,18.25, 26.34, 35.49, 50.64, 65.99)
+  agegroupstart <- c(18, 18,26,35,50,65)
+  agegroupend <- c(99,25,34,49,64,99,99)
   m.M.prevs <- NULL 
   for (age in 1:length(agegroupstart)){
     for (year in minyear:maxyear){
@@ -117,10 +116,10 @@ get_prevs <- function(state,m.cohortbyyear,minyear,maxyear){
       dead <- sum(select=="X",na.rm=TRUE) 
       counts <- sum(str_count(select,state),na.rm=TRUE)
       prev <- sum(str_count(select,state),na.rm=TRUE)/sum(select!="X",na.rm=TRUE)
-      m.M.prevs<-rbind(m.M.prevs,c(state,whichgender,agerownames[age],year, prev,counts,alive,dead))
+      m.M.prevs<-rbind(m.M.prevs,c(agerownames[age],year, prev,counts,alive,dead))
     }
   }
-  colnames(m.M.prevs)<-c("state","gender","agegroup","year", "prev","counts","alive","dead")
+  colnames(m.M.prevs)<-c("agegroup","year", "prev","counts","alive","dead")
   return(m.M.prevs) 
 }
 
@@ -136,39 +135,39 @@ get_prevs <- function(state,m.cohortbyyear,minyear,maxyear){
 # 
 # p.NX[100] <- p.CX[100] <- p.FX[100] <- 1 # everyone dies after age 99
 # p.NC[100] <- p.CF[100] <- 0 
-  
+# 
 #   for (t in c(1:n.t)){
 #     if (bc+t>2100){ # exit for loop if going past the year 2100
 #       break
 #     }
-      
-    # N = c((1-p.NX[t])*(1 - p.NC[t]), 
-          # (1-p.NX[t])*p.NC[t], 
-           # 0, 	
-           # p.NX[t]) 
-    # C = c( 0,
-          # (1-p.CX[t])*(1- p.CF[t]), 
-          # (1-p.CX[t])*p.CF[t], 
-           # p.CX[t]) 
-    # F = c( 0,
-           # 0, 
-          # (1 - p.FX[t]), 
-           # p.FX[t])
-    
-    
-    # allprobs = rbind(N, C, F)
-    # # Check for any negative, missing probabilities, or probability sets that do not sum to 1
-    # if(any(is.na(allprobs))){
-      # print(paste("NA probability! bc: ", bc, ", age: ",t))
-      # print(allprobs)
-    # }
-    # if(any(allprobs<0)){
-      # print(paste("Negative probability! bc: ", bc, ", age: ",t))
-      # print(allprobs)
-      # }
-    # if(any(round(rowSums(allprobs),8) != 1)){
-      # print(paste("Probabilities do not sum to 1! ", "bc:",bc,"age:",t))
-      # print (rowSums(allprobs))
-      # }
-    # }
+# 
+#     N = c((1-p.NX[t])*(1 - p.NC[t]),
+#           (1-p.NX[t])*p.NC[t],
+#            0,
+#            p.NX[t])
+#     C = c( 0,
+#           (1-p.CX[t])*(1- p.CF[t]),
+#           (1-p.CX[t])*p.CF[t],
+#            p.CX[t])
+#     F = c( 0,
+#            0,
+#           (1 - p.FX[t]),
+#            p.FX[t])
+# 
+# 
+#     allprobs = rbind(N, C, F)
+#     # Check for any negative, missing probabilities, or probability sets that do not sum to 1
+#     if(any(is.na(allprobs))){
+#       print(paste("NA probability! bc: ", bc, ", age: ",t))
+#       print(allprobs)
+#     }
+#     if(any(allprobs<0)){
+#       print(paste("Negative probability! bc: ", bc, ", age: ",t))
+#       print(allprobs)
+#     }
+#     if(any(round(rowSums(allprobs),8) != 1)){
+#       print(paste("Probabilities do not sum to 1! ", "bc:",bc,"age:",t))
+#       print (rowSums(allprobs))
+#     }
+#   }
 # }
