@@ -164,7 +164,7 @@ main = function() {
     m.cohortbyage<-foreach (i=cohorts, .combine='rbind', 
                             .export=c('smk_microsim','smk_probs','get_prevs', 
                                       'smk_init','smk_cess','death_cs','death_ns','death_fs',
-                                      'n.i','n.t','v.n','n.s','v.M_1')) %dopar%
+                                      'n.i','n.t','v.n','n.s','v.M_1')) %do% # FIXME:AG: temporary serial  
         {
             smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
         }
