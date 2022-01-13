@@ -8,18 +8,22 @@
 ############################################################################################
 
 rm(list = ls())  # remove any variables in R's memory
+here::i_am("R/smk_microsim_AG.R")
+library(here)
 library(stringr)
 library(doParallel) # set up model to run in parallel
 library(foreach) # parallelization is in the foreach loop
 cl <- makeCluster(detectCores()-2) # Leave 2 cores unused
 registerDoParallel(cl)
 
-mainDir <- "C:/Users/JT936/Dropbox/GitHub/mds-microsim"
-setwd(file.path(mainDir))
+#Rprof(filename = here("test_runs/Rprof.out"),memory.profiling = TRUE, gc.profiling = TRUE, line.profiling = TRUE)
+
+# mainDir <- file.path(here("."))
+# setwd(file.path(mainDir))
 
 ## Inputs
 whichgender <- "females"
-load(paste0("data/smk_inputs_",whichgender,".RData")) # Load all smoking and mortality inputs as matrices
+load(paste0(here("data/smk_inputs_"),whichgender,".RData")) # Load all smoking and mortality inputs as matrices
 smk_init = smk_init_cisnet 
 smk_cess = smk_cess_cisnet 
 
@@ -152,32 +156,38 @@ get_prevs <- function(state,m.cohortbyyear,minyear,maxyear){ # Get counts/preval
 
 ## RUN THE MODEL FOR ALL BIRTH COHORTS  ---------------------------------
 
-t_init <- Sys.time() # Start timer
+main = function() {
 
-# Simulate for each birth cohort with parallelization
-m.cohortbyage<-foreach (i=cohorts, .combine='rbind', 
-                        .export=c('smk_microsim','smk_probs','get_prevs', 
-                                  'smk_init','smk_cess','death_cs','death_ns','death_fs',
-                                  'n.i','n.t','v.n','n.s','v.M_1')) %dopar%
-  {
-    smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
-  }
+    t_init <- Sys.time() # Start timer
 
-# Convert matrix from persons-age to persons-year
-m.cohortbyyear <- matrix(nrow = n.i*length(cohorts), ncol = 301)
-for (b in 1:length(cohorts)){
-  m.cohortbyyear[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.cohortbyage[(n.i*(b-1)+1):(n.i*b),]
+                                        # Simulate for each birth cohort with parallelization
+    m.cohortbyage<-foreach (i=cohorts, .combine='rbind', 
+                            .export=c('smk_microsim','smk_probs','get_prevs', 
+                                      'smk_init','smk_cess','death_cs','death_ns','death_fs',
+                                      'n.i','n.t','v.n','n.s','v.M_1')) %dopar%
+        {
+            smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
+        }
+
+                                        # Convert matrix from persons-age to persons-year
+    m.cohortbyyear <- matrix(nrow = n.i*length(cohorts), ncol = 301)
+    for (b in 1:length(cohorts)){
+        m.cohortbyyear[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.cohortbyage[(n.i*(b-1)+1):(n.i*b),]
+    }
+    colnames(m.cohortbyyear) <- c(1900:2200)
+
+                                        # Output prevalence results as a list
+    model_res <- lapply(v.n, get_prevs, m.cohortbyyear=m.cohortbyyear, minyear=2005, maxyear=2020)
+    names(model_res) <- v.n
+    model_res$N <- model_res$N[order(model_res$N[,"agegroup"],decreasing=FALSE),]
+    model_res$C <- model_res$C[order(model_res$C[,"agegroup"],decreasing=FALSE),]
+    model_res$F <- model_res$F[order(model_res$F[,"agegroup"],decreasing=FALSE),]
+
+    Sys.time() - t_init # End timer
 }
-colnames(m.cohortbyyear) <- c(1900:2200)
 
-# Output prevalence results as a list
-model_res <- lapply(v.n, get_prevs, m.cohortbyyear=m.cohortbyyear, minyear=2005, maxyear=2020)
-names(model_res) <- v.n
-model_res$N <- model_res$N[order(model_res$N[,"agegroup"],decreasing=FALSE),]
-model_res$C <- model_res$C[order(model_res$C[,"agegroup"],decreasing=FALSE),]
-model_res$F <- model_res$F[order(model_res$F[,"agegroup"],decreasing=FALSE),]
+prof=profvis(main())
 
-Sys.time() - t_init # End timer
 
 
 ## PROBABILITY CHECKS ------------------------------------------------------
