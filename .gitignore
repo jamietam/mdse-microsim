@@ -39,3 +39,12 @@ inst/doc
 
 # Developer history
 dev_history.R
+
+# Working directory for test runs
+/test_runs/
+
+# Emacs backup files:
+*~
+
+# Mac "Desktop services" files
+.DS_Store
