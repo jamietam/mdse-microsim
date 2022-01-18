@@ -81,22 +81,32 @@ smk_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, 
   return(results)  # return the results
 } # end of the smk_microsim function  
 
+
+precompute_diag <- function(statdata, cohorts, finval) {
+    precomp = matrix(nrow=100, ncol=201)
+    for (bc in cohorts) {
+        ## Transition probabilities (per cycle) by birth cohort
+        bc_i = bc - 1899
+        precomp[1:min(100,202-bc_i),bc_i] <- diag(statdata[,bc_i:201])
+        precomp[100,bc_i] <- finval
+    }
+    return(precomp)
+}
+p.NC.pc <- precompute_diag(smk_init,cohorts[-length(cohorts)],0) # probability to become Current smoker when Never smoker
+p.CF.pc <- precompute_diag(smk_cess,cohorts[-length(cohorts)],0) # probability to become Former smoker when Current smoker
+p.NX.pc <- precompute_diag(death_ns,cohorts[-length(cohorts)],1) # probability to die when Never smoker
+p.CX.pc <- precompute_diag(death_cs,cohorts[-length(cohorts)],1) # probability to die when Current smoker
+p.FX.pc <- precompute_diag(death_fs,cohorts[-length(cohorts)],1) # probability to die when Former smoker
+
+
 ## PROBABILITY FUNCTION 
 smk_probs <- function(bc, t, M_it) { # updates the transition probabilities of every cycle
   # bc:   birth cohort
   # t:    time in model / age
   # M_it: health state occupied by individual i at cycle t (character variable)
   
-  # Transition probabilities (per cycle) by birth cohort
-  p.NC <- diag(smk_init[,(bc-1899):201]) # probability to become Current smoker when Never smoker
-  p.CF <- diag(smk_cess[,(bc-1899):201]) # probability to become Former smoker when Current smoker
-  p.NX <- diag(death_ns[,(bc-1899):201]) # probability to die when Never smoker
-  p.CX <- diag(death_cs[,(bc-1899):201]) # probability to die when Current smoker
-  p.FX <- diag(death_fs[,(bc-1899):201]) # probability to die when Former smoker
-  
-  p.NX[100] <- p.CX[100] <- p.FX[100] <- 1 # everyone dies after age 99
-  p.NC[100] <- p.CF[100] <- 0 
-  
+  bc1 = bc-1899
+    
   v.p.it <- rep(NA, n.s)     # create vector of state transition probabilities
   names(v.p.it) <- v.n       # name the vector
   
@@ -104,22 +114,22 @@ smk_probs <- function(bc, t, M_it) { # updates the transition probabilities of e
   
   # Never
   v.p.it[M_it == "N"] <- 
-    c((1-p.NX[t])*(1 - p.NC[t]), 
-      (1-p.NX[t])*p.NC[t], 
+    c((1-p.NX.pc[t,bc1])*(1 - p.NC.pc[t,bc1]), 
+      (1-p.NX.pc[t,bc1])*p.NC.pc[t,bc1], 
       0, 	
-      p.NX[t]) 
+      p.NX.pc[t,bc1]) 
   
   v.p.it[M_it == "C"] <- 
     c(0, 
-      (1-p.CX[t])*(1- p.CF[t]),
-      (1-p.CX[t])*p.CF[t],
-      p.CX[t]) 
+      (1-p.CX.pc[t,bc1])*(1- p.CF.pc[t,bc1]),
+      (1-p.CX.pc[t,bc1])*p.CF.pc[t,bc1],
+      p.CX.pc[t,bc1]) 
   
   v.p.it[M_it == "F"] <- 
     c(0,
       0,
-      (1 - p.FX[t]),
-      p.FX[t])
+      (1 - p.FX.pc[t,bc1]),
+      p.FX.pc[t,bc1])
   
   v.p.it[M_it == "X"]  <- c(0,0,0, 1)					#X = DEAD
   # return the transition probabilities or produce an error
@@ -128,6 +138,8 @@ smk_probs <- function(bc, t, M_it) { # updates the transition probabilities of e
   ifelse(round(sum(v.p.it),8) == 1, return(v.p.it), print(paste("Probabilities do not sum to 1:", sum(v.p.it), "bc:",bc,"age:",t,"M_it:",M_it))) # rounds off to the eigth digit because otherwise you get 0.000000001 instead of 0
   return(v.p.it) 
 }       
+
+
 
 ## GET MODEL PREVALENCE RESULTS
 get_prevs <- function(state,m.cohortbyyear,minyear,maxyear){ # Get counts/prevalence of individuals in a health state by age group and year
@@ -153,23 +165,25 @@ get_prevs <- function(state,m.cohortbyyear,minyear,maxyear){ # Get counts/preval
 }
 
 
-
 ## RUN THE MODEL FOR ALL BIRTH COHORTS  ---------------------------------
 
 main = function() {
 
     t_init <- Sys.time() # Start timer
-
-                                        # Simulate for each birth cohort with parallelization
+    # Simulate for each birth cohort with parallelization
     m.cohortbyage<-foreach (i=cohorts, .combine='rbind', 
                             .export=c('smk_microsim','smk_probs','get_prevs', 
                                       'smk_init','smk_cess','death_cs','death_ns','death_fs',
-                                      'n.i','n.t','v.n','n.s','v.M_1')) %do% # FIXME:AG: temporary serial  
+                                      'n.i','n.t','v.n','n.s','v.M_1',
+                                      'p.NC.pc','p.CF.pc','p.NX.pc','p.CX.pc','p.FX.pc')) %do% # FIXME:AG: temporary serial  
         {
             smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
         }
 
-                                        # Convert matrix from persons-age to persons-year
+### Serial:
+## m.cohortbyage <- do.call(rbind, lapply(cohorts, function(i) { smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
+
+# Convert matrix from persons-age to persons-year
     m.cohortbyyear <- matrix(nrow = n.i*length(cohorts), ncol = 301)
     for (b in 1:length(cohorts)){
         m.cohortbyyear[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.cohortbyage[(n.i*(b-1)+1):(n.i*b),]
@@ -184,9 +198,11 @@ main = function() {
     model_res$F <- model_res$F[order(model_res$F[,"agegroup"],decreasing=FALSE),]
 
     Sys.time() - t_init # End timer
+    return(model_res)
 }
 
-prof=profvis(main())
+model_res<-main()
+save(model_res, file=here("test_runs/model_res.RData"))
 
 
 
