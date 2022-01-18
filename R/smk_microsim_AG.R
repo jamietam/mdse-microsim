@@ -175,7 +175,7 @@ main = function() {
                             .export=c('smk_microsim','smk_probs','get_prevs', 
                                       'smk_init','smk_cess','death_cs','death_ns','death_fs',
                                       'n.i','n.t','v.n','n.s','v.M_1',
-                                      'p.NC.pc','p.CF.pc','p.NX.pc','p.CX.pc','p.FX.pc')) %do% # FIXME:AG: temporary serial  
+                                      'p.NC.pc','p.CF.pc','p.NX.pc','p.CX.pc','p.FX.pc')) %dopar%
         {
             smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
         }
@@ -197,7 +197,8 @@ main = function() {
     model_res$C <- model_res$C[order(model_res$C[,"agegroup"],decreasing=FALSE),]
     model_res$F <- model_res$F[order(model_res$F[,"agegroup"],decreasing=FALSE),]
 
-    Sys.time() - t_init # End timer
+    cat("Time: ")
+    print(Sys.time() - t_init) # End timer
     return(model_res)
 }
 
