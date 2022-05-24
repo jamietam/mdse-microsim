@@ -54,50 +54,42 @@ smk_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, 
   
 ## PROBABILITY FUNCTION ----------------------------------------------------
 smk_probs <- function(bc, t, M_it) { # updates the transition probabilities of every cycle
-    # bc:   birth cohort
-    # t:    time in model / age
-    # M_it: health state occupied by individual i at cycle t (character variable)
-    
-    # Transition probabilities (per cycle) by birth cohort
-    p.NC <- diag(smk_init[,(bc-1899):201]) # probability to become Current smoker when Never smoker
-    p.CF <- diag(smk_cess[,(bc-1899):201]) # probability to become Former smoker when Current smoker
-    p.NX <- diag(death_ns[,(bc-1899):201]) # probability to die when Never smoker
-    p.CX <- diag(death_cs[,(bc-1899):201]) # probability to die when Current smoker
-    p.FX <- diag(death_fs[,(bc-1899):201]) # probability to die when Former smoker
-    
-    p.NX[100] <- p.CX[100] <- p.FX[100] <- 1 # everyone dies after age 99
-    p.NC[100] <- p.CF[100] <- 0 
-    
-    v.p.it <- rep(NA, n.s)     # create vector of state transition probabilities
-    names(v.p.it) <- v.n       # name the vector
-    
-    # update v.p.it with the appropriate probabilities   
-    
-    # Never
-    v.p.it[M_it == "N"] <- 
-      c((1-p.NX[t])*(1 - p.NC[t]), 
-        (1-p.NX[t])*p.NC[t], 
-        0, 	
-        p.NX[t]) 
-    
-    v.p.it[M_it == "C"] <- 
-      c(0, 
-        (1-p.CX[t])*(1- p.CF[t]),
-        (1-p.CX[t])*p.CF[t],
-        p.CX[t]) 
-    
-    v.p.it[M_it == "F"] <- 
-      c(0,
-        0,
-        (1 - p.FX[t]),
-        p.FX[t])
-    
-    v.p.it[M_it == "X"]  <- c(0,0,0, 1)					#X = DEAD
-    # return the transition probabilities or produce an error
-    ifelse(any(is.na(v.p.it)), print(paste0(paste0(v.p.it,collapse=", ")," - NA probability! bc: ", bc,", age: ",t,", M_it: ",M_it)),return(v.p.it)) 
-    ifelse(any(v.p.it<0),print(paste0(paste0(v.p.it,collapse=", ")," - Negative probability! bc: ", bc, ", age: ",t,", M_it: ", M_it)),return(v.p.it))
-    ifelse(round(sum(v.p.it),8) == 1, return(v.p.it), print(paste("Probabilities do not sum to 1:", sum(v.p.it), "bc:",bc,"age:",t,"M_it:",M_it))) # rounds off to the eigth digit because otherwise you get 0.000000001 instead of 0
-    return(v.p.it) 
+  # bc:   birth cohort
+  # t:    time in model / age
+  # M_it: health state occupied by individual i at cycle t (character variable)
+  bc1 = bc-1899
+  
+  v.p.it <- rep(NA, n.s)     # create vector of state transition probabilities
+  names(v.p.it) <- v.n       # name the vector
+  
+  # update v.p.it with the appropriate probabilities   
+  
+  # Never
+  v.p.it[M_it == "N"] <- 
+    c((1-p.NX[t,bc1])*(1 - p.NC[t,bc1]), #N to N
+      (1-p.NX[t,bc1])*p.NC[t,bc1],       #N to C
+      0, 	                               #N to F
+      p.NX[t,bc1])                       #N to X
+  
+  v.p.it[M_it == "C"] <- 
+    c(0,                                 #C to N
+      (1-p.CX[t,bc1])*(1- p.CF[t,bc1]),  #C to C
+      (1-p.CX[t,bc1])*p.CF[t,bc1],       #C to F
+      p.CX[t,bc1])                       #C to X
+  
+  v.p.it[M_it == "F"] <- 
+    c(0,                                 #F to N
+      0,                                 #F to C
+      (1 - p.FX[t,bc1]),                 #F to F
+      p.FX[t,bc1])                       #F to X
+  
+  v.p.it[M_it == "X"]  <- c(0,0,0, 1)		 #X to X = DEAD
+  
+  # return the transition probabilities or produce an error
+  ifelse(any(is.na(v.p.it)), print(paste0(paste0(v.p.it,collapse=", ")," - NA probability! bc: ", bc,", age: ",t,", M_it: ",M_it)),return(v.p.it)) 
+  ifelse(any(v.p.it<0),print(paste0(paste0(v.p.it,collapse=", ")," - Negative probability! bc: ", bc, ", age: ",t,", M_it: ", M_it)),return(v.p.it))
+  ifelse(round(sum(v.p.it),8) == 1, return(v.p.it), print(paste("Probabilities do not sum to 1:", sum(v.p.it), "bc:",bc,"age:",t,"M_it:",M_it))) # rounds off to the eigth digit because otherwise you get 0.000000001 instead of 0
+  return(v.p.it) 
 }       
 
 ## MODEL PREVALENCE RESULTS ------------------------------------------------
@@ -127,14 +119,6 @@ get_prevs <- function(state,m.cohortbyyear,minyear,maxyear){ # Get counts/preval
 ## PROBABILITY CHECKS ------------------------------------------------------
 # cohorts = c(1900:2100)
 # for (bc in cohorts){
-# p.NC <- round(diag(as.matrix(smk_init)[,(bc-1899):201]),8) # probability to become Current smoker when Never smoker
-# p.CF <- round(diag(as.matrix(smk_cess)[,(bc-1899):201]),8) # probability to become Former smoker when Current smoker
-# p.NX <- round(diag(as.matrix(death_ns)[,(bc-1899):201]),8) # probability to die when Never smoker
-# p.CX <- round(diag(as.matrix(death_cs)[,(bc-1899):201]),8) # probability to die when Current smoker
-# p.FX <- round(diag(as.matrix(death_fs)[,(bc-1899):201]),8) # probability to die when Former smoker
-# 
-# p.NX[100] <- p.CX[100] <- p.FX[100] <- 1 # everyone dies after age 99
-# p.NC[100] <- p.CF[100] <- 0 
 # 
 #   for (t in c(1:n.t)){
 #     if (bc+t>2100){ # exit for loop if going past the year 2100
