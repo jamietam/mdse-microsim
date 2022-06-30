@@ -66,15 +66,15 @@ smk_probs <- function(bc, t, M_it) { # updates the transition probabilities of e
   
   # Never
   v.p.it[M_it == "N"] <- 
-    c((1-p.NX[t,bc1])*(1 - p.NC[t,bc1]), #N to N
-      (1-p.NX[t,bc1])*p.NC[t,bc1],       #N to C
+    c((1-p.NX[t,bc1] - p.NC[t,bc1]), #N to N
+      p.NC[t,bc1],       #N to C
       0, 	                               #N to F
       p.NX[t,bc1])                       #N to X
   
   v.p.it[M_it == "C"] <- 
     c(0,                                 #C to N
-      (1-p.CX[t,bc1])*(1- p.CF[t,bc1]),  #C to C
-      (1-p.CX[t,bc1])*p.CF[t,bc1],       #C to F
+      (1-p.CX[t,bc1]- p.CF[t,bc1]),  #C to C
+      p.CF[t,bc1],       #C to F
       p.CX[t,bc1])                       #C to X
   
   v.p.it[M_it == "F"] <- 
@@ -117,41 +117,41 @@ get_prevs <- function(state,m.cohortbyyear,minyear,maxyear){ # Get counts/preval
 
 
 ## PROBABILITY CHECKS ------------------------------------------------------
-# cohorts = c(1900:2100)
-# for (bc in cohorts){
-# 
-#   for (t in c(1:n.t)){
-#     if (bc+t>2100){ # exit for loop if going past the year 2100
-#       break
-#     }
-# 
-#     N = c((1-p.NX[t])*(1 - p.NC[t]),
-#           (1-p.NX[t])*p.NC[t],
-#            0,
-#            p.NX[t])
-#     C = c( 0,
-#           (1-p.CX[t])*(1- p.CF[t]),
-#           (1-p.CX[t])*p.CF[t],
-#            p.CX[t])
-#     F = c( 0,
-#            0,
-#           (1 - p.FX[t]),
-#            p.FX[t])
-# 
-# 
-#     allprobs = rbind(N, C, F)
-#     # Check for any negative, missing probabilities, or probability sets that do not sum to 1
-#     if(any(is.na(allprobs))){
-#       print(paste("NA probability! bc: ", bc, ", age: ",t))
-#       print(allprobs)
-#     }
-#     if(any(allprobs<0)){
-#       print(paste("Negative probability! bc: ", bc, ", age: ",t))
-#       print(allprobs)
-#     }
-#     if(any(round(rowSums(allprobs),8) != 1)){
-#       print(paste("Probabilities do not sum to 1! ", "bc:",bc,"age:",t))
-#       print (rowSums(allprobs))
-#     }
-#   }
-# }
+cohorts = c(1900:2100)
+for (bc in cohorts){
+
+  for (t in c(1:n.t)){
+    if (bc+t>2100){ # exit for loop if going past the year 2100
+      break
+    }
+
+    N = c((1-p.NX[t] - p.NC[t]),
+          p.NC[t],
+           0,
+           p.NX[t])
+    C = c( 0,
+          (1-p.CX[t]- p.CF[t]),
+          p.CF[t],
+           p.CX[t])
+    F = c( 0,
+           0,
+          (1 - p.FX[t]),
+           p.FX[t])
+
+
+    allprobs = rbind(N, C, F)
+    # Check for any negative, missing probabilities, or probability sets that do not sum to 1
+    if(any(is.na(allprobs))){
+      print(paste("NA probability! bc: ", bc, ", age: ",t))
+      print(allprobs)
+    }
+    if(any(allprobs<0)){
+      print(paste("Negative probability! bc: ", bc, ", age: ",t))
+      print(allprobs)
+    }
+    if(any(round(rowSums(allprobs),8) != 1)){
+      print(paste("Probabilities do not sum to 1! ", "bc:",bc,"age:",t))
+      print (rowSums(allprobs))
+    }
+  }
+}
