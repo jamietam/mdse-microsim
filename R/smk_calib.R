@@ -68,89 +68,89 @@ main = function(v_params) { # v_params: run model for parameter calibration
     print(Sys.time() - t_init) # End timer
     return(model_res)
 }
-v_params <- c(init0.17=1,init18.25=1,init26.34=1,cess35.49=1,cess50.64=1,cess65.99=1)
+v_params <- c(init0.17=2,init18.25=2,init26.34=2,cess35.49=1,cess50.64=1,cess65.99=1)
 
 model_res<-main(v_params)
 
 # save(model_res, file=paste0(here("model_res_n",n.i,"_",whichgender,"_052422.Rdata")))
 
-# ## Specify calibration parameters ------------------------------------------
-# 
-# # Specify seed (for reproducible sequence of random numbers)
-# set.seed(072218)
-# 
-# # number of initial starting points
-# n_init <- 3
-# 
-# # names and number of input parameters to be calibrated
-# v_param_names <- c("init0.17","init18.25","init26.34","cess35.49","cess50.64","cess65.99")
-# n_param <- length(v_param_names)
-# 
-# # range on input search space
-# lb <- c(init0.17=1,init18.25=1,init26.34=1,cess35.49=0.05,cess50.64=0.05,cess65.99=0.05) # lower bound
-# ub <- c(init0.17=3,init18.25=3,init26.34=3,cess35.49=2,cess50.64=2,cess65.99=2) # upper bound
-# 
-# # number of calibration targets
-# v_target_names <- names(lst_smktargets)
-# n_target <- length(v_target_names)
-# 
-# v_params <- c(init0.17=1,init18.25=1,init26.34=1,cess35.49=1,cess50.64=1,cess65.99=1)
-#   
-# ## Calibration Functions ---------------------------------------------------
-# 
-# # Write goodness-of-fit function to pass to Nelder-Mead algorithm
-# f_gof <- function(v_params){
-#   
-#   # Run model for parameter set "v_params"
-#   model_res <- main(v_params)
-#   
-#   # Calculate goodness-of-fit of model outputs to targets
-#   v_GOF <- numeric(n_target)
-#   
-#   for (r in 1:length(lst_smktargets)){ # sum of squared differences
-#     v_GOF[r] <- sum((lst_smktargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2)
-#   }
-#   
-#   # OVERALL
-#   # can give different targets different weights
-#   v_weights <- rep(1,n_target)
-#   # weighted sum
-#   GOF_overall <- sum(v_GOF[1:n_target] * v_weights)
-#   
-#   # return GOF
-#   return(GOF_overall)
-# }
-# 
-# ####################################################################
-# ######  Calibrate!  ######
-# ####################################################################
-# 
-# ###  Sample multiple random starting values for Nelder-Mead  ###
-# v_params_init <- matrix(nrow=n_init,ncol=n_param)
-# for (i in 1:n_param){
-#   v_params_init[,i] <- runif(n_init,min=lb[i],max=ub[i]) # This should probably be LHS to cover parameter space evenly
-# } 
-# colnames(v_params_init) <- v_param_names
-# 
-# # record start time of calibration
-# t_init <- Sys.time()
-# 
-# ###  Run Nelder-Mead for each starting point  ###
-# m_calib_res <- matrix(nrow = n_init, ncol = n_param+1)
-# colnames(m_calib_res) <- c(v_param_names, "Overall_fit")
-# for (j in 1:n_init){ # j <- 1
-#   
-#   # use optim() as Nelder-Mead, default is minimization
-#   fit_nm <- optim(v_params_init[j,], f_gof, hessian = T)
-#   m_calib_res[j,] <- c(fit_nm$par, fit_nm$value)
-#   
-#   fit_nm <- optim(v_params, f_gof,control = list(fnscale = 1, maxit = 1000), hessian = T)
-#   
-# }
-# 
-# # Calculate computation time
-# comp_time <- Sys.time() - t_init
-# 
+## Specify calibration parameters ------------------------------------------
+
+# Specify seed (for reproducible sequence of random numbers)
+set.seed(072218)
+
+# number of initial starting points
+n_init <- 3
+
+# names and number of input parameters to be calibrated
+v_param_names <- c("init0.17","init18.25","init26.34","cess35.49","cess50.64","cess65.99")
+n_param <- length(v_param_names)
+
+# range on input search space
+lb <- c(init0.17=1,init18.25=1,init26.34=1,cess35.49=0.05,cess50.64=0.05,cess65.99=0.05) # lower bound
+ub <- c(init0.17=3,init18.25=3,init26.34=3,cess35.49=2,cess50.64=2,cess65.99=2) # upper bound
+
+# number of calibration targets
+v_target_names <- names(lst_smktargets)
+n_target <- length(v_target_names)
+
+v_params <- c(init0.17=1,init18.25=1,init26.34=1,cess35.49=1,cess50.64=1,cess65.99=1)
+
+## Calibration Functions ---------------------------------------------------
+
+# Write goodness-of-fit function to pass to Nelder-Mead algorithm
+f_gof <- function(v_params){
+
+  # Run model for parameter set "v_params"
+  model_res <- main(v_params)
+
+  # Calculate goodness-of-fit of model outputs to targets
+  v_GOF <- numeric(n_target)
+
+  for (r in 1:length(lst_smktargets)){ # sum of squared differences
+    v_GOF[r] <- sum((lst_smktargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2)
+  }
+
+  # OVERALL
+  # can give different targets different weights
+  v_weights <- rep(1,n_target)
+  # weighted sum
+  GOF_overall <- sum(v_GOF[1:n_target] * v_weights)
+
+  # return GOF
+  return(GOF_overall)
+}
+
+####################################################################
+######  Calibrate!  ######
+####################################################################
+
+###  Sample multiple random starting values for Nelder-Mead  ###
+v_params_init <- matrix(nrow=n_init,ncol=n_param)
+for (i in 1:n_param){
+  v_params_init[,i] <- runif(n_init,min=lb[i],max=ub[i]) # This should probably be LHS to cover parameter space evenly
+}
+colnames(v_params_init) <- v_param_names
+
+# record start time of calibration
+t_init <- Sys.time()
+
+###  Run Nelder-Mead for each starting point  ###
+m_calib_res <- matrix(nrow = n_init, ncol = n_param+1)
+colnames(m_calib_res) <- c(v_param_names, "Overall_fit")
+for (j in 1:n_init){ # j <- 1
+
+  # use optim() as Nelder-Mead, default is minimization
+  fit_nm <- optim(v_params_init[j,], f_gof, hessian = T)
+  m_calib_res[j,] <- c(fit_nm$par, fit_nm$value)
+
+  fit_nm <- optim(v_params, f_gof,control = list(fnscale = 1, maxit = 1000), hessian = T)
+
+}
+
+# Calculate computation time
+comp_time <- Sys.time() - t_init
+
 # ####################################################################
 # ######  Exploring best-fitting input sets  ######
 # ####################################################################
@@ -169,6 +169,9 @@ model_res<-main(v_params)
 # # Pairwise comparison of top 10 sets
 # pairs.panels(m_calib_res[1:10,v_param_names])
 # 
+
+v_params = m_calib_res[1,-7]
+model_res<-main(v_params)
 
 # Data visualization ------------------------------------------------------
 library(ggplot2)
@@ -234,7 +237,7 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
   )
 }
 
-pdf(file = "Figs_Calib_052422.pdf",width=10, height=6,onefile = TRUE)
+pdf(file = "Figs_Calib_052522.pdf",width=10, height=6,onefile = TRUE)
 plot.new()
 text(.5, 0.9, "Calibration parameters - smk_microsim", font=2, cex=1.5)
 grid.table(v_params,rows=names(v_params))
