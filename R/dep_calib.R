@@ -12,38 +12,27 @@ here::i_am("R/dep_calib.R")
 
 ## INPUTS 
 whichgender ="females"
-load(paste0(here("data/dep_precomputed_inputs_"),whichgender,".RData")) # p.CX, p.FX, p.NX, smk_cess, smk_init
-cohorts  <- 1990:2100
-n.i   <- 10                    # number of simulated individuals per run (cohort) - eventually want to run 10,000
+load(paste0(here("data/dep_precomputed_inputs_"),whichgender,".RData")) 
+cohorts  <- 1920:2020
+n.i   <- 1000                    # number of simulated individuals per run (cohort) - eventually want to run 10,000
 n.t   <- 100
-v.n   <- c( "H","D","R","U","X") 
+v.n   <- c( "H","D","R","X") 
 n.s   <- length(v.n)
 v.M_1 <- rep("H", n.i) 
 
 # parameters for calibration
-# p.HD[,91:201] = 2.3823137*p.HD[,90] # for birth cohorts born 1990-2100, scale up incidence probabilities by inc_SF = 2.3823137
-p.DX = c(rep(1.71,99),1)*p.HX
-p.RX = c(rep(1.50,99),1)*p.HX
-p.UX = p.RX
-# p.RU = c(rep(0,25),rep(0.152,9),rep(0.101,15),rep(0.120,15),rep(0.923,35),0) # probability to Recall Error (U) when Former MD (R)
-# v_params = c(1.71,1.50,0.152,0.101,0.120,0.7)
-hr.D # hazard ratio of death in D vs H
-hr.R # hazard ratio of death in R vs H
-p.RU.26to34
-p.RU.35to49
-p.RU.50to64
-p.RU.65to99
+hr.D = 1.71 # hazard ratio of death in D vs H
+hr.R = 1.50 # hazard ratio of death in R vs H
+inc_SF = 2.3823137 # increased incidence of 1st MD episode starting with the 1990 birth cohort
 
+p.DX = c(rep(hr.D,99),1)*p.HX
+p.RX = c(rep(hr.R,99),1)*p.HX
+p.HD[,91:201] = inc_SF*p.HD[,90] # for birth cohorts born 1990-2100, scale up incidence probabilities by inc_SF = 2.3823137
+
+v_params = c(hr.D,hr.R,inc_SF)
 
 ## CALIBRATION TARGETS
 load(paste0(here("data/dep_calib_targets_"),whichgender,".RData")) #lst_smktargets
-
-# Calibrate to 2005-2015 survey data, remove 2016-2020 survey data
-lst_deptargets$H <- subset(lst_deptargets$H,lst_deptargets$H[,"survey_year"]<=2015)
-lst_deptargets$D <- subset(lst_deptargets$D,lst_deptargets$D[,"survey_year"]<=2015)
-lst_deptargets$R <- subset(lst_deptargets$R,lst_deptargets$R[,"survey_year"]<=2015)
-lst_deptargets$E <- subset(lst_deptargets$E,lst_deptargets$E[,"survey_year"]<=2015)
-
 
 ## MODEL FUNCTIONS
 source("R/dep_microsim.R", echo = FALSE) # microsimulation model and probability functions
@@ -56,14 +45,13 @@ main = function(v_params) { # v_params: run model for parameter calibration
 
   p.DX = v_params[1]*p.HX
   p.RX = v_params[2]*p.HX
-  p.UX = p.RX
-  p.RU = c(rep(0,25),rep(v_params[3],9),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35),0) # probability to Recall Error (U) when Former MD (R)
+  p.HD[,91:201] = v_params[3]*p.HD[,90] # for birth cohorts born 1990-2100, scale up incidence probabilities by inc_SF = 2.3823137
   
   # Simulate for each birth cohort with parallelization
   m.cohortbyage<-foreach (i=cohorts, .combine='rbind', 
                           .export=c('dep_microsim','dep_probs','get_prevs', 
                                     'n.i','n.t','v.n','n.s','v.M_1',
-                                    'p.HX','p.DX','p.RX','p.UX', 'p.HD', 'p.DR', 'p.RD','p.UD','p.RU')) %dopar%
+                                    'p.HX','p.DX','p.RX', 'p.HD', 'p.DR', 'p.RD')) %dopar%
     {
       dep_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
     }
@@ -72,19 +60,18 @@ main = function(v_params) { # v_params: run model for parameter calibration
   # m.cohortbyage <- do.call(rbind, lapply(cohorts, function(i) { dep_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
   
   # Convert matrix from cohort-age to cohort-year
-  m.cohortbyyear <- matrix(nrow = n.i*length(cohorts), ncol = 301)
+  m.cohortbyyear <- matrix(nrow = n.i*length(cohorts), ncol = (length(cohorts)+100))
   for (b in 1:length(cohorts)){
     m.cohortbyyear[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.cohortbyage[(n.i*(b-1)+1):(n.i*b),]
   }
-  colnames(m.cohortbyyear) <- c(1900:2200)
+  colnames(m.cohortbyyear) <- c(min(cohorts):(max(cohorts)+100))
   
   # Output prevalence results as a list
-  model_res <- lapply(v.n, get_prevs, m.cohortbyyear=m.cohortbyyear, minyear=2005, maxyear=2015) # calibrate to survey years 2005-2015
+  model_res <- lapply(v.n, get_prevs, m.cohortbyyear=m.cohortbyyear, minyear=2005, maxyear=2020) # calibrate to survey years 2005-2020
   names(model_res) <- v.n
   model_res$H <- model_res$H[order(model_res$H[,"agegroup"],decreasing=FALSE),]
   model_res$D <- model_res$D[order(model_res$D[,"agegroup"],decreasing=FALSE),]
   model_res$R <- model_res$R[order(model_res$R[,"agegroup"],decreasing=FALSE),]
-  model_res$U <- model_res$U[order(model_res$U[,"agegroup"],decreasing=FALSE),]
   
   
   cat("Time: ")
@@ -102,21 +89,21 @@ model_res<-main(v_params)
 set.seed(072218)
 
 # number of initial starting points
-n_init <- 6
+n_init <- 3
 
 # names and number of input parameters to be calibrated
-v_param_names <- c("hr.D", "hr.R", "p.RU.26to34", "p.RU.35to49", "p.RU.50to64", "p.RU.65to99")
+v_param_names <- c("hr.D", "hr.R", "inc_SF")
 n_param <- length(v_param_names)
 
 # range on input search space
-lb <- c(1,1,0,0,0,0) # lower bound
-ub <- c(5,3,0.2,0.2,0.7) # upper bound
+lb <- c(1,1,1) # lower bound
+ub <- c(5,5,5) # upper bound
 
 # number of calibration targets
-v_target_names <- names(lst_smktargets)
+v_target_names <- names(lst_deptargets[2])
 n_target <- length(v_target_names)
 
-v_params = c(1.71,1.50,0.152,0.101,0.120,0.7)
+v_params = c(1.71,1.50,2.4)
 
 ## Calibration Functions ---------------------------------------------------
 
@@ -130,8 +117,6 @@ f_gof <- function(v_params){
   v_GOF <- numeric(n_target)
   
   v_GOF[1] <- sum((lst_deptargets[["D"]][,"prev"] - model_res[["D"]][,"prev"])^2) # Current MD
-  v_GOF[2] <- sum((lst_deptargets[["H"]][,"prev"] - (model_res[["H"]][,"prev"] + model_res[["U"]][,"prev"]))^2) # Never MD (includes recall error)
-  v_GOF[3] <- sum((lst_deptargets[["E"]][,"prev"] - (model_res[["D"]][,"prev"] + model_res[["R"]][,"prev"]))^2) # Former MD (excludes recall error)
   
   # OVERALL
   # can give different targets different weights
