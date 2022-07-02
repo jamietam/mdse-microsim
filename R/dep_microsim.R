@@ -25,7 +25,7 @@ dep_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, 
       m.M[i, t + 1] <- sample(v.n, size=1, prob = v.p)      # sample the next health state and store that state in matrix m.M 
     }                                                       # close the loop for the time points 
     if (i/100 == round(i/100,0)) {                          # display the progress of the simulation
-      cat('\r', paste(i/n.i * 100, "% done", sep = " "))
+      cat('\r', paste(i/n.i * 100, "% done, birth cohort:",bc, sep = " "))
     }
   } # close the loop for the individuals 
   
@@ -103,9 +103,9 @@ get_prevs <- function(state,m.cohortbyyear,minyear,maxyear){ # Get counts/preval
   for (age in 1:length(agegroupstart)){
     for (year in minyear:maxyear){
       cohortmin = year-agegroupend[age]
-      if(cohortmin<1900) {next}
+      if(cohortmin<min(cohorts)) {next}
       cohortmax = year-agegroupstart[age]
-      select = m.cohortbyyear[(n.i*(cohortmin-1900)+1):(n.i*(cohortmax-1900)+n.i),paste(year)] # birth cohort 1905 begins in row 26, and birth cohort 1912 ends in row 65
+      select = m.cohortbyyear[(n.i*(cohortmin-min(cohorts)+1)-(n.i-1)):(n.i*(cohortmax-min(cohorts))+n.i),paste(year)] # select rows for the birth cohorts who comprise that year's prevalence estimate
       alive <- sum(select!="X",na.rm=TRUE)
       dead <- sum(select=="X",na.rm=TRUE) 
       counts <- sum(str_count(select,state),na.rm=TRUE)
