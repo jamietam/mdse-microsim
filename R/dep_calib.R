@@ -14,7 +14,7 @@ here::i_am("R/dep_calib.R")
 whichgender ="females"
 load(paste0(here("data/dep_precomputed_inputs_"),whichgender,".RData")) 
 cohorts  <- 1920:2020
-n.i   <- 1000                    # number of simulated individuals per run (cohort) - eventually want to run 10,000
+n.i   <- 100                    # number of simulated individuals per run (cohort) - eventually want to run 10,000
 n.t   <- 100
 v.n   <- c( "H","D","R","X") 
 n.s   <- length(v.n)
@@ -89,7 +89,7 @@ model_res<-main(v_params)
 set.seed(072218)
 
 # number of initial starting points
-n_init <- 3
+n_init <- 1
 
 # names and number of input parameters to be calibrated
 v_param_names <- c("hr.D", "hr.R", "inc_SF")
@@ -180,48 +180,48 @@ comp_time <- Sys.time() - t_init
 # Data visualization ------------------------------------------------------
 library(ggplot2)
 
-modelprev <- rbind(cbind(data.frame(model_res$N),status="neversmoker"),
-                   cbind(data.frame(model_res$C),status="currentsmoker"),
-                   cbind(data.frame(model_res$F),status="formersmoker"))
+modelprev <- rbind(cbind(data.frame(model_res$H),status="H"),
+                   cbind(data.frame(model_res$D),status="D"),
+                   cbind(data.frame(model_res$R),status="R"))
 
-calibtargets = rbind(cbind(data.frame(lst_smktargets[["N"]]),status="neversmoker"),
-                     cbind(data.frame(lst_smktargets[["C"]]),status="currentsmoker"),
-                     cbind(data.frame(lst_smktargets[["F"]]),status="formersmoker"))
+calibtargets = rbind(cbind(data.frame(lst_deptargets[["H"]]),status="H"),
+                     cbind(data.frame(lst_deptargets[["D"]]),status="D"),
+                     cbind(data.frame(lst_deptargets[["R"]]),status="R"))
 calibtargets$agegroup <-calibtargets$age
 calibtargets$year <-calibtargets$survey_year
 
-ns_age <-ggplot() +
-  geom_pointrange(data= subset(calibtargets,status=="neversmoker"&agegroup!=18.99), aes(x = year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(agegroup), shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="neversmoker" & agegroup!=18.99),  aes(x=year, y= prev, colour=factor(agegroup)))+
+H_age <-ggplot() +
+  geom_pointrange(data= subset(calibtargets,status=="H"&agegroup!=18.99), aes(x = year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(agegroup), shape="National Survey on Drug Use and Health"))+
+  geom_line(data = subset(modelprev, status=="H" & agegroup!=18.99),  aes(x=year, y= prev, colour=factor(agegroup)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
-  labs(title="Never smokers - Women ")+
+  labs(title="Never MDE - Women ")+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
-cs_age <-ggplot() +
-  geom_pointrange(data= subset(calibtargets,status=="currentsmoker"&agegroup!=18.99), aes(x = year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(agegroup), shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="currentsmoker" & agegroup!=18.99),  aes(x=year, y= prev, colour=factor(agegroup)))+
+D_age <-ggplot() +
+  geom_pointrange(data= subset(calibtargets,status=="D"&agegroup!=18.99), aes(x = year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(agegroup), shape="National Survey on Drug Use and Health"))+
+  geom_line(data = subset(modelprev, status=="D" & agegroup!=18.99),  aes(x=year, y= prev, colour=factor(agegroup)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
-  labs(title="Current smokers - Women ")+
+  labs(title="Current MDE - Women ")+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
-fs_age <-ggplot() +
-  geom_pointrange(data= subset(calibtargets,status=="formersmoker"&agegroup!=18.99), aes(x = year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(agegroup), shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="formersmoker" & agegroup!=18.99),  aes(x=year, y= prev, colour=factor(agegroup)))+
+R_age <-ggplot() +
+  geom_pointrange(data= subset(calibtargets,status=="R"&agegroup!=18.99), aes(x = year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(agegroup), shape="National Survey on Drug Use and Health"))+
+  geom_line(data = subset(modelprev, status=="R" & agegroup!=18.99),  aes(x=year, y= prev, colour=factor(agegroup)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
-  labs(title="Former smokers - Women ")+
+  labs(title="Former MDE - Women ")+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 
-ncf_total <- ggplot() +
+HDR_total <- ggplot() +
   geom_pointrange(data=subset(calibtargets, agegroup==18.99), 
                   aes(x = year, y = prev,ymin=prev_lowCI, ymax=prev_highCI, color=status,shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, agegroup==18.99),  aes(x=year, y= prev,color=status))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
-  labs(title="Smoking distribution - Women, ages 18-99")+
+  labs(title="MDE distribution - Women, ages 18-99")+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 library(gridBase)
@@ -241,12 +241,12 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
   )
 }
 
-pdf(file = "Figs_Calib_052422.pdf",width=10, height=6,onefile = TRUE)
+pdf(file = "dep_calib_070622.pdf",width=10, height=6,onefile = TRUE)
 plot.new()
-text(.5, 0.9, "Calibration parameters - smk_microsim", font=2, cex=1.5)
+text(.5, 0.9, "Calibration parameters - dep_microsim", font=2, cex=1.5)
 grid.table(v_params,rows=names(v_params))
-grid_arrange_shared_legend(list(ns_age, cs_age, fs_age),3,"")
-ncf_total
+grid_arrange_shared_legend(list(H_age, D_age, R_age),3,"")
+HDR_total
 dev.off()
 
 ############################################################################################
