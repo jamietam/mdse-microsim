@@ -13,7 +13,7 @@ here::i_am("R/dep_calib.R")
 ## INPUTS 
 whichgender ="females"
 load(paste0(here("data/dep_precomputed_inputs_"),whichgender,".RData")) 
-cohorts  <- 1920:2020
+cohorts  <- 1900:2020
 n.i   <- 100                    # number of simulated individuals per run (cohort) - eventually want to run 10,000
 n.t   <- 100
 v.n   <- c( "H","D","R","X") 
@@ -24,12 +24,13 @@ v.M_1 <- rep("H", n.i)
 hr.D = 1.71 # hazard ratio of death in D vs H
 hr.R = 1.50 # hazard ratio of death in R vs H
 inc_SF = 2.3823137 # increased incidence of 1st MD episode starting with the 1990 birth cohort
+inc_SF.bc = 1995
 
 p.DX = c(rep(hr.D,99),1)*p.HX
 p.RX = c(rep(hr.R,99),1)*p.HX
-p.HD[,91:201] = inc_SF*p.HD[,90] # for birth cohorts born 1990-2100, scale up incidence probabilities by inc_SF = 2.3823137
+p.HD[,round(inc_SF.bc-1900):201] = inc_SF*p.HD[,round(inc_SF.bc-1900)] # for birth cohorts born 1990-2100, scale up incidence probabilities by inc_SF = 2.3823137
 
-v_params = c(hr.D,hr.R,inc_SF, bcdep)
+v_params = c(hr.D,hr.R,inc_SF, inc_SF.bc)
 
 ## CALIBRATION TARGETS
 load(paste0(here("data/dep_calib_targets_"),whichgender,".RData")) #lst_smktargets
@@ -92,7 +93,7 @@ set.seed(072218)
 n_init <- 1
 
 # names and number of input parameters to be calibrated
-v_param_names <- c("hr.D", "hr.R", "inc_SF", "bcdep")
+v_param_names <- c("hr.D", "hr.R", "inc_SF", "inc_SF.bc")
 n_param <- length(v_param_names)
 
 # range on input search space
