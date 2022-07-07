@@ -29,7 +29,7 @@ p.DX = c(rep(hr.D,99),1)*p.HX
 p.RX = c(rep(hr.R,99),1)*p.HX
 p.HD[,91:201] = inc_SF*p.HD[,90] # for birth cohorts born 1990-2100, scale up incidence probabilities by inc_SF = 2.3823137
 
-v_params = c(hr.D,hr.R,inc_SF)
+v_params = c(hr.D,hr.R,inc_SF, bcdep)
 
 ## CALIBRATION TARGETS
 load(paste0(here("data/dep_calib_targets_"),whichgender,".RData")) #lst_smktargets
@@ -45,7 +45,7 @@ main = function(v_params) { # v_params: run model for parameter calibration
 
   p.DX = v_params[1]*p.HX
   p.RX = v_params[2]*p.HX
-  p.HD[,91:201] = v_params[3]*p.HD[,90] # for birth cohorts born 1990-2100, scale up incidence probabilities by inc_SF = 2.3823137
+  p.HD[,round(v_params[4]-1900):201] = v_params[3]*p.HD[,round(v_params[4]-1900)] # for birth cohorts born 1990-2100, scale up incidence probabilities by inc_SF = 2.3823137
   
   # Simulate for each birth cohort with parallelization
   m.cohortbyage<-foreach (i=cohorts, .combine='rbind', 
@@ -92,18 +92,18 @@ set.seed(072218)
 n_init <- 1
 
 # names and number of input parameters to be calibrated
-v_param_names <- c("hr.D", "hr.R", "inc_SF")
+v_param_names <- c("hr.D", "hr.R", "inc_SF", "bcdep")
 n_param <- length(v_param_names)
 
 # range on input search space
-lb <- c(1,1,1) # lower bound
-ub <- c(5,5,5) # upper bound
+lb <- c(1,1,1, 1990) # lower bound
+ub <- c(5,5,5, 2005) # upper bound
 
 # number of calibration targets
 v_target_names <- names(lst_deptargets[2])
 n_target <- length(v_target_names)
 
-v_params = c(1.71,1.50,2.4)
+v_params = c(1.71,1.50,2.4, 1995)
 
 ## Calibration Functions ---------------------------------------------------
 
