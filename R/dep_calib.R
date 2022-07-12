@@ -21,15 +21,12 @@ n.s   <- length(v.n)
 v.M_1 <- rep("H", n.i) 
 
 # parameters for calibration
+v_param_names <- c("hr.D", "hr.R", "inc_SF", "inc_SF.bc")
+n_param <- length(v_param_names)
 hr.D = 1.71 # hazard ratio of death in D vs H
 hr.R = 1.50 # hazard ratio of death in R vs H
 inc_SF = 2.3823137 # increased incidence of 1st MD episode starting with the 1990 birth cohort
 inc_SF.bc = 1995
-
-p.DX = c(rep(hr.D,99),1)*p.HX
-p.RX = c(rep(hr.R,99),1)*p.HX
-p.HD[,round(inc_SF.bc-1900):201] = inc_SF*p.HD[,round(inc_SF.bc-1900)] # for birth cohorts born 1990-2100, scale up incidence probabilities by inc_SF = 2.3823137
-
 v_params = c(hr.D,hr.R,inc_SF, inc_SF.bc)
 
 ## CALIBRATION TARGETS
@@ -44,19 +41,24 @@ main = function(v_params) { # v_params: run model for parameter calibration
   
   t_init <- Sys.time() # Start timer
 
-  p.DX = v_params[1]*p.HX
-  p.RX = v_params[2]*p.HX
+  p.DX = c(rep(v_params[1],99),1)**p.HX
+  p.RX = c(rep(v_params[2],99),1)*p.HX
   p.HD[,round(v_params[4]-1900):201] = v_params[3]*p.HD[,round(v_params[4]-1900)] # for birth cohorts born 1990-2100, scale up incidence probabilities by inc_SF = 2.3823137
   
+  # Replace parameter values that lead to negative transition probabilities 
+  p.HD[p.HD>0.5898702]<-0.5898702 # H to H: (1-p.HX[t,bc1]- p.HD[t,bc1]), so 1- max(p.HX[1:99,], na.rm=TRUE) - max(p.HD) >= 0, which means 1-0.4101298 > p.HD, so p.HD <= 0.5898702
+  p.DX[p.DX>0.827]<-0.827 # D to D: (1-p.DX[t,bc1]- p.DR[t]), so  1 - p.DX - 0.173 >= 0, which means p.DX must be <= 0.827. 
+  p.RX[p.RX>0.942]<-0.942 # R to R: (1 - p.RX[t,bc1]-p.RD[t]), so 1 - p.RX - 0.058 >= 0, which means that p.RX <= 0.942
+  
   # Simulate for each birth cohort with parallelization
-  m.cohortbyage<-foreach (i=cohorts, .combine='rbind', 
-                          .export=c('dep_microsim','dep_probs','get_prevs', 
+  m.cohortbyage<-foreach (i=cohorts, .combine='rbind',
+                          .export=c('dep_microsim','dep_probs','get_prevs',
                                     'n.i','n.t','v.n','n.s','v.M_1',
                                     'p.HX','p.DX','p.RX', 'p.HD', 'p.DR', 'p.RD')) %dopar%
     {
       dep_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
     }
-  
+
   ### Serial:
   # m.cohortbyage <- do.call(rbind, lapply(cohorts, function(i) { dep_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
   
@@ -75,7 +77,7 @@ main = function(v_params) { # v_params: run model for parameter calibration
   model_res$R <- model_res$R[order(model_res$R[,"agegroup"],decreasing=FALSE),]
   
   
-  cat("Time: ")
+  cat(paste0("  ", v_param_names,": ", v_params," "))
   print(Sys.time() - t_init) # End timer
   return(model_res)
 }
@@ -92,10 +94,6 @@ set.seed(072218)
 # number of initial starting points
 n_init <- 1
 
-# names and number of input parameters to be calibrated
-v_param_names <- c("hr.D", "hr.R", "inc_SF", "inc_SF.bc")
-n_param <- length(v_param_names)
-
 # range on input search space
 lb <- c(1,1,1, 1990) # lower bound
 ub <- c(5,5,5, 2005) # upper bound
@@ -103,8 +101,6 @@ ub <- c(5,5,5, 2005) # upper bound
 # number of calibration targets
 v_target_names <- names(lst_deptargets[2])
 n_target <- length(v_target_names)
-
-v_params = c(1.71,1.50,2.4, 1995)
 
 ## Calibration Functions ---------------------------------------------------
 
@@ -148,8 +144,8 @@ m_calib_res <- matrix(nrow = n_init, ncol = n_param+1)
 colnames(m_calib_res) <- c(v_param_names, "Overall_fit")
 for (j in 1:n_init){ # j <- 1
 
-  # use optim() as Nelder-Mead, default is minimization
-  fit_nm <- optim(v_params_init[j,], f_gof, hessian = T)
+  # Use optim() as box-constraint method with upper and lower bounds. Default is minimization.
+  fit_nm <- optim(v_params_init[j,], f_gof, hessian = T, method="L-BFGS-B", lower=lb, upper=ub)
   m_calib_res[j,] <- c(fit_nm$par, fit_nm$value)
 
   fit_nm <- optim(v_params, f_gof,control = list(fnscale = 1, maxit = 1000), hessian = T)
