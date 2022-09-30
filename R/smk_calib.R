@@ -32,8 +32,9 @@ v_params <- c(s.NC_0.17, s.NC_18.25, s.NC_26.34,s.CF_35.49,s.CF_50.64,s.CF_65.99
 
 ## CALIBRATION TARGETS
 load(paste0(here("data/smk_calib_targets_"),whichgender,".RData")) #lst_smktargets																			  
+lst_smktargets18.99<-lapply(lst_smktargets, function(x) subset(x, x[,1]==18.99)) # remove prevalences for ages 18-99
 lst_smktargets<-lapply(lst_smktargets, function(x) subset(x, x[,1]!=18.99)) # remove prevalences for ages 18-99
-  
+
 ## MODEL FUNCTIONS
 source("R/smk_microsim.R", echo = FALSE) # microsimulation model and probability functions
 
@@ -249,9 +250,14 @@ fs_age <-ggplot() +
   labs(title="Former smokers - Women ")+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
+calibtargets18.99 = rbind(cbind(data.frame(lst_smktargets18.99[["N"]]),status="neversmoker"),
+                     cbind(data.frame(lst_smktargets18.99[["C"]]),status="currentsmoker"),
+                     cbind(data.frame(lst_smktargets18.99[["F"]]),status="formersmoker"))
+calibtargets18.99$agegroup <-calibtargets18.99$age
+calibtargets18.99$year <-calibtargets18.99$survey_year
 
 ncf_total <- ggplot() +
-  geom_pointrange(data=subset(calibtargets, agegroup==18.99), 
+  geom_pointrange(data=calibtargets18.99, 
                   aes(x = year, y = prev,ymin=prev_lowCI, ymax=prev_highCI, color=status,shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, agegroup==18.99),  aes(x=year, y= prev,color=status))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
@@ -276,7 +282,7 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
   )
 }
 
-pdf(file = "smk_calib_070522_v2.pdf",width=10, height=6,onefile = TRUE)
+pdf(file = "smk_calib_093022.pdf",width=10, height=6,onefile = TRUE)
 plot.new()
 text(.5, 0.9, "Calibration parameters - smk_microsim", font=2, cex=1.5)
 grid.table(v_params,rows=names(v_params))
