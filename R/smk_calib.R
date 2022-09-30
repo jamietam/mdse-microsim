@@ -19,22 +19,36 @@ v.M_1 <- rep("N", n.i)          # everyone begins in the Never smoker state  # v
 cohorts <- 1900:2100
 load(paste0(here("data/smk_precomputed_inputs_"),whichgender,".RData")) # p.CX, p.FX, p.NX, smk_cess, smk_init
 
+## Parameters for calibration
+v_params_names <- c("s.NC_0.17", "s.NC_18.25", "s.NC_26.34","s.CF_35.49","s.CF_50.64","s.CF_65.99")
+n_param <- length(v_params_names)
+s.NC_0.17 = 1 # scaling factor for smoking initiation ages 0-17
+s.NC_18.25 = 1
+s.NC_26.34 = 1
+s.CF_35.49 = 1 # scaling factor for smoking cessation ages 35-49
+s.CF_50.64 = 1
+s.CF_65.99 = 1
+v_params <- c(s.NC_0.17, s.NC_18.25, s.NC_26.34,s.CF_35.49,s.CF_50.64,s.CF_65.99)
+
 ## CALIBRATION TARGETS
 load(paste0(here("data/smk_calib_targets_"),whichgender,".RData")) #lst_smktargets																			  
-  
+lst_smktargets18.99<-lapply(lst_smktargets, function(x) subset(x, x[,1]==18.99)) # remove prevalences for ages 18-99
+lst_smktargets<-lapply(lst_smktargets, function(x) subset(x, x[,1]!=18.99)) # remove prevalences for ages 18-99
+
 ## MODEL FUNCTIONS
 source("R/smk_microsim.R", echo = FALSE) # microsimulation model and probability functions
 
 ## RUN THE MODEL FOR ALL BIRTH COHORTS  ---------------------------------
 main = function(v_params) { # v_params: run model for parameter calibration
     
-    ## v_params: init 0-17, init 18-25, init 26-34, cess 35-49, cess 50-64, cess 65+
-    
-    ## scale and calibrate initiation probabilities p.NC ages 0-34
-    p.NC = smk_init*c(rep(v_params[1],18),rep(v_params[2],8),rep(v_params[3],9), rep(1,65)) # ages 0-17, 18-25, 25-34
-    
-    ## scale and calibrate cessation probabilities p.CF ages 35+
-    p.CF = smk_cess*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35)) 
+    ## v_params 1-6: initiation, 7-11: cessation
+
+    ## scale and calibrate initiation probabilities p.NC 
+    p.NC = smk_init*c(rep(v_params[1],18),rep(v_params[2],8),rep(v_params[3],9), rep(1,65))
+    ## scale and calibrate cessation probabilities p.CF 
+    p.CF = smk_cess*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35))
+    p.NC[p.NC>0.65]<-0.65 # all transition probabilities must be positive. (1-p.NX[t] - p.NC[t]) ==> 1- max(p.NX) - p.NC >0. max(p.NX[0:99,]) = 0.3457545 ==> , so max value for p.NC is 0.65
+    p.CF[p.CF>0.32]<-0.32 # all transition probabilities must be positive. (1-p.CX[t]- p.CF[t]) ==> 1-max(p.CX)-p.CF > 0. max(p.CX[0:99,])=0.67 ==> so max value for p.CF is 0.32
     
     t_init <- Sys.time() # Start timer
     
@@ -48,14 +62,14 @@ main = function(v_params) { # v_params: run model for parameter calibration
         }
     
     ### Serial:
-    ## m.cohortbyage <- do.call(rbind, lapply(cohorts, function(i) { smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
+    # m.cohortbyage <- do.call(rbind, lapply(cohorts, function(i) { smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
 
     # Convert matrix from cohort-age to cohort-year
-    m.cohortbyyear <- matrix(nrow = n.i*length(cohorts), ncol = 301)
+    m.cohortbyyear <- matrix(nrow = n.i*length(cohorts), ncol = (length(cohorts)+100))
     for (b in 1:length(cohorts)){
       m.cohortbyyear[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.cohortbyage[(n.i*(b-1)+1):(n.i*b),]
     }
-    colnames(m.cohortbyyear) <- c(1900:2200)
+    colnames(m.cohortbyyear) <- c(min(cohorts):(max(cohorts)+100))
     
     # Output prevalence results as a list
     model_res <- lapply(v.n, get_prevs, m.cohortbyyear=m.cohortbyyear, minyear=2005, maxyear=2020)
@@ -64,11 +78,10 @@ main = function(v_params) { # v_params: run model for parameter calibration
     model_res$C <- model_res$C[order(model_res$C[,"agegroup"],decreasing=FALSE),]
     model_res$F <- model_res$F[order(model_res$F[,"agegroup"],decreasing=FALSE),]
     
-    cat("Time: ")
+    cat(paste0("  ", v_params_names,": ", v_params," "))
     print(Sys.time() - t_init) # End timer
     return(model_res)
 }
-v_params <- c(init0.17=2,init18.25=2,init26.34=2,cess35.49=1,cess50.64=1,cess65.99=1)
 
 model_res<-main(v_params)
 
@@ -80,21 +93,21 @@ model_res<-main(v_params)
 set.seed(072218)
 
 # number of initial starting points
-n_init <- 3
+n_init <- 2
 
 # names and number of input parameters to be calibrated
-v_param_names <- c("init0.17","init18.25","init26.34","cess35.49","cess50.64","cess65.99")
+v_params_names <- c("s.NC_0.17", "s.NC_18.25", "s.NC_26.34","s.CF_35.49","s.CF_50.64","s.CF_65.99")
 n_param <- length(v_param_names)
 
 # range on input search space
-lb <- c(init0.17=1,init18.25=1,init26.34=1,cess35.49=0.05,cess50.64=0.05,cess65.99=0.05) # lower bound
-ub <- c(init0.17=3,init18.25=3,init26.34=3,cess35.49=2,cess50.64=2,cess65.99=2) # upper bound
+lb <- c(0.01,0.01,0.01,0.01,0.01,0.01) # lower bound
+ub <- c(5,5,5,5,5,5) # upper bound
 
 # number of calibration targets
 v_target_names <- names(lst_smktargets)
 n_target <- length(v_target_names)
 
-v_params <- c(init0.17=1,init18.25=1,init26.34=1,cess35.49=1,cess50.64=1,cess65.99=1)
+v_params <- c(1,1,1,1,1,1)
 
 ## Calibration Functions ---------------------------------------------------
 
@@ -103,7 +116,10 @@ f_gof <- function(v_params){
 
   # Run model for parameter set "v_params"
   model_res <- main(v_params)
-
+  
+  model_res<-lapply(model_res, function(x) subset(x, x[,1]!=18.99)) # remove prevalences for ages 18-99
+  model_res <- model_res[-4] # remove 'X' dead population
+  
   # Calculate goodness-of-fit of model outputs to targets
   v_GOF <- numeric(n_target)
 
@@ -112,11 +128,11 @@ f_gof <- function(v_params){
   }
 
   # OVERALL
-  # can give different targets different weights
+  # can assign targets different weights
   v_weights <- rep(1,n_target)
   # weighted sum
   GOF_overall <- sum(v_GOF[1:n_target] * v_weights)
-
+  cat(GOF_overall)
   # return GOF
   return(GOF_overall)
 }
@@ -128,16 +144,16 @@ f_gof <- function(v_params){
 ###  Sample multiple random starting values for Nelder-Mead  ###
 v_params_init <- matrix(nrow=n_init,ncol=n_param)
 for (i in 1:n_param){
-  v_params_init[,i] <- runif(n_init,min=lb[i],max=ub[i]) # This should probably be LHS to cover parameter space evenly
+  v_params_init[,i] <- 1 #runif(n_init,min=lb[i],max=ub[i]) # This should probably be LHS to cover parameter space evenly
 }
-colnames(v_params_init) <- v_param_names
+colnames(v_params_init) <- v_params_names
 
 # record start time of calibration
 t_init <- Sys.time()
 
 ###  Run Nelder-Mead for each starting point  ###
 m_calib_res <- matrix(nrow = n_init, ncol = n_param+1)
-colnames(m_calib_res) <- c(v_param_names, "Overall_fit")
+colnames(m_calib_res) <- c(v_params_names, "Overall_fit")
 for (j in 1:n_init){ # j <- 1
 
   # use optim() as Nelder-Mead, default is minimization
@@ -151,6 +167,7 @@ for (j in 1:n_init){ # j <- 1
 # Calculate computation time
 comp_time <- Sys.time() - t_init
 
+save(m_calib_res,file=paste0("smk_m_calib_res_",whichgender,n.i,".Rda"))
 # ####################################################################
 # ######  Exploring best-fitting input sets  ######
 # ####################################################################
@@ -176,6 +193,29 @@ model_res<-main(v_params)
 # Data visualization ------------------------------------------------------
 library(ggplot2)
 
+## Figures for initiation and cessation
+p.NC = smk_init*c(rep(v_params[1],18),rep(v_params[2],8),rep(v_params[3],9), rep(1,65))
+p.CF = smk_cess*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35))
+p.NC[p.NC>0.65]<-0.65 # all transition probabilities must be positive. (1-p.NX[t] - p.NC[t]) ==> 1- max(p.NX) - p.NC >0. max(p.NX[0:99,]) = 0.3457545 ==> , so max value for p.NC is 0.65
+p.CF[p.CF>0.32]<-0.32 # all transition probabilities must be positive. (1-p.CX[t]- p.CF[t]) ==> 1-max(p.CX)-p.CF > 0. max(p.CX[0:99,])=0.67 ==> so max value for p.CF is 0.32
+
+p.NCsmk_init <- as.data.frame(cbind(c(p.NC[,100],smk_init[,100]),c(rep("calibrated",100),rep("CISNET",100)),c(rep(0:99,2))))
+names(p.NCsmk_init) <- c("prob","inputs","age")
+p.NCsmk_init$prob<-as.numeric(p.NCsmk_init$prob)
+p.NCsmk_init$age<-as.numeric(p.NCsmk_init$age)
+p.NC_age <- ggplot(data=p.NCsmk_init) +  geom_line( aes(x=age, y=prob, linetype=inputs)) + 
+  scale_x_continuous(name="Age", limits=c(0,99), breaks=seq(0,99,10)) +
+  labs(title="Initiation probabilities")
+
+p.CFsmk_cess <- as.data.frame(cbind(c(p.CF[,100],smk_cess[,100]),c(rep("calibrated",100),rep("CISNET",100)),c(rep(0:99,2))))
+names(p.CFsmk_cess) <- c("prob","inputs","age")
+p.CFsmk_cess$prob<-as.numeric(p.CFsmk_cess$prob)
+p.CFsmk_cess$age<-as.numeric(p.CFsmk_cess$age)
+p.CF_age <- ggplot(data=p.CFsmk_cess) +  geom_line( aes(x=age, y=prob, linetype=inputs)) + 
+  scale_x_continuous(name="Age", limits=c(0,99), breaks=seq(0,99,10)) +
+  labs(title="Cessation probabilities")
+
+##
 modelprev <- rbind(cbind(data.frame(model_res$N),status="neversmoker"),
                    cbind(data.frame(model_res$C),status="currentsmoker"),
                    cbind(data.frame(model_res$F),status="formersmoker"))
@@ -210,9 +250,14 @@ fs_age <-ggplot() +
   labs(title="Former smokers - Women ")+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
+calibtargets18.99 = rbind(cbind(data.frame(lst_smktargets18.99[["N"]]),status="neversmoker"),
+                     cbind(data.frame(lst_smktargets18.99[["C"]]),status="currentsmoker"),
+                     cbind(data.frame(lst_smktargets18.99[["F"]]),status="formersmoker"))
+calibtargets18.99$agegroup <-calibtargets18.99$age
+calibtargets18.99$year <-calibtargets18.99$survey_year
 
 ncf_total <- ggplot() +
-  geom_pointrange(data=subset(calibtargets, agegroup==18.99), 
+  geom_pointrange(data=calibtargets18.99, 
                   aes(x = year, y = prev,ymin=prev_lowCI, ymax=prev_highCI, color=status,shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, agegroup==18.99),  aes(x=year, y= prev,color=status))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
@@ -237,7 +282,7 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
   )
 }
 
-pdf(file = "Figs_Calib_052522.pdf",width=10, height=6,onefile = TRUE)
+pdf(file = "smk_calib_093022.pdf",width=10, height=6,onefile = TRUE)
 plot.new()
 text(.5, 0.9, "Calibration parameters - smk_microsim", font=2, cex=1.5)
 grid.table(v_params,rows=names(v_params))
