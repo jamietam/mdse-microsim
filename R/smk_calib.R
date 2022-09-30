@@ -19,9 +19,20 @@ v.M_1 <- rep("N", n.i)          # everyone begins in the Never smoker state  # v
 cohorts <- 1900:2100
 load(paste0(here("data/smk_precomputed_inputs_"),whichgender,".RData")) # p.CX, p.FX, p.NX, smk_cess, smk_init
 
+## Parameters for calibration
+v_params_names <- c("s.NC_0.17", "s.NC_18.25", "s.NC_26.34","s.CF_35.49","s.CF_50.64","s.CF_65.99")
+n_param <- length(v_params_names)
+s.NC_0.17 = 1 # scaling factor for smoking initiation ages 0-17
+s.NC_18.25 = 1
+s.NC_26.34 = 1
+s.CF_35.49 = 1 # scaling factor for smoking cessation ages 35-49
+s.CF_50.64 = 1
+s.CF_65.99 = 1
+v_params <- c(s.NC_0.17, s.NC_18.25, s.NC_26.34,s.CF_35.49,s.CF_50.64,s.CF_65.99)
+
 ## CALIBRATION TARGETS
 load(paste0(here("data/smk_calib_targets_"),whichgender,".RData")) #lst_smktargets																			  
-lst_smktargets<-lapply(lst_smktargets, function(x) subset(x, x[,1]==18.99))
+lst_smktargets<-lapply(lst_smktargets, function(x) subset(x, x[,1]!=18.99)) # remove prevalences for ages 18-99
   
 ## MODEL FUNCTIONS
 source("R/smk_microsim.R", echo = FALSE) # microsimulation model and probability functions
@@ -35,11 +46,8 @@ main = function(v_params) { # v_params: run model for parameter calibration
     p.NC = smk_init*c(rep(v_params[1],18),rep(v_params[2],8),rep(v_params[3],9), rep(1,65))
     ## scale and calibrate cessation probabilities p.CF 
     p.CF = smk_cess*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35))
-    
-    # p.NC = smk_init*c(rep(v_params[1],10),rep(v_params[2],3),rep(v_params[3],3), rep(v_params[4],3), rep(v_params[5],3),rep(v_params[6],28), rep(1,50)) # ages 0-9, 10-12, 13-15, 16-18, 19-21, 22-49, 50-99
-    # p.NC[p.NC>0.65]<-0.65 # all transition probabilities must be positive. (1-p.NX[t] - p.NC[t]) ==> 1- max(p.NX) - p.NC >0. max(p.NX[0:99,]) = 0.3457545 ==> , so max value for p.NC is 0.65
-    # p.CF = smk_cess*c(rep(v_params[7],30),rep(v_params[8],10),rep(v_params[9],10),rep(v_params[10],10),rep(v_params[11],40)) # ages 0-29, 30-39, 40-49, 50-59, 60-99
-    # p.CF[p.CF>0.32]<-0.32 # all transition probabilities must be positive. (1-p.CX[t]- p.CF[t]) ==> 1-max(p.CX)-p.CF > 0. max(p.CX[0:99,])=0.67 ==> so max value for p.CF is 0.32 
+    p.NC[p.NC>0.65]<-0.65 # all transition probabilities must be positive. (1-p.NX[t] - p.NC[t]) ==> 1- max(p.NX) - p.NC >0. max(p.NX[0:99,]) = 0.3457545 ==> , so max value for p.NC is 0.65
+    p.CF[p.CF>0.32]<-0.32 # all transition probabilities must be positive. (1-p.CX[t]- p.CF[t]) ==> 1-max(p.CX)-p.CF > 0. max(p.CX[0:99,])=0.67 ==> so max value for p.CF is 0.32
     
     t_init <- Sys.time() # Start timer
     
@@ -69,11 +77,10 @@ main = function(v_params) { # v_params: run model for parameter calibration
     model_res$C <- model_res$C[order(model_res$C[,"agegroup"],decreasing=FALSE),]
     model_res$F <- model_res$F[order(model_res$F[,"agegroup"],decreasing=FALSE),]
     
-    cat(" Time: ")
+    cat(paste0("  ", v_params_names,": ", v_params," "))
     print(Sys.time() - t_init) # End timer
     return(model_res)
 }
-v_params <- c(init0.17=2,init18.25=2,init26.34=2,cess35.49=1,cess50.64=1,cess65.99=1)
 
 model_res<-main(v_params)
 
@@ -85,21 +92,21 @@ model_res<-main(v_params)
 set.seed(072218)
 
 # number of initial starting points
-n_init <- 1
+n_init <- 2
 
 # names and number of input parameters to be calibrated
-v_param_names <- c("init0.17","init18.25","init26.34","cess35.49","cess50.64","cess65.99")
+v_params_names <- c("s.NC_0.17", "s.NC_18.25", "s.NC_26.34","s.CF_35.49","s.CF_50.64","s.CF_65.99")
 n_param <- length(v_param_names)
 
 # range on input search space
-lb <- c(init0.17=1,init18.25=1,init26.34=1,cess35.49=0.05,cess50.64=0.05,cess65.99=0.05) # lower bound
-ub <- c(init0.17=3,init18.25=3,init26.34=3,cess35.49=3,cess50.64=3,cess65.99=3) # upper bound
+lb <- c(0.01,0.01,0.01,0.01,0.01,0.01) # lower bound
+ub <- c(5,5,5,5,5,5) # upper bound
 
 # number of calibration targets
 v_target_names <- names(lst_smktargets)
 n_target <- length(v_target_names)
 
-v_params <- c(init0.17=1,init18.25=1,init26.34=1,cess35.49=1,cess50.64=1,cess65.99=1)
+v_params <- c(1,1,1,1,1,1)
 
 ## Calibration Functions ---------------------------------------------------
 
@@ -109,7 +116,8 @@ f_gof <- function(v_params){
   # Run model for parameter set "v_params"
   model_res <- main(v_params)
   
-  model_res<-lapply(model_res, function(x) subset(x, x[,1]==18.99))
+  model_res<-lapply(model_res, function(x) subset(x, x[,1]!=18.99)) # remove prevalences for ages 18-99
+  model_res <- model_res[-4] # remove 'X' dead population
   
   # Calculate goodness-of-fit of model outputs to targets
   v_GOF <- numeric(n_target)
@@ -119,11 +127,11 @@ f_gof <- function(v_params){
   }
 
   # OVERALL
-  # can give different targets different weights
+  # can assign targets different weights
   v_weights <- rep(1,n_target)
   # weighted sum
   GOF_overall <- sum(v_GOF[1:n_target] * v_weights)
-
+  cat(GOF_overall)
   # return GOF
   return(GOF_overall)
 }
@@ -137,14 +145,14 @@ v_params_init <- matrix(nrow=n_init,ncol=n_param)
 for (i in 1:n_param){
   v_params_init[,i] <- 1 #runif(n_init,min=lb[i],max=ub[i]) # This should probably be LHS to cover parameter space evenly
 }
-colnames(v_params_init) <- v_param_names
+colnames(v_params_init) <- v_params_names
 
 # record start time of calibration
 t_init <- Sys.time()
 
 ###  Run Nelder-Mead for each starting point  ###
 m_calib_res <- matrix(nrow = n_init, ncol = n_param+1)
-colnames(m_calib_res) <- c(v_param_names, "Overall_fit")
+colnames(m_calib_res) <- c(v_params_names, "Overall_fit")
 for (j in 1:n_init){ # j <- 1
 
   # use optim() as Nelder-Mead, default is minimization
@@ -184,6 +192,29 @@ model_res<-main(v_params)
 # Data visualization ------------------------------------------------------
 library(ggplot2)
 
+## Figures for initiation and cessation
+p.NC = smk_init*c(rep(v_params[1],18),rep(v_params[2],8),rep(v_params[3],9), rep(1,65))
+p.CF = smk_cess*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35))
+p.NC[p.NC>0.65]<-0.65 # all transition probabilities must be positive. (1-p.NX[t] - p.NC[t]) ==> 1- max(p.NX) - p.NC >0. max(p.NX[0:99,]) = 0.3457545 ==> , so max value for p.NC is 0.65
+p.CF[p.CF>0.32]<-0.32 # all transition probabilities must be positive. (1-p.CX[t]- p.CF[t]) ==> 1-max(p.CX)-p.CF > 0. max(p.CX[0:99,])=0.67 ==> so max value for p.CF is 0.32
+
+p.NCsmk_init <- as.data.frame(cbind(c(p.NC[,100],smk_init[,100]),c(rep("calibrated",100),rep("CISNET",100)),c(rep(0:99,2))))
+names(p.NCsmk_init) <- c("prob","inputs","age")
+p.NCsmk_init$prob<-as.numeric(p.NCsmk_init$prob)
+p.NCsmk_init$age<-as.numeric(p.NCsmk_init$age)
+p.NC_age <- ggplot(data=p.NCsmk_init) +  geom_line( aes(x=age, y=prob, linetype=inputs)) + 
+  scale_x_continuous(name="Age", limits=c(0,99), breaks=seq(0,99,10)) +
+  labs(title="Initiation probabilities")
+
+p.CFsmk_cess <- as.data.frame(cbind(c(p.CF[,100],smk_cess[,100]),c(rep("calibrated",100),rep("CISNET",100)),c(rep(0:99,2))))
+names(p.CFsmk_cess) <- c("prob","inputs","age")
+p.CFsmk_cess$prob<-as.numeric(p.CFsmk_cess$prob)
+p.CFsmk_cess$age<-as.numeric(p.CFsmk_cess$age)
+p.CF_age <- ggplot(data=p.CFsmk_cess) +  geom_line( aes(x=age, y=prob, linetype=inputs)) + 
+  scale_x_continuous(name="Age", limits=c(0,99), breaks=seq(0,99,10)) +
+  labs(title="Cessation probabilities")
+
+##
 modelprev <- rbind(cbind(data.frame(model_res$N),status="neversmoker"),
                    cbind(data.frame(model_res$C),status="currentsmoker"),
                    cbind(data.frame(model_res$F),status="formersmoker"))
