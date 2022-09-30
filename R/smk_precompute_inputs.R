@@ -1,10 +1,11 @@
-setwd(file.path("C:/Users/JT936/Dropbox/GitHub/mds-microsim/data"))
+setwd(file.path("C:/Users/JT936/Dropbox/GitHub/mds-microsim"))
+here::i_am("R/smk_microsim_calib.R")
 
-whichgender <x- "females"
+whichgender <- "females"
 
 # Precompute all smoking and mortality probabilities by birth cohort
 load(paste0(here("data/smk_inputs_"),whichgender,".RData")) # Load all smoking and mortality inputs as matrices
-cohorts=1900:2100
+
 
 precompute_diag <- function(statdata, cohorts, finval) { 
   precomp = matrix(nrow=100, ncol=201)
