@@ -201,16 +201,16 @@ p.CF[p.CF>0.32]<-0.32 # all transition probabilities must be positive. (1-p.CX[t
 
 p.NCsmk_init <- as.data.frame(cbind(c(p.NC[,100],smk_init[,100]),c(rep("calibrated",100),rep("CISNET",100)),c(rep(0:99,2))))
 names(p.NCsmk_init) <- c("prob","inputs","age")
-p.NCsmk_init$prob<-as.numeric(p.NCsmk_init$prob)
-p.NCsmk_init$age<-as.numeric(p.NCsmk_init$age)
+p.NCsmk_init$prob<-as.numeric(as.character(p.NCsmk_init$prob))
+p.NCsmk_init$age<-as.numeric(as.character(p.NCsmk_init$age))
 p.NC_age <- ggplot(data=p.NCsmk_init) +  geom_line( aes(x=age, y=prob, linetype=inputs)) + 
   scale_x_continuous(name="Age", limits=c(0,99), breaks=seq(0,99,10)) +
   labs(title="Initiation probabilities")
 
 p.CFsmk_cess <- as.data.frame(cbind(c(p.CF[,100],smk_cess[,100]),c(rep("calibrated",100),rep("CISNET",100)),c(rep(0:99,2))))
 names(p.CFsmk_cess) <- c("prob","inputs","age")
-p.CFsmk_cess$prob<-as.numeric(p.CFsmk_cess$prob)
-p.CFsmk_cess$age<-as.numeric(p.CFsmk_cess$age)
+p.CFsmk_cess$prob<-as.numeric(as.character(p.CFsmk_cess$prob))
+p.CFsmk_cess$age<-as.numeric(as.character(p.CFsmk_cess$age))
 p.CF_age <- ggplot(data=p.CFsmk_cess) +  geom_line( aes(x=age, y=prob, linetype=inputs)) + 
   scale_x_continuous(name="Age", limits=c(0,99), breaks=seq(0,99,10)) +
   labs(title="Cessation probabilities")
@@ -285,7 +285,7 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
 pdf(file = "smk_calib_093022.pdf",width=10, height=6,onefile = TRUE)
 plot.new()
 text(.5, 0.9, "Calibration parameters - smk_microsim", font=2, cex=1.5)
-grid.table(v_params,rows=names(v_params))
+grid.table(c(v_params),rows=c(v_params_names))
 grid_arrange_shared_legend(list(ns_age, cs_age, fs_age),3,"")
 ncf_total
 dev.off()
