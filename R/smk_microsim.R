@@ -125,41 +125,41 @@ get_prevs <- function(state,m.cohortbyyear,minyear,maxyear){ # Get counts/preval
 
 
 ## PROBABILITY CHECKS ------------------------------------------------------
-# cohorts = c(1900:2100)
-# for (bc in cohorts){
-# 
-#   for (t in c(1:n.t)){
-#     if (bc+t>2100){ # exit for loop if going past the year 2100
-#       break
-#     }
-# 
-#     N = c((1-p.NX[t] - p.NC[t]),
-#           p.NC[t],
-#            0,
-#            p.NX[t])
-#     C = c( 0,
-#           (1-p.CX[t]- p.CF[t]),
-#           p.CF[t],
-#            p.CX[t])
-#     F = c( 0,
-#            0,
-#           (1 - p.FX[t]),
-#            p.FX[t])
-# 
-# 
-#     allprobs = rbind(N, C, F)
-#     # Check for any negative, missing probabilities, or probability sets that do not sum to 1
-#     if(any(is.na(allprobs))){
-#       print(paste("NA probability! bc: ", bc, ", age: ",t))
-#       print(allprobs)
-#     }
-#     if(any(allprobs<0)){
-#       print(paste("Negative probability! bc: ", bc, ", age: ",t))
-#       print(allprobs)
-#     }
-#     if(any(round(rowSums(allprobs),8) != 1)){
-#       print(paste("Probabilities do not sum to 1! ", "bc:",bc,"age:",t))
-#       print (rowSums(allprobs))
-#     }
-#   }
-# }
+cohorts = c(1900:2100)
+for (bc in cohorts){
+
+  for (t in c(1:n.t)){
+    if (bc+t>2100){ # exit for loop if going past the year 2100
+      break
+    }
+
+    N = c((1-p.NX[t] - p.NC[t]),
+          p.NC[t],
+           0,
+           p.NX[t])
+    C = c( 0,
+          (1-p.CX[t]- p.CF[t]),
+          p.CF[t],
+           p.CX[t])
+    F = c( 0,
+           0,
+          (1 - p.FX[t]),
+           p.FX[t])
+
+
+    allprobs = rbind(N, C, F)
+    # Check for any negative, missing probabilities, or probability sets that do not sum to 1
+    if(any(is.na(allprobs))){
+      print(paste("NA probability! bc: ", bc, ", age: ",t))
+      print(allprobs)
+    }
+    if(any(allprobs<0)){
+      print(paste("Negative probability! bc: ", bc, ", age: ",t))
+      print(allprobs)
+    }
+    if(any(round(rowSums(allprobs),8) != 1)){
+      print(paste("Probabilities do not sum to 1! ", "bc:",bc,"age:",t))
+      print (rowSums(allprobs))
+    }
+  }
+}
