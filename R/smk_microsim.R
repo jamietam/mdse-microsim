@@ -21,7 +21,13 @@ smk_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, 
         if ((bc+t>2100)|(m.M[i, t]=="X")){ # exit for loop if going past the year 2100
           break
         }
-        v.p <- smk_probs(bc, t, m.M[i, t])           # calculate the transition probabilities at cycle t 
+        
+        if (m.M[i,t]=="F"){
+          ysq <- sum(m.M[i,]=="F", na.rm=TRUE) +1 # count the number of years since quitting for this individual
+        } else{
+          ysq = 1 # set years since quitting as 1 unless individual is a former smoker  
+        }
+        v.p <- smk_probs(bc, t, ysq, m.M[i, t])           # calculate the transition probabilities at cycle t 
         m.M[i, t + 1] <- sample(v.n, size=1, prob = v.p)      # sample the next health state and store that state in matrix m.M 
       }                                                       # close the loop for the time points 
       if (i/100 == round(i/100,0)) {                          # display the progress of the simulation
@@ -53,7 +59,7 @@ smk_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, 
 } # end of the smk_microsim function  
   
 ## PROBABILITY FUNCTION ----------------------------------------------------
-smk_probs <- function(bc, t, M_it) { # updates the transition probabilities of every cycle
+smk_probs <- function(bc, t, ysq,  M_it) { # updates the transition probabilities of every cycle
   # bc:   birth cohort
   # t:    time in model / age
   # M_it: health state occupied by individual i at cycle t (character variable)
@@ -62,6 +68,8 @@ smk_probs <- function(bc, t, M_it) { # updates the transition probabilities of e
   v.p.it <- rep(NA, n.s)     # create vector of state transition probabilities
   names(v.p.it) <- v.n       # name the vector
   
+  ysq[ysq>40]<-40 # if quit more than 40 years ago, set ysq at 40 years since quitting
+    
   # update v.p.it with the appropriate probabilities   
   
   # Never
@@ -80,8 +88,8 @@ smk_probs <- function(bc, t, M_it) { # updates the transition probabilities of e
   v.p.it[M_it == "F"] <- 
     c(0,                                 #F to N
       0,                                 #F to C
-      (1 - p.FX[t,bc1]),                 #F to F
-      p.FX[t,bc1])                       #F to X
+      (1 - p.FX.ysq[[ysq]][t,bc1]),                 #F to F - former smoker mortality based on years since quit (ysq)
+      p.FX.ysq[[ysq]][t,bc1])                       #F to X
   
   v.p.it[M_it == "X"]  <- c(0,0,0, 1)		 #X to X = DEAD
   
