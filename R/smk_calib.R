@@ -17,7 +17,9 @@ v.n   <- c( "N","C","F","X") # model states: Neversmoker (N), Currentsmoker (C),
 n.s   <- length(v.n)            # the number of health states
 v.M_1 <- rep("N", n.i)          # everyone begins in the Never smoker state  # v.M_1:   vector of initial states for individuals 
 cohorts <- 1900:2100
-load(paste0(here("data/smk_precomputed_inputs_"),whichgender,".RData")) # p.CX, p.FX, p.NX, smk_cess, smk_init
+load(paste0(here("data/smk_precomputed_inputs_"),whichgender,".RData")) # p.CX, p.FX.ysq, p.NX, smk_cess, smk_init
+
+### ADD FORMER SMOKER MORTALITY BY YEARS SINCE QUITTING
 
 ## Parameters for calibration
 v_params_names <- c("s.NC_0.17", "s.NC_18.25", "s.NC_26.34","s.CF_35.49","s.CF_50.64","s.CF_65.99")
@@ -56,13 +58,13 @@ main = function(v_params) { # v_params: run model for parameter calibration
     m.cohortbyage<-foreach (i=cohorts, .combine='rbind', 
                             .export=c('smk_microsim','smk_probs','get_prevs', 
                                       'n.i','n.t','v.n','n.s','v.M_1',
-                                      'p.NC','p.CF','p.NX','p.CX','p.FX')) %dopar%
+                                      'p.NC','p.CF','p.NX','p.CX','p.FX.ysq')) %dopar%
         {
             smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
         }
     
     ### Serial:
-    # m.cohortbyage <- do.call(rbind, lapply(cohorts, function(i) { smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
+    m.cohortbyage <- do.call(rbind, lapply(cohorts, function(i) { smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
 
     # Convert matrix from cohort-age to cohort-year
     m.cohortbyyear <- matrix(nrow = n.i*length(cohorts), ncol = (length(cohorts)+100))
@@ -78,7 +80,7 @@ main = function(v_params) { # v_params: run model for parameter calibration
     model_res$C <- model_res$C[order(model_res$C[,"agegroup"],decreasing=FALSE),]
     model_res$F <- model_res$F[order(model_res$F[,"agegroup"],decreasing=FALSE),]
     
-    cat(paste0("  ", v_params_names,": ", v_params," "))
+    cat(paste0("\n  ", v_params_names,": ", v_params," "))
     print(Sys.time() - t_init) # End timer
     return(model_res)
 }
@@ -93,11 +95,11 @@ model_res<-main(v_params)
 set.seed(072218)
 
 # number of initial starting points
-n_init <- 2
+n_init <- 1
 
 # names and number of input parameters to be calibrated
 v_params_names <- c("s.NC_0.17", "s.NC_18.25", "s.NC_26.34","s.CF_35.49","s.CF_50.64","s.CF_65.99")
-n_param <- length(v_param_names)
+n_param <- length(v_params_names)
 
 # range on input search space
 lb <- c(0.01,0.01,0.01,0.01,0.01,0.01) # lower bound
@@ -144,7 +146,7 @@ f_gof <- function(v_params){
 ###  Sample multiple random starting values for Nelder-Mead  ###
 v_params_init <- matrix(nrow=n_init,ncol=n_param)
 for (i in 1:n_param){
-  v_params_init[,i] <- 1 #runif(n_init,min=lb[i],max=ub[i]) # This should probably be LHS to cover parameter space evenly
+  v_params_init[,i] <- runif(n_init,min=lb[i],max=ub[i]) # This should probably be LHS to cover parameter space evenly
 }
 colnames(v_params_init) <- v_params_names
 
@@ -156,11 +158,11 @@ m_calib_res <- matrix(nrow = n_init, ncol = n_param+1)
 colnames(m_calib_res) <- c(v_params_names, "Overall_fit")
 for (j in 1:n_init){ # j <- 1
 
-  # use optim() as Nelder-Mead, default is minimization
+  # use optim() as box-constrained BFGS minimization
   fit_nm <- optim(v_params_init[j,], f_gof, hessian = T)
   m_calib_res[j,] <- c(fit_nm$par, fit_nm$value)
 
-  fit_nm <- optim(v_params, f_gof,control = list(fnscale = 1, maxit = 1000), hessian = T)
+  fit_nm <- optim(v_params, f_gof,control = list(fnscale = 1, maxit = 1000), method="L-BFGS-B", lower=lb, upper=ub,hessian = T)
 
 }
 
@@ -187,7 +189,7 @@ save(m_calib_res,file=paste0("smk_m_calib_res_",whichgender,n.i,".Rda"))
 # pairs.panels(m_calib_res[1:10,v_param_names])
 # 
 
-v_params = m_calib_res[1,-7]
+v_params = m_calib_res[1:(length(v_params))]
 model_res<-main(v_params)
 
 # Data visualization ------------------------------------------------------
@@ -282,10 +284,10 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
   )
 }
 
-pdf(file = "smk_calib_093022.pdf",width=10, height=6,onefile = TRUE)
+pdf(file = "smk_calib_101222.pdf",width=10, height=6,onefile = TRUE)
 plot.new()
 text(.5, 0.9, "Calibration parameters - smk_microsim", font=2, cex=1.5)
-grid.table(c(v_params),rows=c(v_params_names))
+grid.table(c(m_calib_res),rows=c(v_params_names,"Overall Fit"))
 grid_arrange_shared_legend(list(ns_age, cs_age, fs_age),3,"")
 ncf_total
 dev.off()

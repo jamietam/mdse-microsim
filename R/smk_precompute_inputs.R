@@ -1,9 +1,10 @@
+rm(list = ls())  # remove any variables in R's memory
 setwd(file.path("C:/Users/JT936/Dropbox/GitHub/mds-microsim/data"))
 
-whichgender <x- "females"
+whichgender <- "females"
 
 # Precompute all smoking and mortality probabilities by birth cohort
-load(paste0(here("data/smk_inputs_"),whichgender,".RData")) # Load all smoking and mortality inputs as matrices
+load(paste0("smk_inputs_",whichgender,".RData")) # Load all smoking and mortality inputs as matrices
 cohorts=1900:2100
 
 precompute_diag <- function(statdata, cohorts, finval) { 
@@ -20,30 +21,62 @@ smk_init <- precompute_diag(smk_init_cisnet,cohorts[-length(cohorts)],0) # proba
 smk_cess <- precompute_diag(smk_cess_cisnet,cohorts[-length(cohorts)],0) # probability to become Former smoker when Current smoker
 p.NX <- precompute_diag(death_ns,cohorts[-length(cohorts)],1) # probability to die when Never smoker
 p.CX <- precompute_diag(death_cs,cohorts[-length(cohorts)],1) # probability to die when Current smoker
-p.FX <- precompute_diag(death_fs,cohorts[-length(cohorts)],1) # probability to die when Former smoker
-p.CX[,121:201] <- p.CX[,120] # hold mortality rates constant from 2020 onwards
-p.NX[,121:201] <- p.NX[,120] 
-p.FX[,121:201] <- p.FX[,120] 
+# p.FX <- precompute_diag(death_fs,cohorts[-length(cohorts)],1) # probability to die when Former smoker
 
-smk_init <- as.data.frame(smk_init)
-smk_init[is.na(smk_init)] <- 0
-smk_init <- as.matrix(smk_init)
+# Fill in missing values with last available value for that age
+for(i in 1:nrow(p.CX)){
+  p.NX[i,which(is.na(p.NX[i,])):201]<-p.CX[i,(min(which(is.na(p.NX[i,])))-1)]
+  p.CX[i,which(is.na(p.CX[i,])):201]<-p.CX[i,(min(which(is.na(p.CX[i,])))-1)]
+  # p.FX[i,which(is.na(p.FX[i,])):201]<-p.CX[i,(min(which(is.na(p.FX[i,])))-1)]
+  
+  smk_init[i,which(is.na(smk_init[i,])):201]<-smk_init[i,(min(which(is.na(smk_init[i,])))-1)]
+  smk_cess[i,which(is.na(smk_cess[i,])):201]<-smk_cess[i,(min(which(is.na(smk_cess[i,])))-1)]
+}
 
-smk_cess <- as.data.frame(smk_cess)
-smk_cess[is.na(smk_cess)] <- 0
-smk_cess <- as.matrix(smk_cess)
-
-p.NX <- as.data.frame(p.NX)
-p.NX[is.na(p.NX)] <- 0
-p.NX <- as.matrix(p.NX)
-
-p.CX <- as.data.frame(p.CX)
-p.CX[is.na(p.CX)] <- 0
-p.CX <- as.matrix(p.CX)
-
-p.FX <- as.data.frame(p.FX)
-p.FX[is.na(p.FX)] <- 0
-p.FX <- as.matrix(p.FX)
+# Create array for 40 years since quitting
+p.FX.ysq = vector("list", 40)
+for (j in 1:40){
+  p.FX.ysq[[j]] = matrix(, nrow = 100, ncol = 201)
+}
+# Get former smoker relative risk of mortality compared to current smoker - See Thun (2013) & Tam (2021) Graphic Health Warnings Supplement
+if (whichgender=="females"){
+  rr.FX.CX <- pmin(1,0.8613*exp(-0.023*(1:40)))
+}
+if (whichgender=="males"){
+  rr.FX.CX <- pmin(1,1.0313*exp(-0.024*(1:40)))
+}
+for (j in 1:40){
+  for (age in 1:100){
+    for (bc in 1:201){
+      p.FX.ysq[[j]][age,bc]=pmax(rr.FX.CX[j]*p.CX[age,bc],p.NX[age,bc]) 
+    }
+  }
+}
 
 rm(smk_cess_cisnet,smk_init_cisnet,death_cs,death_fs,death_ns)
-save(p.NX,p.CX,p.FX,smk_init,smk_cess,file=paste0("smk_precomputed_inputs_",whichgender,".RData"))
+save(p.NX,p.CX,p.FX.ysq,smk_init,smk_cess,file=paste0("smk_precomputed_inputs_",whichgender,".RData"))
+
+
+# p.CX[,121:201] <- p.CX[,120] # hold mortality rates constant from 2020 bc onwards
+# p.NX[,121:201] <- p.NX[,120]
+# p.FX[,121:201] <- p.FX[,120]
+# 
+# smk_init <- as.data.frame(smk_init)
+# smk_init[is.na(smk_init)] <- 0
+# smk_init <- as.matrix(smk_init)
+# 
+# smk_cess <- as.data.frame(smk_cess)
+# smk_cess[is.na(smk_cess)] <- 0
+# smk_cess <- as.matrix(smk_cess)
+# 
+# p.NX <- as.data.frame(p.NX)
+# p.NX[is.na(p.NX)] <- 0
+# p.NX <- as.matrix(p.NX)
+# 
+# p.CX <- as.data.frame(p.CX)
+# p.CX[is.na(p.CX)] <- 0
+# p.CX <- as.matrix(p.CX)
+# 
+# p.FX <- as.data.frame(p.FX)
+# p.FX[is.na(p.FX)] <- 0
+# p.FX <- as.matrix(p.FX)
