@@ -25,7 +25,7 @@ dep_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, 
       m.M[i, t + 1] <- sample(v.n, size=1, prob = v.p)      # sample the next health state and store that state in matrix m.M 
     }                                                       # close the loop for the time points 
     if (i/100 == round(i/100,0)) {                          # display the progress of the simulation
-      cat('\r', paste(i/n.i * 100, "% done", sep = " "))
+      cat('\r', paste(i/n.i * 100, "% done, birth cohort:",bc, sep = " "))
     }
   } # close the loop for the individuals 
   
@@ -66,37 +66,26 @@ dep_probs <- function(bc, t, M_it) { # updates the transition probabilities of e
   
   # Never MD "H" (Happy)
   v.p.it[M_it == "H"] <- 
-    c((1-p.HX[t,bc1])*(1 - p.HD[t,bc1]), #H to H
-      (1-p.HX[t,bc1])*(p.HD[t,bc1]),      #H to D
+    c((1-p.HX[t,bc1]- p.HD[t,bc1]), #H to H
+      p.HD[t,bc1],      #H to D
       0,                         #H to R
-      0,                                 #H to U 
       p.HX[t,bc1])                       #H to X
   
   # Current MD "D" 
   v.p.it[M_it == "D"] <- 
     c(0,                                 #D to H
-      (1-p.DX[t,bc1])*(1- p.DR[t]),  #D to D
-      (1-p.DX[t,bc1])*p.DR[t],       #D to R
-      0,                     #D to U
+      (1-p.DX[t,bc1]- p.DR[t]),  #D to D
+      p.DR[t],       #D to R
       p.DX[t,bc1])              #D to X
   
   # Former MD "R" 
   v.p.it[M_it == "R"] <- 
     c(0,                                 #R to H
-      (1 - p.RX[t,bc1])*p.RD[t]*(1-p.RU[t]),   #R to D
-      (1 - p.RX[t,bc1])*(1-p.RD[t])*(1-p.RU[t]), #R to R
-      (1 - p.RX[t,bc1])*(1-p.RD[t])*p.RU[t], #R to U
+      p.RD[t],   #R to D
+      (1 - p.RX[t,bc1]-p.RD[t]), #R to R
       p.RX[t])                       #R to X
   
-  # Underreported "U"
-  v.p.it[M_it == "U"] <- 
-    c(0,                                 #U to H
-      (1 - p.RX[t,bc1])*p.RD[t]*(1-p.RU[t]),   #U to D
-      (1 - p.RX[t,bc1])*(1-p.RD[t])*(1-p.RU[t]), #U to R
-      (1 - p.RX[t,bc1])*(1-p.RD[t])*p.RU[t], #U to U
-      p.RX[t,bc1])                       #U to X
-  
-  v.p.it[M_it == "X"]  <- c(0,0,0,0, 1)		 #X to X = DEAD
+  v.p.it[M_it == "X"]  <- c(0,0,0,0, 1) #X to X = DEAD
   
   # return the transition probabilities or produce an error
   ifelse(any(is.na(v.p.it)), print(paste0(paste0(v.p.it,collapse=", ")," - NA probability! bc: ", bc,", age: ",t,", M_it: ",M_it)),return(v.p.it)) 
@@ -114,9 +103,9 @@ get_prevs <- function(state,m.cohortbyyear,minyear,maxyear){ # Get counts/preval
   for (age in 1:length(agegroupstart)){
     for (year in minyear:maxyear){
       cohortmin = year-agegroupend[age]
-      if(cohortmin<1900) {next}
+      if(cohortmin<min(cohorts)) {next}
       cohortmax = year-agegroupstart[age]
-      select = m.cohortbyyear[(n.i*(cohortmin-1900)+1):(n.i*(cohortmax-1900)+n.i),paste(year)] # birth cohort 1905 begins in row 26, and birth cohort 1912 ends in row 65
+      select = m.cohortbyyear[(n.i*(cohortmin-min(cohorts)+1)-(n.i-1)):(n.i*(cohortmax-min(cohorts))+n.i),paste(year)] # select rows for the birth cohorts who comprise that year's prevalence estimate
       alive <- sum(select!="X",na.rm=TRUE)
       dead <- sum(select=="X",na.rm=TRUE) 
       counts <- sum(str_count(select,state),na.rm=TRUE)
@@ -126,84 +115,4 @@ get_prevs <- function(state,m.cohortbyyear,minyear,maxyear){ # Get counts/preval
   }
   colnames(m.M.prevs)<-c("agegroup","year", "prev","counts","alive","dead")
   return(m.M.prevs) 
-}
-
-# ## PROBABILITY CHECKS ------------------------------------------------------
-# cohorts = c(1900)
-# for (bc in cohorts){
-#   bc1 = bc-1899
-#   
-#   for (t in c(1:n.t)){
-#     if (bc+t>2100){ # exit for loop if going past the year 2100
-#       break
-#     }
-#   
-#     H = c((1-p.HX[t,bc1] - p.HD[t,bc1]), #H to H
-#           (p.HD[t,bc1]),      #H to D
-#           0,                  #H to R
-#           0,                  #H to U 
-#           p.HX[t,bc1])        #H to X
-#     
-#     D = c(0,             #D to H
-#           (1-p.DX[t,bc1] - p.DR[t]),  #D to D
-#           p.DR[t],       #D to R
-#           0,             #D to U
-#           p.DX[t,bc1])   #D to X
-#     
-#     R = c(0,         #R to H
-#           p.RD[t],   #R to D
-#           (1 - p.RX[t,bc1] - p.RD[t] - p.RU[t]), #R to R # large numbers for p.RU at ages 65+ leads to negative probabilities here (ex. 92.3%)
-#           p.RU[t],   #R to U
-#           p.RX[t,bc1])   #R to X
-#     
-#     U = c(0,         #U to H
-#           p.UD[t],   #U to D
-#           0,         #U to R
-#           (1 - p.UX[t,bc1] - p.UD[t]), #U to U
-#           p.UX[t,bc1]) #U to X
-#     
-#     X = c(0,0,0,0, 1)	
-#     
-#     allprobs = rbind(H, D, R, U, X)
-#     # Check for any negative, missing probabilities, or probability sets that do not sum to 1
-#     if(any(is.na(allprobs))){
-#       print(paste("NA probability! bc: ", bc, ", age: ",t))
-#       print(allprobs)
-#     }
-#     if(any(allprobs<0)){
-#       print(paste("Negative probability! bc: ", bc, ", age: ",t))
-#       print(allprobs)
-#     }
-#     if(any(round(rowSums(allprobs),8) != 1)){
-#       print(paste("Probabilities do not sum to 1! ", "bc:",bc,"age:",t))
-#       print (rowSums(allprobs))
-#     }
-#   }
-# }
-
-for (v in seq(0.4,0.5,0.02)){
-  p.RU[65:99] = v
-
-  cohorts = c(1900:2020)
-  for (bc in cohorts){
-    bc1 = bc-1899
-  
-    for (t in c(66:n.t)){
-      if (bc+t>2100){ # exit for loop if going past the year 2100
-        break
-      }
-  
-      R = c(0,         #R to H
-            p.RD[t],   #R to D
-            (1 - p.RX[t,bc1] - p.RD[t] - p.RU[t]), #R to R # large numbers for p.RU at ages 65+ leads to negative probabilities here (ex. 92.3%)
-            p.RU[t],   #R to U
-            p.RX[t,bc1])   #R to X
-  
-      # Check for any negative probabilities 
-      if(any(R<0)){
-        print(paste(v," Negative probability! bc: ", bc, ", age: ",t))
-        print(R)
-      }
-    }
-  }
 }
