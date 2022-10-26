@@ -2,9 +2,10 @@ rm(list = ls())  # remove any variables in R's memory
 library(here)
 library(stringr)
 library(doParallel) # set up model to run in parallel
+library(lbfgsb3c)
 library(splines)
 library(foreach) # parallelization is in the foreach loop
-cl <- makeCluster(detectCores()-2) # Leave 2 cores unused
+cl <- makeCluster(detectCores())
 registerDoParallel(cl)
 setwd(file.path("C:/Users/JT936/Dropbox/GitHub/mds-microsim"))
 here::i_am("R/smk_calib.R")
@@ -19,18 +20,14 @@ v.M_1 <- rep("N", n.i)          # everyone begins in the Never smoker state  # v
 cohorts <- 1900:2100
 load(paste0(here("data/smk_precomputed_inputs_"),whichgender,".RData")) # p.CX, p.FX.ysq, p.NX, smk_cess, smk_init
 
-### ADD FORMER SMOKER MORTALITY BY YEARS SINCE QUITTING
-
 ## Parameters for calibration
-v_params_names <- c("s.NC_0.17", "s.NC_18.25", "s.NC_26.34","s.CF_35.49","s.CF_50.64","s.CF_65.99")
+# names and number of input parameters to be calibrated
+v_params_names <- c("s.NC_9.12", "s.NC_13.15", "s.NC_16.18","s.NC_19.21","s.NC_22.49")#,"s.NC_50.99") # based on knots=c(10, 13, 16, 19, 22, 50, 60))
+
+v_params <- c(1.542848,   4.590924,   0.010000,   0.010000,   0.010000) 
+# v_params_names <- c("spline.NC1","spline.NC2","spline.NC3")
 n_param <- length(v_params_names)
-s.NC_0.17 = 1 # scaling factor for smoking initiation ages 0-17
-s.NC_18.25 = 1
-s.NC_26.34 = 1
-s.CF_35.49 = 1 # scaling factor for smoking cessation ages 35-49
-s.CF_50.64 = 1
-s.CF_65.99 = 1
-v_params <- c(s.NC_0.17, s.NC_18.25, s.NC_26.34,s.CF_35.49,s.CF_50.64,s.CF_65.99)
+v_params <- c(rep(1,n_param)) #initial test values
 
 ## CALIBRATION TARGETS
 load(paste0(here("data/smk_calib_targets_"),whichgender,".RData")) #lst_smktargets																			  
@@ -43,12 +40,11 @@ source("R/smk_microsim.R", echo = FALSE) # microsimulation model and probability
 ## RUN THE MODEL FOR ALL BIRTH COHORTS  ---------------------------------
 main = function(v_params) { # v_params: run model for parameter calibration
     
-    ## v_params 1-6: initiation, 7-11: cessation
-
     ## scale and calibrate initiation probabilities p.NC 
-    p.NC = smk_init*c(rep(v_params[1],18),rep(v_params[2],8),rep(v_params[3],9), rep(1,65))
+    p.NC = smk_init*c(rep(v_params[1],13),rep(v_params[2],3),rep(v_params[3],3),rep(v_params[4],3),
+                      rep(v_params[5],28),rep(1,50))
     ## scale and calibrate cessation probabilities p.CF 
-    p.CF = smk_cess*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35))
+    p.CF = smk_cess#*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35))
     p.NC[p.NC>0.65]<-0.65 # all transition probabilities must be positive. (1-p.NX[t] - p.NC[t]) ==> 1- max(p.NX) - p.NC >0. max(p.NX[0:99,]) = 0.3457545 ==> , so max value for p.NC is 0.65
     p.CF[p.CF>0.32]<-0.32 # all transition probabilities must be positive. (1-p.CX[t]- p.CF[t]) ==> 1-max(p.CX)-p.CF > 0. max(p.CX[0:99,])=0.67 ==> so max value for p.CF is 0.32
     
@@ -60,11 +56,11 @@ main = function(v_params) { # v_params: run model for parameter calibration
                                       'n.i','n.t','v.n','n.s','v.M_1',
                                       'p.NC','p.CF','p.NX','p.CX','p.FX.ysq')) %dopar%
         {
-            smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
+          smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
         }
     
     ### Serial:
-    m.cohortbyage <- do.call(rbind, lapply(cohorts, function(i) { smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
+    # m.cohortbyage <- do.call(rbind, lapply(cohorts, function(i) { smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
 
     # Convert matrix from cohort-age to cohort-year
     m.cohortbyyear <- matrix(nrow = n.i*length(cohorts), ncol = (length(cohorts)+100))
@@ -95,21 +91,15 @@ model_res<-main(v_params)
 set.seed(072218)
 
 # number of initial starting points
-n_init <- 1
-
-# names and number of input parameters to be calibrated
-v_params_names <- c("s.NC_0.17", "s.NC_18.25", "s.NC_26.34","s.CF_35.49","s.CF_50.64","s.CF_65.99")
-n_param <- length(v_params_names)
+n_init <- 10
 
 # range on input search space
-lb <- c(0.01,0.01,0.01,0.01,0.01,0.01) # lower bound
-ub <- c(5,5,5,5,5,5) # upper bound
+lb <- c(0,0,0,0,0) # lower bound
+ub <- c(5,5,1,1,1) # upper bound
 
 # number of calibration targets
 v_target_names <- names(lst_smktargets)
 n_target <- length(v_target_names)
-
-v_params <- c(1,1,1,1,1,1)
 
 ## Calibration Functions ---------------------------------------------------
 
@@ -119,16 +109,28 @@ f_gof <- function(v_params){
   # Run model for parameter set "v_params"
   model_res <- main(v_params)
   
+  model_res18.99<-lapply(model_res, function(x) subset(x, x[,1]==18.99)) # remove prevalences for ages 18-99
+  model_res18.99 <- model_res18.99[-4] # remove 'X' dead population
+  
   model_res<-lapply(model_res, function(x) subset(x, x[,1]!=18.99)) # remove prevalences for ages 18-99
   model_res <- model_res[-4] # remove 'X' dead population
   
   # Calculate goodness-of-fit of model outputs to targets
   v_GOF <- numeric(n_target)
 
-  for (r in 1:length(lst_smktargets)){ # sum of squared differences
-    v_GOF[r] <- sum((lst_smktargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2)
-  }
-
+  # Calibrate to never smoker prevalence only
+  r=1 
+  gof<- sum((lst_smktargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
+  gof18.99<-sum((lst_smktargets18.99[[r]][,"prev"] - model_res18.99[[r]][,"prev"])^2)  # prevalence for all adults ages 18-99
+  v_GOF[r] <-gof+gof18.99
+  
+  # Calibrate to never, current, and former smoker prevalences
+  # for (r in 1:length(lst_smktargets)){ # sum of squared differences
+  #   gof<- sum((lst_smktargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
+  #   gof18.99<-sum((lst_smktargets18.99[[r]][,"prev"] - model_res18.99[[r]][,"prev"])^2)  # prevalence for all adults ages 18-99
+  #   v_GOF[r] <-gof+gof18.99
+  # }
+  
   # OVERALL
   # can assign targets different weights
   v_weights <- rep(1,n_target)
@@ -158,24 +160,26 @@ m_calib_res <- matrix(nrow = n_init, ncol = n_param+1)
 colnames(m_calib_res) <- c(v_params_names, "Overall_fit")
 for (j in 1:n_init){ # j <- 1
 
-  # use optim() as box-constrained BFGS minimization
-  fit_nm <- optim(v_params_init[j,], f_gof, hessian = T)
-  m_calib_res[j,] <- c(fit_nm$par, fit_nm$value)
+  # L-BFGS-B optimization method - minimization 
+  # fit_nm <- optim(v_params_init[j,], f_gof, hessian = T)
+  # fit_nm <- optim(v_params_init[j,], f_gof,control = list(fnscale = 1, maxit = 1000), method="L-BFGS-B", lower=lb, upper=ub,hessian = T)
+  
+  fit_nm <- lbfgsb3c(par = v_params_init[j,], fn = f_gof, lower=lb, upper=ub)
 
-  fit_nm <- optim(v_params, f_gof,control = list(fnscale = 1, maxit = 1000), method="L-BFGS-B", lower=lb, upper=ub,hessian = T)
-
+    m_calib_res[j,] <- c(fit_nm$par, fit_nm$value)
+  
 }
 
 # Calculate computation time
 comp_time <- Sys.time() - t_init
 
-save(m_calib_res,file=paste0("smk_m_calib_res_",whichgender,n.i,".Rda"))
+save(m_calib_res,file=paste0("smk_m_calib_res_10.26.22",whichgender,n.i,".Rda"))
 # ####################################################################
 # ######  Exploring best-fitting input sets  ######
 # ####################################################################
 # 
 # # Arrange parameter sets in order of fit
-# m_calib_res <- m_calib_res[order(-m_calib_res[,"Overall_fit"]),]
+m_calib_res <- m_calib_res[order(m_calib_res[,"Overall_fit"]),]
 # 
 # # Examine the top 10 best-fitting sets
 # m_calib_res[1:10,]
@@ -189,15 +193,16 @@ save(m_calib_res,file=paste0("smk_m_calib_res_",whichgender,n.i,".Rda"))
 # pairs.panels(m_calib_res[1:10,v_param_names])
 # 
 
-v_params = m_calib_res[1:(length(v_params))]
+v_params = m_calib_res[1,1:length(v_params)]
 model_res<-main(v_params)
 
 # Data visualization ------------------------------------------------------
 library(ggplot2)
 
 ## Figures for initiation and cessation
-p.NC = smk_init*c(rep(v_params[1],18),rep(v_params[2],8),rep(v_params[3],9), rep(1,65))
-p.CF = smk_cess*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35))
+p.NC = smk_init*c(rep(v_params[1],13),rep(v_params[2],3),rep(v_params[3],3),rep(v_params[4],3),
+                  rep(v_params[5],28),rep(1,50))
+p.CF = smk_cess #*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35))
 p.NC[p.NC>0.65]<-0.65 # all transition probabilities must be positive. (1-p.NX[t] - p.NC[t]) ==> 1- max(p.NX) - p.NC >0. max(p.NX[0:99,]) = 0.3457545 ==> , so max value for p.NC is 0.65
 p.CF[p.CF>0.32]<-0.32 # all transition probabilities must be positive. (1-p.CX[t]- p.CF[t]) ==> 1-max(p.CX)-p.CF > 0. max(p.CX[0:99,])=0.67 ==> so max value for p.CF is 0.32
 
@@ -284,10 +289,12 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
   )
 }
 
-pdf(file = "smk_calib_101222.pdf",width=10, height=6,onefile = TRUE)
+
+pdf(file = "smk_calib_102622.pdf",width=10, height=6,onefile = TRUE)
 plot.new()
 text(.5, 0.9, "Calibration parameters - smk_microsim", font=2, cex=1.5)
-grid.table(c(m_calib_res),rows=c(v_params_names,"Overall Fit"))
+grid.table(c(m_calib_res[1,]),rows=c(v_params_names,"Overall Fit"))
+grid_arrange_shared_legend(list(p.NC_age,p.CF_age),2,"")
 grid_arrange_shared_legend(list(ns_age, cs_age, fs_age),3,"")
 ncf_total
 dev.off()
