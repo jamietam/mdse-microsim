@@ -12,7 +12,7 @@ here::i_am("R/smk_calib.R")
 
 ## INPUTS
 whichgender <- "females"
-n.i   <- 100                    # number of simulated individuals per run (cohort) - eventually want to run 10,000
+n.i   <- 1000                    # number of simulated individuals per run (cohort) - eventually want to run 10,000
 n.t   <- 100                    # time horizon per person, number of years 
 v.n   <- c( "N","C","F","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), Dead (X)
 n.s   <- length(v.n)            # the number of health states
@@ -22,12 +22,11 @@ load(paste0(here("data/smk_precomputed_inputs_"),whichgender,".RData")) # p.CX, 
 
 ## Parameters for calibration
 # names and number of input parameters to be calibrated
-v_params_names <- c("s.NC_9.12", "s.NC_13.15", "s.NC_16.18","s.NC_19.21","s.NC_22.49")#,"s.NC_50.99") # based on knots=c(10, 13, 16, 19, 22, 50, 60))
+v_params_names <- c("s.NC_9.12", "s.NC_13.15", "s.NC_16.18")#,"s.NC_19.21","s.NC_22.49")#,"s.NC_50.99") # based on knots=c(10, 13, 16, 19, 22, 50, 60))
 
-v_params <- c(1.542848,   4.590924,   0.010000,   0.010000,   0.010000) 
+v_params <- c(4.599147 ,  1.241944 ,  1.646778 ) 
 # v_params_names <- c("spline.NC1","spline.NC2","spline.NC3")
 n_param <- length(v_params_names)
-v_params <- c(rep(1,n_param)) #initial test values
 
 ## CALIBRATION TARGETS
 load(paste0(here("data/smk_calib_targets_"),whichgender,".RData")) #lst_smktargets																			  
@@ -41,12 +40,13 @@ source("R/smk_microsim.R", echo = FALSE) # microsimulation model and probability
 main = function(v_params) { # v_params: run model for parameter calibration
     
     ## scale and calibrate initiation probabilities p.NC 
-    p.NC = smk_init*c(rep(v_params[1],13),rep(v_params[2],3),rep(v_params[3],3),rep(v_params[4],3),
-                      rep(v_params[5],28),rep(1,50))
+    p.NC = smk_init*c(rep(v_params[1],13),rep(v_params[2],3),rep(v_params[3],3),rep(0,3),
+                      rep(0,28),rep(0,50))
     ## scale and calibrate cessation probabilities p.CF 
-    p.CF = smk_cess#*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35))
-    p.NC[p.NC>0.65]<-0.65 # all transition probabilities must be positive. (1-p.NX[t] - p.NC[t]) ==> 1- max(p.NX) - p.NC >0. max(p.NX[0:99,]) = 0.3457545 ==> , so max value for p.NC is 0.65
-    p.CF[p.CF>0.32]<-0.32 # all transition probabilities must be positive. (1-p.CX[t]- p.CF[t]) ==> 1-max(p.CX)-p.CF > 0. max(p.CX[0:99,])=0.67 ==> so max value for p.CF is 0.32
+    p.CF = smk_cess #*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35))
+    
+    # p.NC[p.NC>0.65]<-0.65 # all transition probabilities must be positive. (1-p.NX[t] - p.NC[t]) ==> 1- max(p.NX) - p.NC >0. max(p.NX[0:99,]) = 0.3457545 ==> , so max value for p.NC is 0.65
+    # p.CF[p.CF>0.32]<-0.32 # all transition probabilities must be positive. (1-p.CX[t]- p.CF[t]) ==> 1-max(p.CX)-p.CF > 0. max(p.CX[0:99,])=0.67 ==> so max value for p.CF is 0.32
     
     t_init <- Sys.time() # Start timer
     
@@ -56,7 +56,10 @@ main = function(v_params) { # v_params: run model for parameter calibration
                                       'n.i','n.t','v.n','n.s','v.M_1',
                                       'p.NC','p.CF','p.NX','p.CX','p.FX.ysq')) %dopar%
         {
-          smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
+          if(any(p.NC<0)) next
+            else{
+              smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M    
+            }
         }
     
     ### Serial:
@@ -91,11 +94,11 @@ model_res<-main(v_params)
 set.seed(072218)
 
 # number of initial starting points
-n_init <- 10
+n_init <- 2
 
 # range on input search space
-lb <- c(0,0,0,0,0) # lower bound
-ub <- c(5,5,1,1,1) # upper bound
+lb <- c(4,1,1)# lower bound
+ub <- c(6,3,3)# upper bound
 
 # number of calibration targets
 v_target_names <- names(lst_smktargets)
@@ -173,7 +176,7 @@ for (j in 1:n_init){ # j <- 1
 # Calculate computation time
 comp_time <- Sys.time() - t_init
 
-save(m_calib_res,file=paste0("smk_m_calib_res_10.26.22",whichgender,n.i,".Rda"))
+save(m_calib_res,file=paste0("smk_m_calib_res_03.22.23_",whichgender,n.i,".Rda"))
 # ####################################################################
 # ######  Exploring best-fitting input sets  ######
 # ####################################################################
@@ -200,11 +203,11 @@ model_res<-main(v_params)
 library(ggplot2)
 
 ## Figures for initiation and cessation
-p.NC = smk_init*c(rep(v_params[1],13),rep(v_params[2],3),rep(v_params[3],3),rep(v_params[4],3),
-                  rep(v_params[5],28),rep(1,50))
+p.NC = smk_init*c(rep(v_params[1],13),rep(v_params[2],3),rep(v_params[3],3),rep(0,3),
+                  rep(0,28),rep(0,50))
 p.CF = smk_cess #*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35))
-p.NC[p.NC>0.65]<-0.65 # all transition probabilities must be positive. (1-p.NX[t] - p.NC[t]) ==> 1- max(p.NX) - p.NC >0. max(p.NX[0:99,]) = 0.3457545 ==> , so max value for p.NC is 0.65
-p.CF[p.CF>0.32]<-0.32 # all transition probabilities must be positive. (1-p.CX[t]- p.CF[t]) ==> 1-max(p.CX)-p.CF > 0. max(p.CX[0:99,])=0.67 ==> so max value for p.CF is 0.32
+# p.NC[p.NC>0.65]<-0.65 # all transition probabilities must be positive. (1-p.NX[t] - p.NC[t]) ==> 1- max(p.NX) - p.NC >0. max(p.NX[0:99,]) = 0.3457545 ==> , so max value for p.NC is 0.65
+# p.CF[p.CF>0.32]<-0.32 # all transition probabilities must be positive. (1-p.CX[t]- p.CF[t]) ==> 1-max(p.CX)-p.CF > 0. max(p.CX[0:99,])=0.67 ==> so max value for p.CF is 0.32
 
 p.NCsmk_init <- as.data.frame(cbind(c(p.NC[,100],smk_init[,100]),c(rep("calibrated",100),rep("CISNET",100)),c(rep(0:99,2))))
 names(p.NCsmk_init) <- c("prob","inputs","age")
@@ -290,7 +293,7 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
 }
 
 
-pdf(file = "smk_calib_102622.pdf",width=10, height=6,onefile = TRUE)
+pdf(file = "smk_calib_110122.pdf",width=10, height=6,onefile = TRUE)
 plot.new()
 text(.5, 0.9, "Calibration parameters - smk_microsim", font=2, cex=1.5)
 grid.table(c(m_calib_res[1,]),rows=c(v_params_names,"Overall Fit"))

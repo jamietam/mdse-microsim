@@ -31,7 +31,7 @@ smk_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, 
         m.M[i, t + 1] <- sample(v.n, size=1, prob = v.p)      # sample the next health state and store that state in matrix m.M 
       }                                                       # close the loop for the time points 
       if (i/100 == round(i/100,0)) {                          # display the progress of the simulation
-        cat('\r', paste(i/n.i * 100, "% done", sep = " "))
+        cat('\r', paste(i/n.i * 100, "% done, birth cohort:",bc, sep = " "))
       }
     } # close the loop for the individuals 
     
@@ -125,47 +125,47 @@ get_prevs <- function(state,m.cohortbyyear,minyear,maxyear){ # Get counts/preval
 
 
 ## PROBABILITY CHECKS ------------------------------------------------------
-cohorts = c(1900:2100)
-p.NC = smk_init*c(rep(v_params[1],13),rep(v_params[2],3),rep(v_params[3],3),rep(v_params[4],3),
-                  rep(v_params[5],28),rep(1,50))
-p.CF = smk_cess#*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35))
-
-for (bc in cohorts){
-  bc1 = bc-1899
-  for (t in c(1:n.t)){
-    if (bc1+t>2100){ # exit for loop if going past the year 2100
-      break
-    }
-
-    N = c((1-p.NX[t,bc1] - p.NC[t,bc1]), #N to N
-          p.NC[t,bc1],       #N to C
-          0, 	                               #N to F
-          p.NX[t,bc1])
-    C = c(0,                                 #C to N
-          (1-p.CX[t,bc1]- p.CF[t,bc1]),  #C to C
-          p.CF[t,bc1],       #C to F
-          p.CX[t,bc1])
-    for (ysq in c(1:40)){
-      F = c(0,                                 #F to N
-            0,                                 #F to C
-            (1 - p.FX.ysq[[ysq]][t,bc1]),                 #F to F - former smoker mortality based on years since quit (ysq)
-            p.FX.ysq[[ysq]][t,bc1]) 
-      
-      allprobs = rbind(N, C, F)
-      # Check for any negative, missing probabilities, or probability sets that do not sum to 1
-      if(any(is.na(allprobs))){
-        print(paste("NA probability! bc: ", bc, ", age: ",t, ", ysq: ",ysq))
-        print(allprobs)
-      }
-      if(any(allprobs<0)){
-        print(paste("Negative probability! bc: ", bc, ", age: ",t, ", ysq: ",ysq))
-        print(allprobs)
-      }
-      if(any(round(rowSums(allprobs),8) != 1)){
-        print(paste("Probabilities do not sum to 1! ", "bc:",bc,"age:",t, ", ysq: ",ysq))
-        print (rowSums(allprobs))
-      }
-    }
-    
-  }
-}
+# cohorts = c(1900:2100)
+# p.NC = smk_init*c(rep(v_params[1],13),rep(v_params[2],3),rep(v_params[3],3),rep(v_params[4],3),
+#                   rep(v_params[5],28),rep(1,50))
+# p.CF = smk_cess#*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35))
+# 
+# for (bc in cohorts){
+#   bc1 = bc-1899
+#   for (t in c(1:n.t)){
+#     if (bc1+t>2100){ # exit for loop if going past the year 2100
+#       break
+#     }
+# 
+#     N = c((1-p.NX[t,bc1] - p.NC[t,bc1]), #N to N
+#           p.NC[t,bc1],       #N to C
+#           0, 	                               #N to F
+#           p.NX[t,bc1])
+#     C = c(0,                                 #C to N
+#           (1-p.CX[t,bc1]- p.CF[t,bc1]),  #C to C
+#           p.CF[t,bc1],       #C to F
+#           p.CX[t,bc1])
+#     for (ysq in c(1:40)){
+#       F = c(0,                                 #F to N
+#             0,                                 #F to C
+#             (1 - p.FX.ysq[[ysq]][t,bc1]),                 #F to F - former smoker mortality based on years since quit (ysq)
+#             p.FX.ysq[[ysq]][t,bc1]) 
+#       
+#       allprobs = rbind(N, C, F)
+#       # Check for any negative, missing probabilities, or probability sets that do not sum to 1
+#       if(any(is.na(allprobs))){
+#         print(paste("NA probability! bc: ", bc, ", age: ",t, ", ysq: ",ysq))
+#         print(allprobs)
+#       }
+#       if(any(allprobs<0)){
+#         print(paste("Negative probability! bc: ", bc, ", age: ",t, ", ysq: ",ysq))
+#         print(allprobs)
+#       }
+#       if(any(round(rowSums(allprobs),8) != 1)){
+#         print(paste("Probabilities do not sum to 1! ", "bc:",bc,"age:",t, ", ysq: ",ysq))
+#         print (rowSums(allprobs))
+#       }
+#     }
+#     
+#   }
+# }
