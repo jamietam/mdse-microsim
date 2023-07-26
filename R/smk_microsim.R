@@ -93,6 +93,8 @@ smk_probs <- function(bc, t, ysq,  M_it) { # updates the transition probabilitie
   
   v.p.it[M_it == "X"]  <- c(0,0,0, 1)		 #X to X = DEAD
   
+  v.p.it[v.p.it<0.001]<-0 # if any probabilities are negative, replace with zero
+  
   # return the transition probabilities or produce an error
   ifelse(any(is.na(v.p.it)), print(paste0(paste0(v.p.it,collapse=", ")," - NA probability! bc: ", bc,", age: ",t,", M_it: ",M_it)),return(v.p.it)) 
   ifelse(any(v.p.it<0),print(paste0(paste0(v.p.it,collapse=", ")," - Negative probability! bc: ", bc, ", age: ",t,", M_it: ", M_it)),return(v.p.it))
