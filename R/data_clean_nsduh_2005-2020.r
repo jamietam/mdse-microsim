@@ -130,26 +130,34 @@ nsduh0520$everdep[nsduh0520$nevdep==1] <- 0
 nsduh0520$everdep[nsduh0520$nevdep==0] <- 1
 
 # smoked within the past 12 months and at least 100 cigs in lifetime
+# nsduh0520$currentsmoker[nsduh0520$cigyr==1 & (nsduh0520$CIG100LF==1 | nsduh0520$CIG100LF==3 |nsduh0520$CIG100LF==5)]<-1
+# nsduh0520$currentsmoker[nsduh0520$cigyr==0] <-0
+# nsduh0520$currentsmoker[nsduh0520$CIG100LF==2 | nsduh0520$CIG100LF==91] <-0 # Has not smoked 100 cigs in life OR Never used cigarettes
 nsduh0520$currentsmoker[nsduh0520$cigyr==1 & (nsduh0520$CIG100LF==1 | nsduh0520$CIG100LF==3 |nsduh0520$CIG100LF==5)]<-1
-nsduh0520$currentsmoker[nsduh0520$cigyr==0] <-0
-nsduh0520$currentsmoker[nsduh0520$CIG100LF==2 | nsduh0520$CIG100LF==91] <-0 # Has not smoked 100 cigs in life OR Never used cigarettes
+nsduh0520$currentsmoker[nsduh0520$cigyr==1 & (nsduh0520$CIG100LF==2 | nsduh0520$CIG100LF==91)]<-0 # Has not smoked 100 cigs in life OR Never used cigarettes
+nsduh0520$currentsmoker[nsduh0520$cigyr==0 & (nsduh0520$CIG100LF==1 | nsduh0520$CIG100LF==3 |nsduh0520$CIG100LF==5)] <-0
+nsduh0520$currentsmoker[nsduh0520$cigyr==0 & (nsduh0520$CIG100LF==2 | nsduh0520$CIG100LF==91)]<-0
 
 # did not smoke within the past 12 months but at least 100 cigs in lifetime
-nsduh0520$formersmoker[nsduh0520$cigyr==0 & (nsduh0520$CIG100LF==1 | nsduh0520$CIG100LF==3 |nsduh0520$CIG100LF==5)]<-1
-nsduh0520$formersmoker[nsduh0520$cigyr==1] <-0
-nsduh0520$formersmoker[nsduh0520$CIG100LF==2 | nsduh0520$CIG100LF==91] <-0 # Has not smoked 100 cigs in life OR Never used cigarettes
+# nsduh0520$formersmoker[nsduh0520$cigyr==0 & (nsduh0520$CIG100LF==1 | nsduh0520$CIG100LF==3 |nsduh0520$CIG100LF==5)]<-1
+# nsduh0520$formersmoker[nsduh0520$cigyr==1] <-0
+# nsduh0520$formersmoker[nsduh0520$CIG100LF==2 | nsduh0520$CIG100LF==91] <-0 # Has not smoked 100 cigs in life OR Never used cigarettes
+nsduh0520$formersmoker[nsduh0520$cigyr==1 & (nsduh0520$CIG100LF==1 | nsduh0520$CIG100LF==3 |nsduh0520$CIG100LF==5)]<-0
+nsduh0520$formersmoker[nsduh0520$cigyr==1 & (nsduh0520$CIG100LF==2 | nsduh0520$CIG100LF==91)]<-0 # Has not smoked 100 cigs in life OR Never used cigarettes
+nsduh0520$formersmoker[nsduh0520$cigyr==0 & (nsduh0520$CIG100LF==1 | nsduh0520$CIG100LF==3 |nsduh0520$CIG100LF==5)] <-1
+nsduh0520$formersmoker[nsduh0520$cigyr==0 & (nsduh0520$CIG100LF==2 | nsduh0520$CIG100LF==91)]<-0
 
 #never smoked 100 cigarettes in lifetime or never smoked at all
-nsduh0520$neversmoker[nsduh0520$CIG100LF==2 |nsduh0520$CIG100LF==91] <- 1
-nsduh0520$neversmoker[nsduh0520$CIG100LF==1 | nsduh0520$CIG100LF==3 |nsduh0520$CIG100LF==5] <- 0
+# nsduh0520$neversmoker[nsduh0520$CIG100LF==2 |nsduh0520$CIG100LF==91] <- 1
+# nsduh0520$neversmoker[nsduh0520$CIG100LF==1 | nsduh0520$CIG100LF==3 |nsduh0520$CIG100LF==5] <- 0
+nsduh0520$neversmoker[nsduh0520$cigyr==1 & (nsduh0520$CIG100LF==1 | nsduh0520$CIG100LF==3 |nsduh0520$CIG100LF==5)]<-0
+nsduh0520$neversmoker[nsduh0520$cigyr==1 & (nsduh0520$CIG100LF==2 | nsduh0520$CIG100LF==91)]<-1 # Has not smoked 100 cigs in life OR Never used cigarettes
+nsduh0520$neversmoker[nsduh0520$cigyr==0 & (nsduh0520$CIG100LF==1 | nsduh0520$CIG100LF==3 |nsduh0520$CIG100LF==5)] <-0
+nsduh0520$neversmoker[nsduh0520$cigyr==0 & (nsduh0520$CIG100LF==2 | nsduh0520$CIG100LF==91)]<-1
 
 # ever smoked 100 cigarettes in lifetime
-nsduh0520$eversmoker[nsduh0520$CIG100LF==2 |nsduh0520$CIG100LF==91] <- 0
-nsduh0520$eversmoker[nsduh0520$CIG100LF==1 | nsduh0520$CIG100LF==3 |nsduh0520$CIG100LF==5] <- 1
-
-nsduh0520$smkstatus[nsduh0520$CIG100LF==2 |nsduh0520$CIG100LF==91] <-0 # never smoker
-nsduh0520$smkstatus[nsduh0520$cigyr==1 & (nsduh0520$CIG100LF==1 | nsduh0520$CIG100LF==3 |nsduh0520$CIG100LF==5)] <- 1 # current smoker
-nsduh0520$smkstatus[nsduh0520$cigyr==0 & (nsduh0520$CIG100LF==1 | nsduh0520$CIG100LF==3 |nsduh0520$CIG100LF==5)] <- 2 # former smoker
+# nsduh0520$eversmoker[nsduh0520$CIG100LF==2 |nsduh0520$CIG100LF==91] <- 0
+# nsduh0520$eversmoker[nsduh0520$CIG100LF==1 | nsduh0520$CIG100LF==3 |nsduh0520$CIG100LF==5] <- 1
 
 save(nsduh0520, file="nsduh2005-2020clean.Rda")
 load("nsduh2005-2020clean.Rda")
@@ -190,7 +198,7 @@ get2020prevs<- function(groupvar, subpop){
     prev <-svymean(as.formula(paste("~",groupvar)),design=svy,na.rm=TRUE) 
     alladults  <- rbind(alladults, data.frame(y,"total",groupvar, deparse(substitute(subpop)), prev[1],SE(prev), confint(prev)[1,1], confint(prev)[1,2]))          
     
-    agegroupnames <- c("18to25", "26to34","35to49", "50to64","65plus")
+    agegroupnames <- c(18.25, 26.34,35.49, 50.64, 65.99)
     for (k in 2:6){
       prev <-svymean(as.formula(paste("~",groupvar)),design=subset(svy,CATAG6==k),na.rm=TRUE) # 
       byagegroup <- rbind(byagegroup, data.frame(y,agegroupnames[k-1],groupvar, deparse(substitute(subpop)), prev[1],SE(prev),confint(prev)[1,1], confint(prev)[1,2]))          
