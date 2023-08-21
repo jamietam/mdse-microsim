@@ -3,35 +3,51 @@ library(here)
 library(stringr)
 library(doParallel) # set up model to run in parallel
 library(lbfgsb3c)
-library(splines)
 library(foreach) # parallelization is in the foreach loop
-cl <- makeCluster(detectCores())
-registerDoParallel(cl)
-setwd(file.path("C:/Users/JT936/Dropbox/GitHub/mds-microsim"))
+library(ggplot2)
+library(gridBase)
+library(gridExtra)
+library(grid)
+setwd(file.path("/gpfs/gibbs/project/tam_jamie/shared/mds-microsim/"))
 here::i_am("R/smk_calib.R")
+## For HPC runs
+n_cores = Sys.getenv("SLURM_CPUS_PER_TASK")
+cl <- makeCluster(as.numeric(n_cores),type="FORK")
+## For Personal Computer and Open On Demand Interface runs
+# cl <- makeCluster(detectCores())
+registerDoParallel(cl)
 
 ## INPUTS
-whichgender <- "females"
+whichgender <- "females" 
+s.NC_9.17=2.181656 # females best fit_value=0.1005130
+s.NC_18.25= 0
+
+# whichgender <- "males" 
+# s.NC_9.17=1.62823408465733 # males fit_value=0.168578616625688
+# s.NC_18.25= 0.744987876855674
+
+load(paste0(here("data/smk_precomputed_inputs_"),whichgender,".RData")) # p.CX, p.FX.ysq, p.NX, smk_cess, smk_init
+cohorts <- 1900:2020
 n.i   <- 1000                    # number of simulated individuals per run (cohort) - eventually want to run 10,000
 n.t   <- 100                    # time horizon per person, number of years 
 v.n   <- c( "N","C","F","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), Dead (X)
 n.s   <- length(v.n)            # the number of health states
 v.M_1 <- rep("N", n.i)          # everyone begins in the Never smoker state  # v.M_1:   vector of initial states for individuals 
-cohorts <- 1900:2100
-load(paste0(here("data/smk_precomputed_inputs_"),whichgender,".RData")) # p.CX, p.FX.ysq, p.NX, smk_cess, smk_init
 
-## Parameters for calibration
-# names and number of input parameters to be calibrated
-v_params_names <- c("s.NC_9.12", "s.NC_13.15", "s.NC_16.18")#,"s.NC_19.21","s.NC_22.49")#,"s.NC_50.99") # based on knots=c(10, 13, 16, 19, 22, 50, 60))
+## CALIBRATION PARAMETERS
+v_params <- c("s.CF_18.25"= 0.0710292148869485, "s.CF_26.34"= 1.06624004784143, "s.CF_35.49" = 0.581030531786382,"s.CF_50.64" = 1.09528614839045 ,"s.CF_65.99" = 1.04268235996959) 
+n_param <- length(v_params)
+set.seed(072218) # Specify seed (for reproducible sequence of random numbers)
+n_init <- 15 # number of initial starting points
+# range on input search space
+lb <- c(0,0,0,0,0)# lower bound
+ub <- c(1,1.3,1.3,1.3,1.3)# upper bound
 
-v_params <- c(4.599147 ,  1.241944 ,  1.646778 ) 
-# v_params_names <- c("spline.NC1","spline.NC2","spline.NC3")
-n_param <- length(v_params_names)
 
 ## CALIBRATION TARGETS
 load(paste0(here("data/smk_calib_targets_"),whichgender,".RData")) #lst_smktargets																			  
-lst_smktargets18.99<-lapply(lst_smktargets, function(x) subset(x, x[,1]==18.99)) # remove prevalences for ages 18-99
-lst_smktargets<-lapply(lst_smktargets, function(x) subset(x, x[,1]!=18.99)) # remove prevalences for ages 18-99
+v_target_names <- names(lst_smktargets) # number of calibration targets
+n_target <- length(v_target_names)
 
 ## MODEL FUNCTIONS
 source("R/smk_microsim.R", echo = FALSE) # microsimulation model and probability functions
@@ -39,29 +55,21 @@ source("R/smk_microsim.R", echo = FALSE) # microsimulation model and probability
 ## RUN THE MODEL FOR ALL BIRTH COHORTS  ---------------------------------
 main = function(v_params) { # v_params: run model for parameter calibration
     
-    ## scale and calibrate initiation probabilities p.NC 
-    p.NC = smk_init*c(rep(v_params[1],13),rep(v_params[2],3),rep(v_params[3],3),rep(0,3),
-                      rep(0,28),rep(0,50))
-    ## scale and calibrate cessation probabilities p.CF 
-    p.CF = smk_cess #*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35))
+  t_init <- Sys.time() # Start timer
+  
+  ## Initiation - No initiation after 25
+  p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),  rep(0,74))
+
+  ## Cessation - No cessation before 18
+  p.CF = smk_cess*c(rep(0,18),rep(v_params["s.CF_18.25"],8), rep(v_params["s.CF_26.34"],9),rep(v_params["s.CF_35.49"],15),rep(v_params["s.CF_50.64"],15),rep(v_params["s.CF_65.99"],35))
     
-    # p.NC[p.NC>0.65]<-0.65 # all transition probabilities must be positive. (1-p.NX[t] - p.NC[t]) ==> 1- max(p.NX) - p.NC >0. max(p.NX[0:99,]) = 0.3457545 ==> , so max value for p.NC is 0.65
-    # p.CF[p.CF>0.32]<-0.32 # all transition probabilities must be positive. (1-p.CX[t]- p.CF[t]) ==> 1-max(p.CX)-p.CF > 0. max(p.CX[0:99,])=0.67 ==> so max value for p.CF is 0.32
-    
-    t_init <- Sys.time() # Start timer
-    
-    # Simulate for each birth cohort with parallelization
-    m.cohortbyage<-foreach (i=cohorts, .combine='rbind', 
-                            .export=c('smk_microsim','smk_probs','get_prevs', 
-                                      'n.i','n.t','v.n','n.s','v.M_1',
-                                      'p.NC','p.CF','p.NX','p.CX','p.FX.ysq')) %dopar%
-        {
-          if(any(p.NC<0)) next
-            else{
-              smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M    
-            }
-        }
-    
+  # Simulate for each birth cohort with parallelization
+  m.cohortbyage<-foreach (i=cohorts, .combine='rbind', 
+                          .export=c('smk_microsim','smk_probs','get_prevs', 
+                                    'n.i','n.t','v.n','n.s','v.M_1',
+                                    'p.NC','p.CF','p.NX','p.CX','p.FX.ysq')) %dopar% {
+                                      smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M    
+                                      }
     ### Serial:
     # m.cohortbyage <- do.call(rbind, lapply(cohorts, function(i) { smk_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
 
@@ -73,66 +81,35 @@ main = function(v_params) { # v_params: run model for parameter calibration
     colnames(m.cohortbyyear) <- c(min(cohorts):(max(cohorts)+100))
     
     # Output prevalence results as a list
-    model_res <- lapply(v.n, get_prevs, m.cohortbyyear=m.cohortbyyear, minyear=2005, maxyear=2020)
+    model_res <- lapply(v.n, get_prevs, m.cohortbyyear=m.cohortbyyear, minyear=2005, maxyear=max(cohorts))
     names(model_res) <- v.n
     model_res$N <- model_res$N[order(model_res$N[,"agegroup"],decreasing=FALSE),]
     model_res$C <- model_res$C[order(model_res$C[,"agegroup"],decreasing=FALSE),]
     model_res$F <- model_res$F[order(model_res$F[,"agegroup"],decreasing=FALSE),]
     
-    cat(paste0("\n  ", v_params_names,": ", v_params," "))
+    cat(paste0("\n  ", v_params," "))
     print(Sys.time() - t_init) # End timer
     return(model_res)
 }
-
-model_res<-main(v_params)
-
-# save(model_res, file=paste0(here("model_res_n",n.i,"_",whichgender,"_052422.Rdata")))
-
-## Specify calibration parameters ------------------------------------------
-
-# Specify seed (for reproducible sequence of random numbers)
-set.seed(072218)
-
-# number of initial starting points
-n_init <- 2
-
-# range on input search space
-lb <- c(4,1,1)# lower bound
-ub <- c(6,3,3)# upper bound
-
-# number of calibration targets
-v_target_names <- names(lst_smktargets)
-n_target <- length(v_target_names)
 
 ## Calibration Functions ---------------------------------------------------
 
 # Write goodness-of-fit function to pass to Nelder-Mead algorithm
 f_gof <- function(v_params){
 
-  # Run model for parameter set "v_params"
-  model_res <- main(v_params)
-  
-  model_res18.99<-lapply(model_res, function(x) subset(x, x[,1]==18.99)) # remove prevalences for ages 18-99
-  model_res18.99 <- model_res18.99[-4] # remove 'X' dead population
-  
-  model_res<-lapply(model_res, function(x) subset(x, x[,1]!=18.99)) # remove prevalences for ages 18-99
-  model_res <- model_res[-4] # remove 'X' dead population
-  
-  # Calculate goodness-of-fit of model outputs to targets
-  v_GOF <- numeric(n_target)
+  model_res <- main(v_params)   # Run model for parameter set "v_params"
+  v_GOF <- numeric(n_target)   # Calculate goodness-of-fit of model outputs to targets
 
   # Calibrate to never smoker prevalence only
-  r=1 
-  gof<- sum((lst_smktargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
-  gof18.99<-sum((lst_smktargets18.99[[r]][,"prev"] - model_res18.99[[r]][,"prev"])^2)  # prevalence for all adults ages 18-99
-  v_GOF[r] <-gof+gof18.99
-  
+  # r=1
+  # v_GOF<- sum((lst_smktargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
+
   # Calibrate to never, current, and former smoker prevalences
-  # for (r in 1:length(lst_smktargets)){ # sum of squared differences
-  #   gof<- sum((lst_smktargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
-  #   gof18.99<-sum((lst_smktargets18.99[[r]][,"prev"] - model_res18.99[[r]][,"prev"])^2)  # prevalence for all adults ages 18-99
-  #   v_GOF[r] <-gof+gof18.99
-  # }
+  for (r in 1:length(lst_smktargets)){ # sum of squared differences
+    gof<- sum((lst_smktargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
+    # gof18.99<-sum((lst_smktargets18.99[[r]][,"prev"] - model_res18.99[[r]][,"prev"])^2)  # prevalence for all adults ages 18-99
+    v_GOF[r] <-gof #+gof18.99
+  }
   
   # OVERALL
   # can assign targets different weights
@@ -153,61 +130,55 @@ v_params_init <- matrix(nrow=n_init,ncol=n_param)
 for (i in 1:n_param){
   v_params_init[,i] <- runif(n_init,min=lb[i],max=ub[i]) # This should probably be LHS to cover parameter space evenly
 }
-colnames(v_params_init) <- v_params_names
+colnames(v_params_init) <- names(v_params)
 
 # record start time of calibration
 t_init <- Sys.time()
 
-###  Run Nelder-Mead for each starting point  ###
+###  Run optimization algorithm for each starting point  ###
 m_calib_res <- matrix(nrow = n_init, ncol = n_param+1)
-colnames(m_calib_res) <- c(v_params_names, "Overall_fit")
+colnames(m_calib_res) <- c(names(v_params), "Overall_fit")
 for (j in 1:n_init){ # j <- 1
 
   # L-BFGS-B optimization method - minimization 
-  # fit_nm <- optim(v_params_init[j,], f_gof, hessian = T)
-  # fit_nm <- optim(v_params_init[j,], f_gof,control = list(fnscale = 1, maxit = 1000), method="L-BFGS-B", lower=lb, upper=ub,hessian = T)
-  
   fit_nm <- lbfgsb3c(par = v_params_init[j,], fn = f_gof, lower=lb, upper=ub)
 
-    m_calib_res[j,] <- c(fit_nm$par, fit_nm$value)
+  m_calib_res[j,] <- c(fit_nm$par, fit_nm$value)
   
 }
 
 # Calculate computation time
 comp_time <- Sys.time() - t_init
 
-save(m_calib_res,file=paste0("smk_m_calib_res_03.22.23_",whichgender,n.i,".Rda"))
-# ####################################################################
-# ######  Exploring best-fitting input sets  ######
-# ####################################################################
-# 
-# # Arrange parameter sets in order of fit
+### Arrange parameter sets in order of fit
 m_calib_res <- m_calib_res[order(m_calib_res[,"Overall_fit"]),]
-# 
-# # Examine the top 10 best-fitting sets
-# m_calib_res[1:10,]
-# 
-# # Plot the top 10 (top 10%)
-# plot(m_calib_res[1:10,1],m_calib_res[1:10,2],
-#      xlim=c(lb[1],ub[1]),ylim=c(lb[2],ub[2]),
-#      xlab = colnames(m_calib_res)[1],ylab = colnames(m_calib_res)[2])
-# 
-# # Pairwise comparison of top 10 sets
-# pairs.panels(m_calib_res[1:10,v_param_names])
-# 
 
 v_params = m_calib_res[1,1:length(v_params)]
+
 model_res<-main(v_params)
 
+v_GOF <- numeric(n_target)   # Calculate goodness-of-fit of model outputs to targets
+for (r in 1:length(lst_smktargets)){ # sum of squared differences
+  gof<- sum((lst_smktargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
+  v_GOF[r] <-gof #+gof18.99
+}
+
+fit_value <- sum(v_GOF)
+
+print(whichgender)
+print(v_params_init)
+print(m_calib_res)
+print(v_GOF)
+
 # Data visualization ------------------------------------------------------
-library(ggplot2)
 
 ## Figures for initiation and cessation
-p.NC = smk_init*c(rep(v_params[1],13),rep(v_params[2],3),rep(v_params[3],3),rep(0,3),
-                  rep(0,28),rep(0,50))
-p.CF = smk_cess #*c(rep(1,35),rep(v_params[4],15),rep(v_params[5],15),rep(v_params[6],35))
-# p.NC[p.NC>0.65]<-0.65 # all transition probabilities must be positive. (1-p.NX[t] - p.NC[t]) ==> 1- max(p.NX) - p.NC >0. max(p.NX[0:99,]) = 0.3457545 ==> , so max value for p.NC is 0.65
-# p.CF[p.CF>0.32]<-0.32 # all transition probabilities must be positive. (1-p.CX[t]- p.CF[t]) ==> 1-max(p.CX)-p.CF > 0. max(p.CX[0:99,])=0.67 ==> so max value for p.CF is 0.32
+## Initiation 
+p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),  rep(0,74))
+
+## Cessation
+## scale and calibrate cessation probabilities p.CF 
+p.CF = smk_cess*c(rep(0,18),rep(v_params["s.CF_18.25"],8), rep(v_params["s.CF_26.34"],9),rep(v_params["s.CF_35.49"],15),rep(v_params["s.CF_50.64"],15),rep(v_params["s.CF_65.99"],35))
 
 p.NCsmk_init <- as.data.frame(cbind(c(p.NC[,100],smk_init[,100]),c(rep("calibrated",100),rep("CISNET",100)),c(rep(0:99,2))))
 names(p.NCsmk_init) <- c("prob","inputs","age")
@@ -225,7 +196,6 @@ p.CF_age <- ggplot(data=p.CFsmk_cess) +  geom_line( aes(x=age, y=prob, linetype=
   scale_x_continuous(name="Age", limits=c(0,99), breaks=seq(0,99,10)) +
   labs(title="Cessation probabilities")
 
-##
 modelprev <- rbind(cbind(data.frame(model_res$N),status="neversmoker"),
                    cbind(data.frame(model_res$C),status="currentsmoker"),
                    cbind(data.frame(model_res$F),status="formersmoker"))
@@ -241,15 +211,15 @@ ns_age <-ggplot() +
   geom_line(data = subset(modelprev, status=="neversmoker" & agegroup!=18.99),  aes(x=year, y= prev, colour=factor(agegroup)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
-  labs(title="Never smokers - Women ")+
+  labs(title=paste0("Never smokers - ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
-
+ 
 cs_age <-ggplot() +
   geom_pointrange(data= subset(calibtargets,status=="currentsmoker"&agegroup!=18.99), aes(x = year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(agegroup), shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, status=="currentsmoker" & agegroup!=18.99),  aes(x=year, y= prev, colour=factor(agegroup)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
-  labs(title="Current smokers - Women ")+
+  labs(title=paste0("Current smokers - ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 fs_age <-ggplot() +
@@ -257,27 +227,18 @@ fs_age <-ggplot() +
   geom_line(data = subset(modelprev, status=="formersmoker" & agegroup!=18.99),  aes(x=year, y= prev, colour=factor(agegroup)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
-  labs(title="Former smokers - Women ")+
+  labs(title=paste0("Former smokers - ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
-calibtargets18.99 = rbind(cbind(data.frame(lst_smktargets18.99[["N"]]),status="neversmoker"),
-                     cbind(data.frame(lst_smktargets18.99[["C"]]),status="currentsmoker"),
-                     cbind(data.frame(lst_smktargets18.99[["F"]]),status="formersmoker"))
-calibtargets18.99$agegroup <-calibtargets18.99$age
-calibtargets18.99$year <-calibtargets18.99$survey_year
 
 ncf_total <- ggplot() +
-  geom_pointrange(data=calibtargets18.99, 
+  geom_pointrange(data=subset(calibtargets,age==18.99), 
                   aes(x = year, y = prev,ymin=prev_lowCI, ymax=prev_highCI, color=status,shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, agegroup==18.99),  aes(x=year, y= prev,color=status))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
-  labs(title="Smoking distribution - Women, ages 18-99")+
+  labs(title=paste0("Smoking distribution - ",whichgender," ages 18-99"))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
-
-library(gridBase)
-library(gridExtra)
-library(grid)
 
 grid_arrange_shared_legend <- function(plots,columns,titletext) {
   g <- ggplotGrob(plots[[1]] + theme(legend.position="bottom"))$grobs
@@ -292,11 +253,11 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
   )
 }
 
+pdf(file = paste0(whichgender,"_smk_calib_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I:%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
 
-pdf(file = "smk_calib_110122.pdf",width=10, height=6,onefile = TRUE)
 plot.new()
-text(.5, 0.9, "Calibration parameters - smk_microsim", font=2, cex=1.5)
-grid.table(c(m_calib_res[1,]),rows=c(v_params_names,"Overall Fit"))
+text(.5, 1.0, "Calibration parameters - smk_microsim", font=2, cex=1.5)
+grid.table(c(v_params,v_GOF, fit_value),rows=c(names(v_params),names(lst_smktargets),"Overall Fit"))
 grid_arrange_shared_legend(list(p.NC_age,p.CF_age),2,"")
 grid_arrange_shared_legend(list(ns_age, cs_age, fs_age),3,"")
 ncf_total
@@ -319,3 +280,9 @@ dev.off()
 #   Med Decis Making. 2017; 37(3): 735-746. 
 # For more information: https://darth-git.github.io/calibSMDM2018-materials/
 ############################################################################################
+
+# lst_smktargets18.99<-lapply(lst_smktargets, function(x) subset(x, x[,1]==18.99)) # remove prevalences for ages 18-99
+# lst_smktargets<-lapply(lst_smktargets, function(x) subset(x, x[,1]!=18.99)) # remove prevalences for ages 18-99
+# p.NC[p.NC>0.65]<-0.65 # all transition probabilities must be positive. (1-p.NX[t] - p.NC[t]) ==> 1- max(p.NX) - p.NC >0. max(p.NX[0:99,]) = 0.3457545 ==> , so max value for p.NC is 0.65
+# p.CF[p.CF>0.32]<-0.32 # all transition probabilities must be positive. (1-p.CX[t]- p.CF[t]) ==> 1-max(p.CX)-p.CF > 0. max(p.CX[0:99,])=0.67 ==> so max value for p.CF is 0.32
+

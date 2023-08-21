@@ -86,6 +86,8 @@ dep_probs <- function(bc, t, M_it) { # updates the transition probabilities of e
       p.RX[t])                       #R to X
   
   v.p.it[M_it == "X"]  <- c(0,0,0,0, 1) #X to X = DEAD
+
+  v.p.it = replace(v.p.it,v.p.it<0,0)
   
   # return the transition probabilities or produce an error
   ifelse(any(is.na(v.p.it)), print(paste0(paste0(v.p.it,collapse=", ")," - NA probability! bc: ", bc,", age: ",t,", M_it: ",M_it)),return(v.p.it)) 
