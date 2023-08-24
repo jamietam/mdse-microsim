@@ -14,7 +14,7 @@
 # Probs:   function for the estimation of transition probabilities
 
 mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, seed = 1) {
-
+  n_form <- rep(n.i, 0)
   # create the matrix capturing the state name/costs/health outcomes for all individuals at each time point 
   m.M <- matrix(nrow = n.i, ncol = n.t + 1, 
                 dimnames = list(paste(bc, 1:n.i, sep = "."), # each individual, year of birth
@@ -24,9 +24,9 @@ mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, 
   for (i in 1:n.i) {
     set.seed(seed + i)                                      # set the seed for every individual for the random number generator
     for (t in 1:n.t) {
-      if ((bc+t>2100)|(m.M[i, t]=="X")){ # exit for loop if going past the year 2100
-        break
-      }
+      # if ((bc+t>2100)|(m.M[i, t]=="X")){ # exit for loop if going past the year 2100
+        # break
+      # }
       if (m.M[i,t]=="FH"|m.M[i,t]=="FD"|m.M[i,t]=="FR"){ # if former smoker, 
         ysq <- sum((m.M[i,]=="FH"|m.M[i,]=="FD"|m.M[i,]=="FR"), na.rm=TRUE) +1 # count the number of years since quitting for this individual
       } else{
@@ -36,6 +36,8 @@ mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, 
       m.M[i, t + 1] <- sample(v.n, size=1, prob = v.p)      # sample the next health state and store that state in matrix m.M 
     }                                                       # close the loop for the time points 
     
+   n_form <- ifelse(m.M[,t] =="FH"|m.M[,t] =="FD"|m.M[,t] =="FR",n_form +1 , 0 )
+   
     if (i/100 == round(i/100,0)) {                          # display the progress of the simulation
       cat('\r', paste(i/n.i * 100, "% done, birth cohort:",bc, sep = " "))
     }
@@ -65,6 +67,13 @@ mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, 
 
 
 ## PROBABILITY FUNCTION ----------------------------------------------------
+a.p.FX.ysq <- array(NA, dim = c(100,201,40))
+for (i in 1: length(p.FX.ysq)){
+  a.p.FX.ysq[,,i] <-  p.FX.ysq[[i]]
+}
+
+
+
 probs <- function(bc, t, n_form, M_it) { # updates the transition probabilities of every cycle
   # bc:   birth cohort
   # t:    time in model / age
@@ -97,7 +106,17 @@ probs <- function(bc, t, n_form, M_it) { # updates the transition probabilities 
     c(0,0, (1-p.FX.ysq[[ysq]][t,bc1])*(1 -p.HD[t,bc1]), 
       0,0, (1-p.FX.ysq[[ysq]][t,bc1])*p.HD[t,bc1],	
       0,0,0,				
-      p.FX.ysq[[ysq]][t,bc1])			
+      
+    )
+      
+  m.p.t <- matrix(NA, ncol = n.i, nrow = length(v.n))    
+  rownames(m.p.t) <- v.n
+  
+  
+  v_p_FHX <- a.p.FX.ysq[t, bc1, n_form[M_it=="FH"]])
+
+
+  m.p.t["X", M_t =="FH"] <-			
   
   # Depressed
   v.p.it[M_it == "ND"] <- 
