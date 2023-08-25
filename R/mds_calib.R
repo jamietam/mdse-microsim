@@ -9,18 +9,20 @@ library(gridBase)
 library(gridExtra)
 library(grid)
 library(lhs)
-setwd(file.path("/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/"))
+library(darthtools)
+library(matrixStats)
+setwd(file.path("/Users/JT936/Dropbox/GitHub/mds-microsim/"))
 here::i_am("R/mds_calib.R")
 
 ####### For HPC runs ###########################################################
-library(doMPI)
-cl<-startMPIcluster()
-registerDoMPI(cl)
+# library(doMPI)
+# cl<-startMPIcluster()
+# registerDoMPI(cl)
 ####### For Personal Computer and Open On Demand Interface runs ################
-# library(doParallel) # set up model to run in parallel
-# n_cores = Sys.getenv("SLURM_CPUS_PER_TASK")
-# cl <- makeCluster(detectCores())
-# registerDoParallel(cl)
+library(doParallel) # set up model to run in parallel
+n_cores = Sys.getenv("SLURM_CPUS_PER_TASK")
+cl <- makeCluster(detectCores())
+registerDoParallel(cl)
 
 ## INPUTS 
 whichgender <- "females"
@@ -28,11 +30,11 @@ whichgender <- "females"
 load(paste0("data/dep_precomputed_inputs_",whichgender,".RData")) 
 load(paste0("data/smk_precomputed_inputs_",whichgender,".RData")) #lst_smktargets																			  
 cohorts <- 1900:2020            # Change from 2015 to 2020
-n.i   <- 1000                   # number of simulated individuals per run (cohort) - eventually want to run 10,000
-n.t   <- 100                    # time horizon per person, number of years
-v.n   <- c( "NH","CH","FH","ND","CD","FD","NR","CR","FR","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), "Happy" (H), Depressed (D), "Recovered" (R), Dead (X)
-n.s   <- length(v.n)            # the number of health states
-v.M_1 <- rep("NH", n.i)         # everyone begins in the Never smoker Never MD state 
+n_i   <- 1000                   # number of simulated individuals per run (cohort) - eventually want to run 10,000
+n_t   <- 100                    # time horizon per person, number of years
+v_n   <- c( "NH","CH","FH","ND","CD","FD","NR","CR","FR","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), "Happy" (H), Depressed (D), "Recovered" (R), Dead (X)
+n_s   <- length(v_n)            # the number of health states
+v_M_1 <- rep("NH", n_i)         # everyone begins in the Never smoker Never MD state 
 
 ## CALIBRATION PARAMETERS
 param_names <- c("s.NC_9.17","s.NC_18.25",
@@ -40,12 +42,6 @@ param_names <- c("s.NC_9.17","s.NC_18.25",
                  "s.HD_12.17", "s.HD_18.25", 
                  "rr.DX_18.25","rr.DX_26.34", "rr.DX_35.49","rr.DX_50.64","rr.DX_65.99", 
                  "rr.ND.CD", "rr.CH.CD","rr.CR.CD","rr.CD.CR","rr.CD.FD")
-# value <- c(1.9302191, 0, # females  s.NC
-#            1.12487017532752 ,  0.100273604504764  , 0.88125688675791,     1.18021860113367,  0.530590985319447 , # s.CF
-#            9.87520567117026, 2.0713096848689  , # s.HD
-#            4.00235600122251,  2.7723733425606, 3.81187480157241, 4.46946029571265, 2.26865975780884, # rr.DX
-#            3.72653349413304, 3.38392959634075, 1.83616008337573, 1.84771835799088,   0.629814881996104) # rr.smkdep
-
 value <- c(1.9302191, 0, # females
            1.12487017532752 ,  0.100273604504764  , 0.88125688675791,     1.18021860113367,  0.530590985319447 ,
            1,1, # "s.HD_12.17", "s.HD_18.25", 
@@ -71,9 +67,9 @@ ub <- calib_inputs[calib_inputs[,"calib"]==1,][,"upper"]  # upper bound
 ## CALIBRATION TARGETS
 load(paste0("data/smk_calib_targets_",whichgender,".RData")) #lst_smktargets
 load(paste0("data/dep_calib_targets_",whichgender,".RData")) #lst_deptargets
-load(paste0("data/smkdep_calib_targets_",whichgender,".RData")) #lst_smkdeptargets
+# load(paste0("data/smkdep_calib_targets_",whichgender,".RData")) #lst_smkdeptargets
 
-lst_targets <- c(lst_smktargets,lst_deptargets[2],lst_smkdeptargets)
+lst_targets <- c(lst_smktargets,lst_deptargets[2])#,lst_smkdeptargets)
 lst_targets <- lapply(lst_targets,function(x) x[x[,"survey_year"]>=2016,]) # drop survey years after 2015
 
 v_target_names <- names(lst_targets) # number of calibration targets
@@ -132,27 +128,28 @@ main = function(v_params) { # v_params: run model for parameter calibration
   rr.DX = c(rep(1,18),rep(rr.DX_18.25,8),rep(rr.DX_26.34,9),rep(rr.DX_35.49,15),rep(rr.DX_50.64,15),rep(rr.DX_65.99,34),1)
   
   # Simulate for each birth cohort with parallelization
-  m.cohortbyage<-foreach (i=cohorts, .combine='rbind',
+  m_cohortbyage<-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
                           .export=c('mds_microsim','probs','get_prevs',
-                                    'n.i','n.t','v.n','n.s','v.M_1',
-                                    'p.NC','p.CF','p.NX','p.CX','p.FX.ysq',
+                                    'n_i','n_t','v_n','n_s','v_M_1',
+                                    'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
                                     'rr.DX','p.HD', 'p.DR', 'p.RD',
                                     'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.CR','rr.CD.FD')) %dopar% {
-                                      mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
-                                    }
-  ### run in serial for debugging:
-  # m.cohortbyage <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
+                                      mds_microsim(i, v_M_1, n_i, n_t, v_n)$m_M
+  }
+  # run in serial for debugging:
+  # m_cohortbyage <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v_M_1, n_i, n_t, v_n)$m_M }))
+  
   
   # Convert matrix from cohort-age to cohort-year
-  m.cohortbyyear <- matrix(nrow = n.i*length(cohorts), ncol = (length(cohorts)+100))
+  m_cohortbyyear <- matrix(nrow = n_i*length(cohorts), ncol = (length(cohorts)+100))
   for (b in 1:length(cohorts)){
-    m.cohortbyyear[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.cohortbyage[(n.i*(b-1)+1):(n.i*b),]
+    m_cohortbyyear[(n_i*(b-1)+1):(n_i*b),b:(100+b)] <- m_cohortbyage[(n_i*(b-1)+1):(n_i*b),]
   }
-  colnames(m.cohortbyyear) <- c(min(cohorts):(max(cohorts)+100))
+  colnames(m_cohortbyyear) <- c(min(cohorts):(max(cohorts)+100))
   
   # Output prevalence results as a list
-  model_res <- lapply(c("N","C","F","D"), get_prevs, m.cohortbyyear=m.cohortbyyear, minyear=2016, maxyear=max(cohorts)) # denominator is everyone still alive
-  model_res <- c(model_res, lapply(c("ND","CD","FD"), get_subgroup_prevs, denom="D",m.cohortbyyear=m.cohortbyyear, minyear=2016, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
+  model_res <- lapply(c("N","C","F","D"), get_prevs, m_cohortbyyear=m_cohortbyyear, minyear=2000, maxyear=max(cohorts)) # denominator is everyone still alive
+  model_res <- c(model_res, lapply(c("ND","CD","FD"), get_subgroup_prevs, denom="D",m_cohortbyyear=m_cohortbyyear, minyear=2000, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
   names(model_res) <- c("N","C","F","D","ND","CD","FD")
   for (l in 1:length(model_res)){
     model_res[[l]] <- model_res[[l]][order(model_res[[l]][,"age"],decreasing=FALSE),] # re-order the age groups from 18.25, 18.99, 26.34, etc
