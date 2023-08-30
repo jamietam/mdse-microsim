@@ -1,7 +1,7 @@
 rm(list = ls())  # remove any variables in R's memory
 setwd(file.path("C:/Users/JT936/Dropbox/GitHub/mds-microsim/data"))
 
-whichgender <- "females"
+whichgender <- "males"
 
 # Precompute all smoking and mortality probabilities by birth cohort
 load(paste0("smk_inputs_",whichgender,".RData")) # Load all smoking and mortality inputs as matrices
@@ -53,8 +53,19 @@ for (j in 1:40){
   }
 }
 
+# Format mortality by years since quit as an array instead of a list because it runs faster
+a_p.FX.ysq <- array(NA, dim = c(100,201,99))
+for (i in 1: 40){
+  a_p.FX.ysq[,,i] <-  p.FX.ysq[[i]]
+}
+
+for (i in 41:99){ # Fix mortality after 40 years since quitting
+  a_p.FX.ysq[,,i] <-  p.FX.ysq[[40]]
+}
+
+
 rm(smk_cess_cisnet,smk_init_cisnet,death_cs,death_fs,death_ns)
-save(p.NX,p.CX,p.FX.ysq,smk_init,smk_cess,file=paste0("smk_precomputed_inputs_",whichgender,".RData"))
+save(p.NX,p.CX,a_p.FX.ysq,smk_init,smk_cess,file=paste0("data/smk_precomputed_inputs_",whichgender,".RData"))
 
 
 # p.CX[,121:201] <- p.CX[,120] # hold mortality rates constant from 2020 bc onwards
