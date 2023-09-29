@@ -11,13 +11,16 @@ library(grid)
 library(lhs)
 library(darthtools)
 library(matrixStats)
-setwd(file.path("/Users/JT936/Dropbox/GitHub/mds-microsim/"))
+# setwd(file.path("/Users/JT936/Dropbox/GitHub/mds-microsim/"))
+setwd(file.path("/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/"))
 here::i_am("R/mds_calib.R")
 
 ####### For HPC runs ###########################################################
-# library(doMPI)
-# cl<-startMPIcluster()
-# registerDoMPI(cl)
+library(doParallel) ## Run on a single node
+n_cores = Sys.getenv("SLURM_CPUS_PER_TASK")
+cl <- makeCluster(as.numeric(n_cores),type="FORK")
+registerDoParallel(cl)
+
 ####### For Personal Computer and Open On Demand Interface runs ################
 library(doParallel) # set up model to run in parallel
 n_cores = Sys.getenv("SLURM_CPUS_PER_TASK")
@@ -29,7 +32,7 @@ whichgender <- "females"
 
 load(paste0("data/dep_precomputed_inputs_",whichgender,".RData")) 
 load(paste0("data/smk_precomputed_inputs_",whichgender,".RData")) #lst_smktargets																			  
-cohorts <- 1900:2020            # Change from 2015 to 2020
+cohorts <- 1900:2015            # Change from 2015 to 2020
 n_i   <- 1000                   # number of simulated individuals per run (cohort) - eventually want to run 10,000
 n_t   <- 100                    # time horizon per person, number of years
 v_n   <- c( "NH","CH","FH","ND","CD","FD","NR","CR","FR","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), "Happy" (H), Depressed (D), "Recovered" (R), Dead (X)
@@ -42,16 +45,16 @@ param_names <- c("s.NC_9.17","s.NC_18.25",
                  "s.HD_12.17", "s.HD_18.25", 
                  "rr.DX_18.25","rr.DX_26.34", "rr.DX_35.49","rr.DX_50.64","rr.DX_65.99", 
                  "rr.ND.CD", "rr.CH.CD","rr.CR.CD","rr.CD.CR","rr.CD.FD")
-value <- c(1.9302191, 0, # females
-           1.12487017532752 ,  0.100273604504764  , 0.88125688675791,     1.18021860113367,  0.530590985319447 ,
-           1,1, # "s.HD_12.17", "s.HD_18.25", 
-           4.00235600122251,  2.7723733425606, 3.81187480157241, 4.46946029571265, 2.26865975780884,
-           3.72653349413304, 3.38392959634075, 1.83616008337573, 1.84771835799088,   0.629814881996104)
+value<-c(1.2345755, 0, 
+         1.44216489, 0.98976261,  0.4572542, 0.95733806,  1.0720786, 
+         6.993208, 2.650889,    
+         5.709758, 5.432508, 7.043252, 5.365105, 3.363632,
+         1,1,1,1,1) 
 upper <- c(5,1,rep(2,5),rep(10,2),rep(8,5),rep(5,5))
 lower <- c(rep(0,2),rep(0,5),rep(1,2),rep(1,5),rep(0,5))
 
 ## Specify which parameters you want to calibrate
-calib <-c(1,0, rep(1,5), rep(1,2),rep(1,5),rep(1,5))
+calib <-c(1,0, rep(1,5), rep(1,2),rep(1,5),rep(0,5))
 calib_inputs <- cbind(value,lower,upper,calib)  
 rownames(calib_inputs) <- param_names
 
@@ -59,7 +62,7 @@ v_params <- calib_inputs[calib_inputs[,"calib"]==1,][,"value"]
 
 n_param <- length(v_params)
 set.seed(072218) # Specify seed (for reproducible sequence of random numbers)
-n_init <- 15 # number of initial starting points
+n_init <- 20 # number of initial starting points
 # range on input search space ## needs to match the number of params
 lb <- calib_inputs[calib_inputs[,"calib"]==1,][,"lower"] # lower bound
 ub <- calib_inputs[calib_inputs[,"calib"]==1,][,"upper"]  # upper bound
@@ -67,10 +70,10 @@ ub <- calib_inputs[calib_inputs[,"calib"]==1,][,"upper"]  # upper bound
 ## CALIBRATION TARGETS
 load(paste0("data/smk_calib_targets_",whichgender,".RData")) #lst_smktargets
 load(paste0("data/dep_calib_targets_",whichgender,".RData")) #lst_deptargets
-# load(paste0("data/smkdep_calib_targets_",whichgender,".RData")) #lst_smkdeptargets
+load(paste0("data/smkdep_calib_targets_",whichgender,".RData")) #lst_smkdeptargets
 
-lst_targets <- c(lst_smktargets,lst_deptargets[2])#,lst_smkdeptargets)
-lst_targets <- lapply(lst_targets,function(x) x[x[,"survey_year"]>=2016,]) # drop survey years after 2015
+lst_targets <- c(lst_smktargets,lst_deptargets[2],lst_smkdeptargets)
+lst_targets <- lapply(lst_targets,function(x) x[x[,"survey_year"]<=2015,]) # drop survey years after 2015
 
 v_target_names <- names(lst_targets) # number of calibration targets
 n_target <- length(v_target_names)
@@ -85,28 +88,28 @@ main = function(v_params) { # v_params: run model for parameter calibration
   
   s.NC_9.17 <- ifelse(calib_inputs["s.NC_9.17","calib"]==1,v_params["s.NC_9.17"],calib_inputs["s.NC_9.17","value"])
   s.NC_18.25 <- ifelse(calib_inputs["s.NC_18.25","calib"]==1,v_params["s.NC_18.25"],calib_inputs["s.NC_18.25","value"])
-  
+
   s.CF_18.25 <- ifelse(calib_inputs["s.CF_18.25","calib"]==1,v_params["s.CF_18.25"],calib_inputs["s.CF_18.25","value"])
   s.CF_26.34 <- ifelse(calib_inputs["s.CF_26.34","calib"]==1,v_params["s.CF_26.34"],calib_inputs["s.CF_26.34","value"])
   s.CF_35.49 <- ifelse(calib_inputs["s.CF_35.49","calib"]==1,v_params["s.CF_35.49"],calib_inputs["s.CF_35.49","value"])
   s.CF_50.64 <- ifelse(calib_inputs["s.CF_50.64","calib"]==1,v_params["s.CF_50.64"],calib_inputs["s.CF_50.64","value"])
   s.CF_65.99 <- ifelse(calib_inputs["s.CF_65.99","calib"]==1,v_params["s.CF_65.99"],calib_inputs["s.CF_65.99","value"])
-  
+
   s.HD_12.17 <-  ifelse(calib_inputs["s.HD_12.17","calib"]==1,v_params["s.HD_12.17"],calib_inputs["s.HD_12.17","value"])
   s.HD_18.25 <-  ifelse(calib_inputs["s.HD_18.25","calib"]==1,v_params["s.HD_18.25"],calib_inputs["s.HD_18.25","value"])
-  
+
   rr.DX_18.25 <- ifelse(calib_inputs["rr.DX_18.25","calib"]==1,v_params["rr.DX_18.25"],calib_inputs["rr.DX_18.25","value"])
   rr.DX_26.34 <- ifelse(calib_inputs["rr.DX_26.34","calib"]==1,v_params["rr.DX_26.34"],calib_inputs["rr.DX_26.34","value"])
   rr.DX_35.49 <- ifelse(calib_inputs["rr.DX_35.49","calib"]==1,v_params["rr.DX_35.49"],calib_inputs["rr.DX_35.49","value"])
   rr.DX_50.64 <- ifelse(calib_inputs["rr.DX_50.64","calib"]==1,v_params["rr.DX_50.64"],calib_inputs["rr.DX_50.64","value"])
   rr.DX_65.99 <- ifelse(calib_inputs["rr.DX_65.99","calib"]==1,v_params["rr.DX_65.99"],calib_inputs["rr.DX_65.99","value"])
-  
+
   rr.ND.CD <- ifelse(calib_inputs["rr.ND.CD","calib"]==1,v_params["rr.ND.CD"],calib_inputs["rr.ND.CD","value"])
   rr.CH.CD <- ifelse(calib_inputs["rr.CH.CD","calib"]==1,v_params["rr.CH.CD"],calib_inputs["rr.CH.CD","value"])
   rr.CR.CD <- ifelse(calib_inputs["rr.CR.CD","calib"]==1,v_params["rr.CR.CD"],calib_inputs["rr.CR.CD","value"])
   rr.CD.CR <- ifelse(calib_inputs["rr.CD.CR","calib"]==1,v_params["rr.CD.CR"],calib_inputs["rr.CD.CR","value"])
   rr.CD.FD <- ifelse(calib_inputs["rr.CD.FD","calib"]==1,v_params["rr.CD.FD"],calib_inputs["rr.CD.FD","value"])
-  
+
   ## Incidence
   for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
     bc1 = bc-1899
@@ -148,8 +151,8 @@ main = function(v_params) { # v_params: run model for parameter calibration
   colnames(m_cohortbyyear) <- c(min(cohorts):(max(cohorts)+100))
   
   # Output prevalence results as a list
-  model_res <- lapply(c("N","C","F","D"), get_prevs, m_cohortbyyear=m_cohortbyyear, minyear=2000, maxyear=max(cohorts)) # denominator is everyone still alive
-  model_res <- c(model_res, lapply(c("ND","CD","FD"), get_subgroup_prevs, denom="D",m_cohortbyyear=m_cohortbyyear, minyear=2000, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
+  model_res <- lapply(c("N","C","F","D"), get_prevs, m_cohortbyyear=m_cohortbyyear, minyear=2005, maxyear=max(cohorts)) # denominator is everyone still alive
+  model_res <- c(model_res, lapply(c("ND","CD","FD"), get_subgroup_prevs, denom="D",m_cohortbyyear=m_cohortbyyear, minyear=2005, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
   names(model_res) <- c("N","C","F","D","ND","CD","FD")
   for (l in 1:length(model_res)){
     model_res[[l]] <- model_res[[l]][order(model_res[[l]][,"age"],decreasing=FALSE),] # re-order the age groups from 18.25, 18.99, 26.34, etc
@@ -169,7 +172,8 @@ f_gof <- function(v_params){
   v_GOF <- numeric(n_target)   # Calculate goodness-of-fit of model outputs to targets
   
   # Calibrate to N, C, F, D and ND/D, CD/D, FD/D prevalences
-  for (r in 1:length(lst_targets)){ # sum of squared differences
+  # for (r in 1:length(lst_targets)){ # sum of squared differences
+  for (r in 1:4){
     gof<- sum((lst_targets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
     v_GOF[r] <-gof
   }
@@ -210,7 +214,7 @@ for (j in 1:n_init){ # j <- 1
   fit_nm <- lbfgsb3c(par = v_params_init[j,], fn = f_gof, lower=lb, upper=ub)
   
   m_calib_res[j,] <- c(fit_nm$par, fit_nm$value)
-  
+  cat(paste("FINISHED INITIAL STARTING POINT: ",j))
 }
 
 # Calculate computation time
@@ -434,7 +438,7 @@ ncf_totalD <- ggplot() +
 
 
 ## Figures for mortality by smoking and dep status  
-p.NCFX <- as.data.frame(cbind(c(p.NX[,100],p.CX[,100],p.FX.ysq[[5]][,100]),c(rep("NX",100),rep("CX",100),rep("FX",100)),c(rep(0:99,3))))
+p.NCFX <- as.data.frame(cbind(c(p.NX[,100],p.CX[,100],a_p.FX.ysq[,100,5]),c(rep("NX",100),rep("CX",100),rep("FX",100)),c(rep(0:99,3))))
 names(p.NCFX) <- c("prob","status","age")
 p.NCFX$prob <- as.numeric(p.NCFX$prob)
 p.NCFX$age <- as.numeric(p.NCFX$age)
@@ -482,9 +486,14 @@ ncf_totalD
 p.NCFX_age
 dev.off()
 
-
-closeCluster(cl)
-mpi.quit()
+## For MPI ONLY: 
+## Put this at beginning:
+# library(doMPI) ## Run on multiple nodes
+# cl<-startMPIcluster()
+# registerDoMPI(cl)
+## Put this at the end of the R script:
+# closeCluster(cl)
+# mpi.quit()
 ############################################################################################
 ## The microsimulation model code was adapted from the DARTH workgroup (www.darthworkgroup.com). 
 # 	See Appendix A of the article: 
