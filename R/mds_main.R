@@ -21,7 +21,7 @@ n_cores = Sys.getenv("SLURM_CPUS_PER_TASK")
 cl <- makeCluster(as.numeric(n_cores),type="FORK")
 registerDoParallel(cl)
 
-####### For Personal Computer and Open On Demand Interface runs ################
+# ###### For Personal Computer and Open On Demand Interface runs ################
 # library(doParallel) # set up model to run in parallel
 # n_cores = Sys.getenv("SLURM_CPUS_PER_TASK")
 # cl <- makeCluster(detectCores())
@@ -31,6 +31,7 @@ registerDoParallel(cl)
 whichgender <- "females"
 
 load(paste0("data/dep_precomputed_inputs_",whichgender,".RData")) 
+rm()
 load(paste0("data/smk_precomputed_inputs_",whichgender,".RData")) #lst_smktargets																			  
 cohorts <- 1900:2020            # Change from 2015 to 2020
 n_i   <- 1000                   # number of simulated individuals per run (cohort) - eventually want to run 10,000
@@ -42,19 +43,34 @@ v_M_1 <- rep("NH", n_i)         # everyone begins in the Never smoker Never MD s
 ## CALIBRATION PARAMETERS
 param_names <- c("s.NC_9.17","s.NC_18.25",
                  "s.CF_18.25", "s.CF_26.34", "s.CF_35.49" ,"s.CF_50.64"  ,"s.CF_65.99" , 
-                 "s.HD_12.17", "s.HD_18.25", 
+                 "p.DR","s.HD_12.17", "s.HD_18.25", 
                  "rr.DX_18.25","rr.DX_26.34", "rr.DX_35.49","rr.DX_50.64","rr.DX_65.99", 
-                 "rr.ND.CD", "rr.CH.CD","rr.CR.CD","rr.CD.CR","rr.CD.FD")
-value<-c(2.181656, 0, 
-         0.953952552750707, 0.87277384842746,  0.747292307089083, 0.725445074085355,  0.568203055122699, 
-         1.363110, 4.844015,    
-         5.523897, 7.9721387, 4.574927, 5.191135,  1.001617, 
-         3.715614, 1.039868, 4.350371, 1, 1.0005584)
-upper <- c(5,1,rep(1,5),rep(10,2),rep(8,5),rep(5,5))
-lower <- c(rep(0,2),rep(0,5),rep(1,2),rep(1,5),rep(1,5))
+                 "rr.ND.CD", "rr.CH.CD","rr.CR.CD","rr.CD.FD")
+# value<-c(2.1991585, 0, 
+#          0.7833367, 0.5510059,  0.6532555, 0.5790247,  0.6374476, 
+#          0.173, 1,  1, 
+#          5.5302388,  6.8444939, 4.7752103,  7.7882404,  3.7432371, 
+#          1.5520095,  1.6584458,  2.1256031,  2.2640631)
+value<-c(2.081761888, 0, 
+0.993978012, 0.564477195, 0.87073767, 0.654785173, 0.664328015,
+0.379283838, 3.500968429, 3.908561303,
+7.284504694, 5.400727017, 5.518611922, 6.34692571,3.801531806,
+1.271321945,1.848291364 ,1.528161447,1.220915551)
+
+upper <- c(2.5,1,
+           rep(1,5),
+           1,rep(8,2),
+           rep(8,5),
+           rep(3,4))
+lower <- c(2.0,0,
+           rep(0.5,5),
+           0,rep(1,2),
+           rep(1,5),
+           rep(1,4))
 
 ## Specify which parameters you want to calibrate
-calib <-c(0,0, rep(0,5), rep(1,2),rep(1,5),1,1,1,0,1)
+calib <-c(0,0, 
+          rep(0,5), 1, rep(1,2),rep(1,5),1,1,1,1)
 calib_inputs <- cbind(value,lower,upper,calib)  
 rownames(calib_inputs) <- param_names
 v_params <- calib_inputs[calib_inputs[,"calib"]==1,][,"value"]  
@@ -72,7 +88,7 @@ load(paste0("data/smk_calib_targets_",whichgender,".RData")) #lst_smktargets
 load(paste0("data/dep_calib_targets_",whichgender,".RData")) #lst_deptargets
 load(paste0("data/smkdep_calib_targets_",whichgender,".RData")) #lst_smkdeptargets
 lst_targets <- c(lst_smktargets,lst_deptargets[2],lst_smkdeptargets)
-lst_calibtargets <- lapply(lst_targets,function(x) x[x[,"survey_year"]<=max(cohorts),]) # keep survey years based on last cohort 2015 vs 2020
+lst_calibtargets <- lapply(lst_targets,function(x) x[x[,"survey_year"]<=max(cohorts) & x[,"survey_year"]>=2016,]) # keep survey years 2016-2020
 
 v_target_names <- names(lst_calibtargets) # number of calibration targets
 n_target <- length(v_target_names)
@@ -106,9 +122,14 @@ main = function(v_params) { # v_params: run model for parameter calibration
   rr.ND.CD <- ifelse(calib_inputs["rr.ND.CD","calib"]==1,v_params["rr.ND.CD"],calib_inputs["rr.ND.CD","value"])
   rr.CH.CD <- ifelse(calib_inputs["rr.CH.CD","calib"]==1,v_params["rr.CH.CD"],calib_inputs["rr.CH.CD","value"])
   rr.CR.CD <- ifelse(calib_inputs["rr.CR.CD","calib"]==1,v_params["rr.CR.CD"],calib_inputs["rr.CR.CD","value"])
-  rr.CD.CR <- ifelse(calib_inputs["rr.CD.CR","calib"]==1,v_params["rr.CD.CR"],calib_inputs["rr.CD.CR","value"])
   rr.CD.FD <- ifelse(calib_inputs["rr.CD.FD","calib"]==1,v_params["rr.CD.FD"],calib_inputs["rr.CD.FD","value"])
 
+  
+  p.DR=NULL
+  p.DR[1:12] <- p.DR[100] <- 0 # probability to recover, final value = 0 because mortality prob = 1
+  p.DR[13:99] <- ifelse(calib_inputs["p.DR","calib"]==1,v_params["p.DR"],calib_inputs["p.DR","value"]) # assumes constant recovery by age
+  
+  
   ## Incidence
   for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
     bc1 = bc-1899
@@ -135,7 +156,7 @@ main = function(v_params) { # v_params: run model for parameter calibration
                                     'n_i','n_t','v_n','n_s','v_M_1',
                                     'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
                                     'rr.DX','p.HD', 'p.DR', 'p.RD',
-                                    'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.CR','rr.CD.FD')) %dopar% {
+                                    'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD')) %dopar% {
                                       mds_microsim(i, v_M_1, n_i, n_t, v_n)$m_M
   }
   # run in serial for debugging:
@@ -150,8 +171,8 @@ main = function(v_params) { # v_params: run model for parameter calibration
   colnames(m_cohortbyyear) <- c(min(cohorts):(max(cohorts)+100))
   
   # Output prevalence results as a list
-  model_res <- lapply(c("N","C","F","D"), get_prevs, m_cohortbyyear=m_cohortbyyear, minyear=2005, maxyear=max(cohorts)) # denominator is everyone still alive
-  model_res <- c(model_res, lapply(c("ND","CD","FD"), get_subgroup_prevs, denom="D",m_cohortbyyear=m_cohortbyyear, minyear=2005, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
+  model_res <- lapply(c("N","C","F","D"), get_prevs, m_cohortbyyear=m_cohortbyyear, minyear=2016, maxyear=max(cohorts)) # denominator is everyone still alive
+  model_res <- c(model_res, lapply(c("ND","CD","FD"), get_subgroup_prevs, denom="D",m_cohortbyyear=m_cohortbyyear, minyear=2016, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
   names(model_res) <- c("N","C","F","D","ND","CD","FD")
   for (l in 1:length(model_res)){
     model_res[[l]] <- model_res[[l]][order(model_res[[l]][,"age"],decreasing=FALSE),] # re-order the age groups from 18.25, 18.99, 26.34, etc
@@ -174,6 +195,7 @@ for (r in 1:length(lst_calibtargets)){ # sum of squared differences
 }
 names(v_GOF) <- paste0(names(lst_targets),".fit_value")
 fit_value <- sum(v_GOF)
+print(fit_value)
 print(v_GOF)
 # Data visualization ------------------------------------------------------
 
@@ -187,6 +209,10 @@ s.CF_35.49 <- ifelse(calib_inputs["s.CF_35.49","calib"]==1,v_params["s.CF_35.49"
 s.CF_50.64 <- ifelse(calib_inputs["s.CF_50.64","calib"]==1,v_params["s.CF_50.64"],calib_inputs["s.CF_50.64","value"])
 s.CF_65.99 <- ifelse(calib_inputs["s.CF_65.99","calib"]==1,v_params["s.CF_65.99"],calib_inputs["s.CF_65.99","value"])
 
+p.DR=NULL
+p.DR[1:12] <- p.DR[100] <- 0 # probability to recover, final value = 0 because mortality prob = 1
+p.DR[13:99] <- ifelse(calib_inputs["p.DR","calib"]==1,v_params["p.DR"],calib_inputs["p.DR","value"])
+
 s.HD_12.17 <-  ifelse(calib_inputs["s.HD_12.17","calib"]==1,v_params["s.HD_12.17"],calib_inputs["s.HD_12.17","value"])
 s.HD_18.25 <-  ifelse(calib_inputs["s.HD_18.25","calib"]==1,v_params["s.HD_18.25"],calib_inputs["s.HD_18.25","value"])
 
@@ -199,7 +225,6 @@ rr.DX_65.99 <- ifelse(calib_inputs["rr.DX_65.99","calib"]==1,v_params["rr.DX_65.
 rr.ND.CD <- ifelse(calib_inputs["rr.ND.CD","calib"]==1,v_params["rr.ND.CD"],calib_inputs["rr.ND.CD","value"])
 rr.CH.CD <- ifelse(calib_inputs["rr.CH.CD","calib"]==1,v_params["rr.CH.CD"],calib_inputs["rr.CH.CD","value"])
 rr.CR.CD <- ifelse(calib_inputs["rr.CR.CD","calib"]==1,v_params["rr.CR.CD"],calib_inputs["rr.CR.CD","value"])
-rr.CD.CR <- ifelse(calib_inputs["rr.CD.CR","calib"]==1,v_params["rr.CD.CR"],calib_inputs["rr.CD.CR","value"])
 rr.CD.FD <- ifelse(calib_inputs["rr.CD.FD","calib"]==1,v_params["rr.CD.FD"],calib_inputs["rr.CD.FD","value"])
 
 ## Initiation - No initiation after 25
@@ -245,7 +270,7 @@ ns_age <-ggplot() +
   geom_pointrange(data= subset(calibtargets,status=="neversmoker"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, status=="neversmoker" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
+  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
   labs(title=paste0("Never smokers - ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
@@ -253,7 +278,7 @@ cs_age <-ggplot() +
   geom_pointrange(data= subset(calibtargets,status=="currentsmoker"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, status=="currentsmoker" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
+  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
   labs(title=paste0("Current smokers - ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
@@ -261,7 +286,7 @@ fs_age <-ggplot() +
   geom_pointrange(data= subset(calibtargets,status=="formersmoker"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, status=="formersmoker" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
+  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
   labs(title=paste0("Former smokers - ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
@@ -271,7 +296,7 @@ ncf_total <- ggplot() +
                   aes(x = survey_year, y = prev,ymin=prev_lowCI, ymax=prev_highCI, color=status,shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, age==18.99 & (status=="neversmoker" | status=="currentsmoker" | status=="formersmoker") ),  aes(x=year, y= prev,color=status))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
+  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
   labs(title=paste0("Smoking distribution - ",whichgender," ages 18-99"))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
@@ -292,22 +317,22 @@ for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort forma
 p.HD_age <- ggplot() + geom_line(aes(x=0:99,y=p.HD[,(2020-1900)],col="bc 2020")) +
   geom_line(aes(x=0:99,y=p.HD[,(1980-1900)],col="bc 1980")) +
   geom_line(aes(x=0:99,y=p.HD[,(1995-1900)],col="bc 1995")) +
-  scale_y_continuous(name="Annual incidence probability (p.HD)", limits=c(0,0.25), breaks=seq(0,0.25,0.01)) +
+  scale_y_continuous(name="Annual incidence probability (p.HD)", limits=c(0,1), breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Age", limits=c(0,99), breaks=c(0,12,26,36,50,65,100)) +
   labs(title="Incidence, calibrated estimates",color=NULL)
 
 p.HD_ageC <- ggplot() + geom_line(aes(x=0:99,y=rr.CH.CD*p.HD[,(2020-1900)],col="bc 2020")) +
   geom_line(aes(x=0:99,y=rr.CH.CD*p.HD[,(1980-1900)],col="bc 1980")) +
   geom_line(aes(x=0:99,y=rr.CH.CD*p.HD[,(1995-1900)],col="bc 1995")) +
-  scale_y_continuous(name="Annual incidence probability (p.HD, rr.CH.CD)", limits=c(0,0.25), breaks=seq(0,0.25,0.01)) +
+  scale_y_continuous(name="Annual incidence probability (p.HD, rr.CH.CD)", limits=c(0,1), breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Age", limits=c(0,99), breaks=c(0,12,26,36,50,65,100)) +
   labs(title="Incidence among current smokers, rr.CH.CD*",color=NULL)
 
 ## Figure for recovery inputs
-p.DR_age <- ggplot() +  geom_line( aes(x=0:99, y=p.DR)) + geom_point(aes(x=0:99),y=rr.CD.CR*p.DR)+ 
+p.DR_age <- ggplot() +  geom_line( aes(x=0:99, y=p.DR)) + 
   scale_y_continuous(name="Probability of recovery (p.DR)", limits=c(0,1), breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Age", limits=c(0,99), breaks=c(0,12,26,36,50,65,100)) +
-  labs(title="Recovery, calibrated estimates, rr.CD.CR" )
+  labs(title="Recovery, calibrated estimates, p.DR" )
 
 ## Figure for recurrence inputs
 p.RD_age <- ggplot() +  geom_line( aes(x=0:99, y=p.RD)) + geom_point(aes(x=0:99),y=rr.CR.CD*p.RD)+
@@ -320,7 +345,7 @@ D_age <-ggplot() +
                   aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), 
                       shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, status=="depressed" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
-  scale_y_continuous(name="Prevalence (%)",limits=c(0,0.3),breaks=seq(0,0.3,0.05)) +
+  scale_y_continuous(name="Prevalence (%)",limits=c(0,0.4),breaks=seq(0,0.4,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
   labs(title=paste0("Current MDE - ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
@@ -340,7 +365,7 @@ ns_ageD <-ggplot() +
   geom_pointrange(data= subset(calibtargets,status=="neversmokerD"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, status=="neversmokerD" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
+  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
   labs(title=paste0("Never smokers - deppop, ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
@@ -348,7 +373,7 @@ cs_ageD <-ggplot() +
   geom_pointrange(data= subset(calibtargets,status=="currentsmokerD"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, status=="currentsmokerD" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
+  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
   labs(title=paste0("Current smokers - deppop, ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
@@ -356,7 +381,7 @@ fs_ageD <-ggplot() +
   geom_pointrange(data= subset(calibtargets,status=="formersmokerD"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, status=="formersmokerD" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
+  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
   labs(title=paste0("Former smokers - deppop, ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
@@ -366,7 +391,7 @@ ncf_totalD <- ggplot() +
                   aes(x = survey_year, y = prev,ymin=prev_lowCI, ymax=prev_highCI, color=status,shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, age==18.99 & (status=="neversmokerD" | status=="currentsmokerD" | status=="formersmokerD")),  aes(x=year, y= prev,color=status))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,2020),breaks=seq(2005,2020,1))  +
+  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
   labs(title=paste0("Smoking distribution - ",whichgender," ages 18-99"))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 

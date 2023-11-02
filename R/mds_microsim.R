@@ -73,7 +73,7 @@ probs <- function(bc, t, v_ysq, M_t) { # updates the transition probabilities of
   rownames(m_p.t) <-  v_n                               
   
   # update m_p.t with the probabilities conditional on survival  
-  # interaction effects: rr.ND.CD, rr.CH.CD, rr.CR.CD, rr.CD.CR, rr.CD.FD)
+  # interaction effects: rr.ND.CD, rr.CH.CD, rr.CR.CD, rr.CD.FD)
   
   # Happy
   m_p.t["NH", M_t == "NH"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.HD[t,bc1])
@@ -96,9 +96,9 @@ probs <- function(bc, t, v_ysq, M_t) { # updates the transition probabilities of
   m_p.t["NR", M_t == "ND"] <- (1-rr.DX[t]*p.NX[t,bc1])*p.DR[t]
   m_p.t["X", M_t == "ND"] <- rr.DX[t]*p.NX[t,bc1]
   
-  m_p.t["CD",M_t == "CD"] <- (1-rr.DX[t]*p.CX[t,bc1])*(1-rr.CD.FD*p.CF[t,bc1]-rr.CD.CR*p.DR[t])
+  m_p.t["CD",M_t == "CD"] <- (1-rr.DX[t]*p.CX[t,bc1])*(1-rr.CD.FD*p.CF[t,bc1]-p.DR[t])
   m_p.t["FD",M_t == "CD"] <-  (1-rr.DX[t]*p.CX[t,bc1])*rr.CD.FD*p.CF[t,bc1]
-  m_p.t["CR",M_t == "CD"] <-  (1-rr.DX[t]*p.CX[t,bc1])*rr.CD.CR*p.DR[t]
+  m_p.t["CR",M_t == "CD"] <-  (1-rr.DX[t]*p.CX[t,bc1])*p.DR[t]
   m_p.t["X",M_t == "CD"] <-  rr.DX[t]*p.CX[t,bc1]	
   
   m_p.t["FD", M_t == "FD"] <- (1-rr.DX[t]*a_p.FX.ysq[t, bc1, v_ysq[M_t=="FD"]])*(1-p.DR[t])
