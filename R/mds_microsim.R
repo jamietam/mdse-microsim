@@ -2,7 +2,7 @@
 
 # The microsim function keeps track of what happens to each individual during each cycle. 
 # Arguments:  
-# v_M_1:   vector of initial states for individuals 
+# v_M.1:   vector of initial states for individuals 
 # n_i:     number of individuals
 # n_t:     total number of cycles to run the model
 # v_n:     vector of health state names
@@ -13,7 +13,7 @@
 # Makes use of:
 # Probs:   function for the estimation of transition probabilities
 
-mds_microsim <- function(bc,v_M_1, n_i, n_t, v_n, TR.out = TRUE, TS.out = TRUE, seed = 1) {
+mds_microsim <- function(bc,v_M.1, n_i, n_t, v_n, TR.out = TRUE, TS.out = TRUE, seed = 1) {
   set.seed(seed)                                      # set the seed for every individual for the random number generator
   
   v_ysq <- rep(n_i, 0) # vector counting how many years since quit
@@ -22,7 +22,7 @@ mds_microsim <- function(bc,v_M_1, n_i, n_t, v_n, TR.out = TRUE, TS.out = TRUE, 
   m_M <- matrix(nrow = n_i, ncol = n_t + 1, 
                 dimnames = list(paste(bc, 1:n_i, sep = "."), # each individual, year of birth
                                 paste(0:n_t, sep = " ")))  
-  m_M[, 1] <- v_M_1                                         # indicate the initial health state   
+  m_M[, 1] <- v_M.1                                         # indicate the initial health state   
   
   for (t in 1:n_t) {
     if (bc+t>2100){ # exit for loop if going past the year 2100
@@ -73,13 +73,13 @@ probs <- function(bc, t, v_ysq, M_t) { # updates the transition probabilities of
   rownames(m_p.t) <-  v_n                               
   
   # update m_p.t with the probabilities conditional on survival  
-  # interaction effects: rr.ND.CD, rr.CH.CD, rr.CR.CD, rr.CD.CR, rr.CD.FD)
+  # interaction effects: rr.ND.CD, rr.CH.CD, rr.CR.CD, rr.CD.FD)
   
   # Happy
-  m_p.t["NH", M_t == "NH"] <- (1-p.NX[t])*(1-p.NC[t,bc1]-p.HD[t,bc1])
-  m_p.t["CH", M_t == "NH"] <- (1-p.NX[t])*p.NC[t,bc1]
-  m_p.t["ND", M_t == "NH"] <- (1-p.NX[t])*p.HD[t,bc1]
-  m_p.t["X",  M_t == "NH"] <- p.NX[t]
+  m_p.t["NH", M_t == "NH"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.HD[t,bc1])
+  m_p.t["CH", M_t == "NH"] <- (1-p.NX[t,bc1])*p.NC[t,bc1]
+  m_p.t["ND", M_t == "NH"] <- (1-p.NX[t,bc1])*p.HD[t,bc1]
+  m_p.t["X",  M_t == "NH"] <- p.NX[t,bc1]
   
   m_p.t["CH",M_t == "CH"] <- (1-p.CX[t,bc1])*(1-rr.CH.CD*p.HD[t,bc1]-p.CF[t,bc1])
   m_p.t["FH",M_t == "CH"] <- (1-p.CX[t,bc1])*p.CF[t,bc1]
@@ -96,9 +96,9 @@ probs <- function(bc, t, v_ysq, M_t) { # updates the transition probabilities of
   m_p.t["NR", M_t == "ND"] <- (1-rr.DX[t]*p.NX[t,bc1])*p.DR[t]
   m_p.t["X", M_t == "ND"] <- rr.DX[t]*p.NX[t,bc1]
   
-  m_p.t["CD",M_t == "CD"] <- (1-rr.DX[t]*p.CX[t,bc1])*(1-rr.CD.FD*p.CF[t,bc1]-rr.CD.CR*p.DR[t])
+  m_p.t["CD",M_t == "CD"] <- (1-rr.DX[t]*p.CX[t,bc1])*(1-rr.CD.FD*p.CF[t,bc1]-p.DR[t])
   m_p.t["FD",M_t == "CD"] <-  (1-rr.DX[t]*p.CX[t,bc1])*rr.CD.FD*p.CF[t,bc1]
-  m_p.t["CR",M_t == "CD"] <-  (1-rr.DX[t]*p.CX[t,bc1])*rr.CD.CR*p.DR[t]
+  m_p.t["CR",M_t == "CD"] <-  (1-rr.DX[t]*p.CX[t,bc1])*p.DR[t]
   m_p.t["X",M_t == "CD"] <-  rr.DX[t]*p.CX[t,bc1]	
   
   m_p.t["FD", M_t == "FD"] <- (1-rr.DX[t]*a_p.FX.ysq[t, bc1, v_ysq[M_t=="FD"]])*(1-p.DR[t])
