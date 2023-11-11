@@ -31,14 +31,38 @@ registerDoParallel(cl)
 whichgender <- "females"
 
 load(paste0("data/dep_precomputed_inputs_",whichgender,".RData")) 
-rm()
 load(paste0("data/smk_precomputed_inputs_",whichgender,".RData")) #lst_smktargets																			  
 cohorts <- 1900:2020            # Change from 2015 to 2020
-n_i   <- 1000                   # number of simulated individuals per run (cohort) - eventually want to run 10,000
-n_t   <- 100                    # time horizon per person, number of years
-v_n   <- c( "NH","CH","FH","ND","CD","FD","NR","CR","FR","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), "Happy" (H), Depressed (D), "Recovered" (R), Dead (X)
-n_s   <- length(v_n)            # the number of health states
-v_M_1 <- rep("NH", n_i)         # everyone begins in the Never smoker Never MD state 
+n.i   <- 10                   # number of simulated individuals per run (cohort) - eventually want to run 10,000
+n.t   <- 100                    # time horizon per person, number of years
+v.n   <- c( "NH","CH","FH","ND","CD","FD","NR","CR","FR","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), "Happy" (H), Depressed (D), "Recovered" (R), Dead (X)
+n.s   <- length(v.n)            # the number of health states
+v.M_1 <- rep("NH", n.i)         # everyone begins in the Never smoker Never MD state
+d.c <- d.u <- d.w <- 0.03              # equal discounting of costsand QALYs by 3
+
+# Cost inputs 
+c.NH <- c.NR <- rep(2000, n.t)           # cost of remaining one cycle Never Smoking, No MD
+c.CH <- c.CR <- rep(4000, n.t)            # cost of remaining one cycle Current Smoking, No MD 
+c.FH <- c.FR <- rep(15000, n.t)           # cost of remaining one cycle Former Smoking, No MD
+c.ND <- rep(12000, n.t)                    # cost of remaining one cycle Never Smoking, MD            
+c.CD <- rep(20000, n.t)                    # cost of remaining one cycle Current Smoking, MD
+c.FD <- rep(15000, n.t)                    # cost of remaining one cycle Former Smoking, MD
+
+# Utility inputs
+u.NH <- u.NR <- rep(1, n.t)        
+u.CH <- u.CR <- rep(0.75, n.t)     
+u.FH <- u.FR <- rep(0.5, n.t)      
+u.ND <- rep(0.95, n.t)                
+u.CD <- rep(0.6, n.t)
+u.FD <- rep(0.8, n.t)
+
+# Productivity inputs
+w.NH <- w.NR <- rep(50000, n.t)
+w.CH <- w.CR <- rep(40000, n.t)
+w.FH <- w.FR <- rep(45000, n.t)
+w.ND <- rep(45000, n.t)
+w.CD <- rep(35000, n.t)
+w.FD <- rep(40000, n.t)
 
 ## CALIBRATION PARAMETERS
 param_names <- c("s.NC_9.17","s.NC_18.25",
@@ -77,7 +101,7 @@ v_params <- calib_inputs[calib_inputs[,"calib"]==1,][,"value"]
 n_param <- length(v_params) # number of parameters to calibrate
 
 # Number of initial starting points
-n_init <- 40 
+n.init <- 40 
 
 # Provide ranges for input search space
 lb <- calib_inputs[calib_inputs[,"calib"]==1,][,"lower"] # lower bound
@@ -91,7 +115,7 @@ lst_targets <- c(lst_smktargets,lst_deptargets[2],lst_smkdeptargets)
 lst_calibtargets <- lapply(lst_targets,function(x) x[x[,"survey_year"]<=max(cohorts) & x[,"survey_year"]>=2016,]) # keep survey years 2016-2020
 
 v_target_names <- names(lst_calibtargets) # number of calibration targets
-n_target <- length(v_target_names)
+n.target <- length(v_target_names)
 
 ## MODEL FUNCTIONS
 source("R/mds_microsim.R", echo = FALSE) # microsimulation model and probability functions
@@ -124,11 +148,9 @@ main = function(v_params) { # v_params: run model for parameter calibration
   rr.CR.CD <- ifelse(calib_inputs["rr.CR.CD","calib"]==1,v_params["rr.CR.CD"],calib_inputs["rr.CR.CD","value"])
   rr.CD.FD <- ifelse(calib_inputs["rr.CD.FD","calib"]==1,v_params["rr.CD.FD"],calib_inputs["rr.CD.FD","value"])
 
-  
   p.DR=NULL
   p.DR[1:12] <- p.DR[100] <- 0 # probability to recover, final value = 0 because mortality prob = 1
   p.DR[13:99] <- ifelse(calib_inputs["p.DR","calib"]==1,v_params["p.DR"],calib_inputs["p.DR","value"]) # assumes constant recovery by age
-  
   
   ## Incidence
   for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
@@ -150,33 +172,55 @@ main = function(v_params) { # v_params: run model for parameter calibration
   
   rr.DX = c(rep(1,18),rep(rr.DX_18.25,8),rep(rr.DX_26.34,9),rep(rr.DX_35.49,15),rep(rr.DX_50.64,15),rep(rr.DX_65.99,34),1)
   
-  # Simulate for each birth cohort with parallelization
-  m_cohortbyage<-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
-                          .export=c('mds_microsim','probs','get_prevs',
-                                    'n_i','n_t','v_n','n_s','v_M_1',
+  # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
+  m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
+                          .export=c('mds_microsim','probs','costs','utils','productivity','get_prevs',
+                                    'n.i','n.t','v.n','n.s','v.M_1',
                                     'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
                                     'rr.DX','p.HD', 'p.DR', 'p.RD',
                                     'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD')) %dopar% {
-                                      mds_microsim(i, v_M_1, n_i, n_t, v_n)$m_M
+                                      mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
   }
   # run in serial for debugging:
-  # m_cohortbyage <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v_M_1, n_i, n_t, v_n)$m_M }))
+  # m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
   
-  
-  # Convert matrix from cohort-age to cohort-year
-  m_cohortbyyear <- matrix(nrow = n_i*length(cohorts), ncol = (length(cohorts)+100))
+  # Calculate costs, utilities, and productivity for each health state by age in the population
+  m.C <- costs(m.M)
+  m.U <- utils(m.M)
+  m.W <- productivity(m.M)
+
+  # Convert matrix from cohort-age to cohort-year (cy)
+  m.M_cy <- m.C_cy <- m.W_cy <- m.U_cy <- matrix(nrow = n.i*length(cohorts), ncol = (length(cohorts)+100))
   for (b in 1:length(cohorts)){
-    m_cohortbyyear[(n_i*(b-1)+1):(n_i*b),b:(100+b)] <- m_cohortbyage[(n_i*(b-1)+1):(n_i*b),]
+    m.M_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.M[(n.i*(b-1)+1):(n.i*b),]
+    m.C_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.C[(n.i*(b-1)+1):(n.i*b),]
+    m.U_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.U[(n.i*(b-1)+1):(n.i*b),]
+    m.W_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.W[(n.i*(b-1)+1):(n.i*b),]
   }
-  colnames(m_cohortbyyear) <- c(min(cohorts):(max(cohorts)+100))
+  
+  total_cuw <- rbind(colSums(m.C_cy,na.rm=TRUE),colSums(m.U_cy,na.rm=TRUE),colSums(m.W_cy,na.rm=TRUE))
+  rownames(cuws)<-c("total costs","total QALYs","total productivity")
+  colnames(m.M_cy) <- colnames(cuw) <-colnames(m.C_cy) <- colnames(m.U_cy) <- colnames(m.W_cy)<- c(min(cohorts):(max(cohorts)+100))
   
   # Output prevalence results as a list
-  model_res <- lapply(c("N","C","F","D"), get_prevs, m_cohortbyyear=m_cohortbyyear, minyear=2016, maxyear=max(cohorts)) # denominator is everyone still alive
-  model_res <- c(model_res, lapply(c("ND","CD","FD"), get_subgroup_prevs, denom="D",m_cohortbyyear=m_cohortbyyear, minyear=2016, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
+  model_res <- lapply(c("N","C","F","D"), get_prevs, m.M_cy=m.M_cy, minyear=2016, maxyear=max(cohorts)) # denominator is everyone still alive
+  model_res <- c(model_res, lapply(c("ND","CD","FD"), get_subgroup_prevs, denom="D",m.M_cy=m.M_cy, minyear=2016, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
   names(model_res) <- c("N","C","F","D","ND","CD","FD")
   for (l in 1:length(model_res)){
     model_res[[l]] <- model_res[[l]][order(model_res[[l]][,"age"],decreasing=FALSE),] # re-order the age groups from 18.25, 18.99, 26.34, etc
   }
+  
+  # v.d_c <- 1 / (1 + d.c) ^ (0:n.t)   # calculate the cost discount weight based on the discount rate d.c
+  # v.d_u <- 1 / (1 + d.u) ^ (0:n.t)   # calculate the QALY discount weight based on the discount rate d.u
+  # v.d_w <- 1 / (1 + d.w) ^ (0:n.t)   # calculate the QALY discount weight based on the discount rate d.u
+   
+  # tc <- m.C %*% v.d_c       # total (discounted) costs across population
+  # tu <- m.U %*% v.d_u       # total (discounted) QALYs
+  # tw <- m.W %*% v.d_w       # total (discounted) productivity
+   
+  # tc_hat <- mean(tc)        # average (discounted) cost 
+  # tu_hat <- mean(tu)        # average (discounted) QALYs
+  # tw_hat <- mean(tw)
   
   cat(paste0("\n  ", v_params," "))
   print(Sys.time() - t_init) # End timer
@@ -188,7 +232,7 @@ source("R/mds_calib.R", echo = TRUE) # run calibration
 # Run the model (again) ---------------------------------------------------
 model_res<-main(v_params)
 
-v_GOF <- numeric(n_target)   # Calculate goodness-of-fit of model outputs to targets
+v_GOF <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
 for (r in 1:length(lst_calibtargets)){ # sum of squared differences
   gof<- sum((lst_calibtargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
   v_GOF[r] <-gof 
