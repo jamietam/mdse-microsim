@@ -252,9 +252,12 @@ grid_arrange_shared_legend(list(ns_age, cs_age, fs_age),3,"Smoking distribution"
 ncf_total
 grid_arrange_shared_legend(list(p.HD_age,p.HD_ageC),2,"Incidence by smoking status")
 grid.arrange(p.DR_age,p.RD_age,ncol=2)
+Sys.sleep(3)
 D_age
+Sys.sleep(3)
 D_total
 grid_arrange_shared_legend(list(ns_ageD, cs_ageD, fs_ageD),3,"Smoking distribution among people with depression")
+Sys.sleep(3)
 ncf_totalD
 p.NCFX_age
 dev.off()
