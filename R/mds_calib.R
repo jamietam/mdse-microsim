@@ -13,7 +13,7 @@ library(darthtools)
 library(matrixStats)
 # setwd(file.path("/Users/JT936/Dropbox/GitHub/mds-microsim/"))
 setwd(file.path("/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/"))
-# here::i_am("R/mds_calib.R")
+here::i_am("R/mds_calib.R")
 
 ####### For HPC runs ###########################################################
 library(doParallel) ## Run on a single node
@@ -71,16 +71,25 @@ param_names <- c("s.NC_9.17","s.NC_18.25",
                  "p.DR","s.HD_12.17", "s.HD_18.25", 
                  "rr.DX_18.25","rr.DX_26.34", "rr.DX_35.49","rr.DX_50.64","rr.DX_65.99", 
                  "rr.ND.CD", "rr.CH.CD","rr.CR.CD","rr.CD.FD")
-# value<-c(2.1991585, 0, 
-#          0.7833367, 0.5510059,  0.6532555, 0.5790247,  0.6374476, 
-#          0.173, 1,  1, 
-#          5.5302388,  6.8444939, 4.7752103,  7.7882404,  3.7432371, 
-#          1.5520095,  1.6584458,  2.1256031,  2.2640631)
-value<-c(2.081761888, 0, 
-         0.993978012, 0.564477195, 0.87073767, 0.654785173, 0.664328015,
-         0.379283838, 3.500968429, 3.908561303,
-         7.284504694, 5.400727017, 5.518611922, 6.34692571,3.801531806,
-         1.271321945,1.848291364 ,1.528161447,1.220915551)
+value<-c(2.05287465042159,
+0.0848159716005523,
+0.758981274877442,
+0.616667582480333,
+0.746427943601139,
+0.912583380690363,
+0.720470979706167,
+0.28702367776264,
+1,
+1,
+1.08073196073528,
+3.69236171640223,
+3.77460941897007,
+3.43143755495548,
+2.49499687193893,
+2.70249504281674,
+1.4132489374518,
+2.41892186717596,
+1.54728820101549)
 
 upper <- c(2.5,1,
            rep(1,5),
@@ -95,14 +104,14 @@ lower <- c(2.0,0,
 
 ## Specify which parameters you want to calibrate
 calib <-c(1,1, 
-          rep(1,5), 1, rep(1,2),rep(1,5),1,1,1,1)
+          rep(1,5), 1, rep(0,2),rep(1,5),1,1,1,1)
 calib_inputs <- cbind(value,lower,upper,calib)  
 rownames(calib_inputs) <- param_names
 v.params <- calib_inputs[calib_inputs[,"calib"]==1,][,"value"]  
 n.param <- length(v.params) # number of parameters to calibrate
 
 # Number of initial starting points
-n.init <- 40 
+n.init <- 20 
 
 # Provide ranges for input search space
 lb <- calib_inputs[calib_inputs[,"calib"]==1,][,"lower"] # lower bound
