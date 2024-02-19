@@ -61,12 +61,25 @@ main = function(v.params) { # v.params: run model for parameter calibration
   # run in serial for debugging:
   # m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
   
-  # Convert matrix from cohort-age to cohort-year (cy)
-  m.M_cy <- matrix(nrow = n.i*length(cohorts), ncol = (length(cohorts)+100))
+  # Calculate costs, utilities, and productivity at each person's age
+  m.C <- m.U <- m.W <- matrix(nrow = n.i*length(cohorts), ncol = n.t + 1, 
+                              dimnames = list(paste(rep(cohorts,each=n.i), 1:n.i, sep = "."), # each individual, year of birth
+                                              paste(0:n.t, sep = " ")))  
+  for (t in 1:n.t) {
+    m.C[, t] <- costs(m.M[, t],t)
+    m.U[, t] <- utils(m.M[, t],t)
+    m.W[, t] <- prods(m.M[, t],t)
+  }
+  
+  # Convert matrix from cohort-age to cohort-calendaryear (cy)
+  m.M_cy <- m.C_cy <- m.U_cy <- m.W_cy <- matrix(nrow = n.i*length(cohorts), ncol = (length(cohorts)+100))
   for (b in 1:length(cohorts)){
     m.M_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.M[(n.i*(b-1)+1):(n.i*b),]
+    m.C_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.C[(n.i*(b-1)+1):(n.i*b),]
+    m.U_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.U[(n.i*(b-1)+1):(n.i*b),]
+    m.W_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.W[(n.i*(b-1)+1):(n.i*b),]
   }
-  colnames(m.M_cy) <- c(min(cohorts):(max(cohorts)+100))
+  colnames(m.M_cy) <- colnames(m.C_cy) <- colnames(m.U_cy) <- colnames(m.W_cy) <- c(min(cohorts):(max(cohorts)+100))
 
   # Output prevalence results as a list
   model_res <- lapply(c("N","C","F","D"), get_prevs, m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
@@ -77,29 +90,17 @@ main = function(v.params) { # v.params: run model for parameter calibration
   }
   
   # Calculate costs, utilities, and productivity for each health state by age in the population
-  # m.C <- costs(m.M)
-  # m.U <- utils(m.M)
-  # m.W <- productivity(m.M)
-  # m.C_cy <- m.W_cy <- m.U_cy <- matrix(nrow = n.i*length(cohorts), ncol = (length(cohorts)+100))
-  # for (b in 1:length(cohorts)){
-  # m.C_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.C[(n.i*(b-1)+1):(n.i*b),]
-  # m.U_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.U[(n.i*(b-1)+1):(n.i*b),]
-  # m.W_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.W[(n.i*(b-1)+1):(n.i*b),]
-  # }
-  # total_cuw <- rbind(colSums(m.C_cy,na.rm=TRUE),colSums(m.U_cy,na.rm=TRUE),colSums(m.W_cy,na.rm=TRUE))
-  # rownames(total_cuw)<-c("total costs","total QALYs","total productivity")
-  # colnames(total_cuw) <-colnames(m.C_cy) <- colnames(m.U_cy) <- colnames(m.W_cy) <- c(min(cohorts):(max(cohorts)+100))
-  # v.d_c <- 1 / (1 + d.c) ^ (0:n.t)   # calculate the cost discount weight based on the discount rate d.c
-  # v.d_u <- 1 / (1 + d.u) ^ (0:n.t)   # calculate the QALY discount weight based on the discount rate d.u
-  # v.d_w <- 1 / (1 + d.w) ^ (0:n.t)   # calculate the QALY discount weight based on the discount rate d.u
+  total_cuw <- rbind(colSums(m.C_cy,na.rm=TRUE),colSums(m.U_cy,na.rm=TRUE),colSums(m.W_cy,na.rm=TRUE))
+  rownames(total_cuw)<-c("total costs","total QALYs","total productivity")
+  colnames(total_cuw) <-colnames(m.C_cy) <- colnames(m.U_cy) <- colnames(m.W_cy) <- c(min(cohorts):(max(cohorts)+100))
   
-  # tc <- m.C %*% v.d_c       # total (discounted) costs across population
-  # tu <- m.U %*% v.d_u       # total (discounted) QALYs
-  # tw <- m.W %*% v.d_w       # total (discounted) productivity
+  # Assume 2024 is the starting year for discounting purposes, calculate discount weight based on the discount rate d.c
+  v.d = c(rep(1,2024-1900), c(1 / (1 + d.c) ^ (0:(ncol(m.C_cy)-(2024-1899))))) # vector of discount weights
   
-  # tc_hat <- mean(tc)        # average (discounted) cost 
-  # tu_hat <- mean(tu)        # average (discounted) QALYs
-  # tw_hat <- mean(tw)
+  # Total discounted costs, QALYs, and productivity
+  d_total_cuw <- total_cuw %*% diag(v.d) # multiple each row of the cuw matrix by the discounting vector
+  colnames(d_total_cuw) <-colnames(total_cuw)
+  model_res$cuw <- t(d_total_cuw)
   
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer

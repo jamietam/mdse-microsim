@@ -26,12 +26,13 @@ registerDoParallel(cl)
 # n.cores = Sys.getenv("SLURM_CPUS_PER_TASK")
 # cl <- makeCluster(detectCores())
 # registerDoParallel(cl)
-# 
+
 ## INPUTS 
-# whichgender <- "males"
+whichgender <- "males"
 
 load(paste0("data/dep_precomputed_inputs_",whichgender,".RData")) 
-load(paste0("data/smk_precomputed_inputs_",whichgender,".RData")) #lst_smktargets																			  
+load(paste0("data/smk_precomputed_inputs_",whichgender,".RData")) #lst_smktargets
+load(paste0("data/cuw_inputs_",whichgender,".RData"))
 cohorts <- 1900:2020            # Change from 2015 to 2020
 calib_startyear <-2005
 n.i   <- 10                   # number of simulated individuals per run (cohort) - eventually want to run 10,000
@@ -39,28 +40,7 @@ n.t   <- 100                    # time horizon per person, number of years
 v.n   <- c( "NH","CH","FH","ND","CD","FD","NR","CR","FR","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), "Happy" (H), Depressed (D), "Recovered" (R), Dead (X)
 n.s   <- length(v.n)            # the number of health states
 v.M_1 <- rep("NH", n.i)         # everyone begins in the Never smoker Never MD state
-# d.c <- d.u <- d.w <- 0.03              # equal discounting of costsand QALYs by 3
-# 
-# # Cost inputs 
-c.NH <- c.NR <- c.ND <- c(rep(0,20),rep(2743, 10), rep(3214,10),rep(3763,10),rep(4401,10),rep(5143,10), rep(6007, 10), rep(7010,20)) # cost of remaining one cycle Never Smoking, No MD
-c.CH <- c.CR <- c.CD <- c(rep(0,20),rep(2909, 10), rep(3413,10),rep(4000,10),rep(4683,10),rep(5478,10), rep(6403, 10), rep(7479,20)) # cost of remaining one cycle Current Smoking, No MD
-c.FH <- c.FR <- c.FD <- c(rep(0,20),rep(3208, 10), rep(3754,10),rep(4390,10),rep(5130,10),rep(5990,10), rep(6990, 10), rep(8153,20)) # cost of remaining one cycle Former Smoking, No MD
-# 
-# # Utility inputs
-# u.NH <- u.NR <- rep(1, n.t)
-# u.CH <- u.CR <- rep(0.75, n.t)
-# u.FH <- u.FR <- rep(0.5, n.t)
-# u.ND <- rep(0.95, n.t)
-# u.CD <- rep(0.6, n.t)
-# u.FD <- rep(0.8, n.t)
-# 
-# # Productivity inputs
-# w.NH <- w.NR <- rep(50000, n.t)
-# w.CH <- w.CR <- rep(40000, n.t)
-# w.FH <- w.FR <- rep(45000, n.t)
-# w.ND <- rep(45000, n.t)
-# w.CD <- rep(35000, n.t)
-# w.FD <- rep(40000, n.t)
+d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by 3%
 
 ## CALIBRATION PARAMETERS
 param_names <- c("s.NC_9.17","s.NC_18.25",

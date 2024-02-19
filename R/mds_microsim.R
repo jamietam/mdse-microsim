@@ -20,7 +20,7 @@ mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, 
   v.ysq <- rep(n.i, 0) # vector counting how many years since quit
   
   # create the matrix capturing the state name/costs/health outcomes for all individuals at each time point 
-  m.M <- m.C <- m.U <- matrix(nrow = n.i, ncol = n.t + 1, 
+  m.M <- matrix(nrow = n.i, ncol = n.t + 1, 
                 dimnames = list(paste(bc, 1:n.i, sep = "."), # each individual, year of birth
                                 paste(0:n.t, sep = " ")))  
   m.M[, 1] <- v.M_1                                         # indicate the initial health state   
@@ -33,10 +33,7 @@ mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, 
     v.ysq <- ifelse(v.ysq>40 , 40, v.ysq) # Fix mortality after 40 years since quitting
     
     m.P <- probs(bc, t, v.ysq, m.M[, t])           # calculate the transition probabilities at cycle t 
-    m.C[, t] <- costs(m.M[, t],t) # calculate the costs of each person at cycle t (age t)
     m.M[, t+1] <- samplev(m.P, 1)      # sample the next health state and store that state in matrix m.M 
-    
-    
   }                                                       # close the loop for the time points 
   
   if (TS.out == TRUE) {  # create a  matrix of transitions across states
@@ -154,43 +151,34 @@ costs <- function(M_t,t) { # gets the costs for each person based on health stat
 }      
 
 ## UTILITIES FUNCTION ----------------------------------------------------
-utils <- function(m.M) { # gets the utilities for each person based on health state M and age t
-  m.U <- matrix(nrow = n.i*length(cohorts), ncol = n.t + 1, 
-                dimnames = dimnames(m.M))  
-  for (t in 1:n.t){
-    m.U[m.M =="NH"] <- u.NH[t] 
-    m.U[m.M =="CH"] <- u.CH[t]
-    m.U[m.M =="FH"] <- u.FH[t]
-    m.U[m.M =="ND"] <- u.ND[t]
-    m.U[m.M =="CD"] <- u.CD[t]
-    m.U[m.M =="FD"] <- u.FD[t]
-    m.U[m.M =="NR"] <- u.NR[t]
-    m.U[m.M =="CR"] <- u.CR[t]
-    m.U[m.M =="FR"] <- u.FR[t]
-    m.U[m.M =="X"] <- 0
-  }
-  return(m.U) 
+utils <- function(M_t,t) { # gets the utilities for each person based on health state M and age t
+  
+  m.u_t <- matrix(data= NA, nrow = n.i, ncol = 1)  
+  
+  m.u_t[M_t =="NH"] <- u.NH[t] 
+  m.u_t[M_t =="CH"] <- u.CH[t]
+  m.u_t[M_t =="FH"] <- u.FH[t]
+  m.u_t[M_t =="ND"] <- u.ND[t]
+  m.u_t[M_t =="CD"] <- u.CD[t]
+  m.u_t[M_t =="FD"] <- u.FD[t]
+  m.u_t[M_t =="NR"] <- u.NR[t]
+  m.u_t[M_t =="CR"] <- u.CR[t]
+  m.u_t[M_t =="FR"] <- u.FR[t]
+  m.u_t[M_t =="X"] <- 0
+
+  return(m.u_t) 
 }      
 
-## PRODUCTIVITY FUNCTION ----------------------------------------------------
-productivity <- function(m.M) { # gets the utilities for each person based on health state M and age t
-  m.W <- matrix(nrow = n.i*length(cohorts), ncol = n.t + 1, 
-                dimnames = dimnames(m.M))  
-  for (t in 1:n.t){
-    m.W[m.M =="NH"] <- w.NH[t] 
-    m.W[m.M =="CH"] <- w.CH[t]
-    m.W[m.M =="FH"] <- w.FH[t]
-    m.W[m.M =="ND"] <- w.ND[t]
-    m.W[m.M =="CD"] <- w.CD[t]
-    m.W[m.M =="FD"] <- w.FD[t]
-    m.W[m.M =="NR"] <- w.NR[t]
-    m.W[m.M =="CR"] <- w.CR[t]
-    m.W[m.M =="FR"] <- w.FR[t]
-    m.W[m.M =="X"] <- 0
-  }
-  return(m.W) 
-}    
-
+## PRODUCTIVITIES FUNCTION ----------------------------------------------------
+prods <- function(M_t,t) { # gets the work productivity for each person based on health state M and age t
+  
+  m.w_t <- matrix(data= NA, nrow = n.i, ncol = 1)  
+  
+  m.w_t[M_t !="X"] <- w[t] 
+  m.w_t[M_t =="X"] <- 0
+  
+  return(m.w_t) 
+}      
 
 ## MODEL PREVALENCE RESULTS ------------------------------------------------
 get_prevs <- function(state,m_cohortbyyear,minyear,maxyear){ # Get counts/prevalence of individuals in a health state by age group and year
@@ -237,15 +225,7 @@ get_subgroup_prevs <- function(state,denom, m_cohortbyyear,minyear,maxyear){ # G
   return(m.m_prevs) 
 }
 
-# https://github.com/DARTH-git/darthtools/blob/main/R/samplev.R
-samplev_norm <- function(m_Probs, m = 1) {
-  lev <- dimnames(m_Probs)[[2]]  # extract the names of the health states considered for sampling
-  n_samp <- nrow(m_Probs)
-  u <- runif(n_samp, min = 0, max = 1)
-  v_sum_p <- matrixStats::rowCumsums(m_Probs)
-  v_cat <- lev[max.col(v_sum_p >= u, ties.method = "first")]
-  return(v_cat)
-}
+
 ############################################################################################
 # The MDS microsimulation model was developed by Jamie Tam and last updated on 11/3/2021
 #
