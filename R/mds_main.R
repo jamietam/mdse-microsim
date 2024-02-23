@@ -1,4 +1,6 @@
-main = function(v.params) { # v.params: run model for parameter calibration
+v.policy <- c(initeff = 1.05, cesseff = .85)
+
+main = function(v.params, v.policy) { # v.params: run model for parameter calibration; v.policy: policy effects
   
   t_init <- Sys.time() # Start timer
   
@@ -13,6 +15,7 @@ main = function(v.params) { # v.params: run model for parameter calibration
 
   s.HD_12.17 <-  ifelse(calib_inputs["s.HD_12.17","calib"]==1,v.params["s.HD_12.17"],calib_inputs["s.HD_12.17","value"])
   s.HD_18.25 <-  ifelse(calib_inputs["s.HD_18.25","calib"]==1,v.params["s.HD_18.25"],calib_inputs["s.HD_18.25","value"])
+  s.HD_26.34 <-  ifelse(calib_inputs["s.HD_26.34","calib"]==1,v.params["s.HD_26.34"],calib_inputs["s.HD_26.34","value"])
 
   rr.DX_18.25 <- ifelse(calib_inputs["rr.DX_18.25","calib"]==1,v.params["rr.DX_18.25"],calib_inputs["rr.DX_18.25","value"])
   rr.DX_26.34 <- ifelse(calib_inputs["rr.DX_26.34","calib"]==1,v.params["rr.DX_26.34"],calib_inputs["rr.DX_26.34","value"])
@@ -25,6 +28,8 @@ main = function(v.params) { # v.params: run model for parameter calibration
   rr.CR.CD <- ifelse(calib_inputs["rr.CR.CD","calib"]==1,v.params["rr.CR.CD"],calib_inputs["rr.CR.CD","value"])
   rr.CD.FD <- ifelse(calib_inputs["rr.CD.FD","calib"]==1,v.params["rr.CD.FD"],calib_inputs["rr.CD.FD","value"])
 
+  yearinc_p.HD <- ifelse(calib_inputs["yearinc_p.HD","calib"]==1,v.params["yearinc_p.HD"],calib_inputs["yearinc_p.HD","value"])
+  yearinc_p.HD <- round(yearinc_p.HD)
   p.DR=NULL
   p.DR[1:12] <- p.DR[100] <- 0 # probability to recover, final value = 0 because mortality prob = 1
   p.DR[13:99] <- ifelse(calib_inputs["p.DR","calib"]==1,v.params["p.DR"],calib_inputs["p.DR","value"]) # assumes constant recovery by age
@@ -32,20 +37,23 @@ main = function(v.params) { # v.params: run model for parameter calibration
   ## Incidence
   for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
     bc1 = bc-1899
-    for (age in 0:25){ # increase applies to youth and young adults ages 0-25
-      if ((bc+age)>=2016 & age>=18){ # starting in 2016
+    for (age in 0:34){ # increase applies to youth and young adults ages 0-25
+      if ((bc+age)>=yearinc_p.HD & age>=18 & age<=25){ # starting in 2016
         p.HD[(age+1),bc1] = s.HD_18.25*p.HD[(age+1),bc1]
       }
-      if ((bc+age)>=2016 & age<18){
+      if ((bc+age)>=yearinc_p.HD & age<18){
         p.HD[(age+1),bc1] = s.HD_12.17*p.HD[(age+1),bc1]
+      }
+      if ((bc+age)>=yearinc_p.HD & age>=26){
+        p.HD[(age+1),bc1] = s.HD_26.34*p.HD[(age+1),bc1]
       }
     }
   }
   ## Initiation - No initiation after 25
-  p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
+  p.NC = unname(v.policy["initeff"])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
   
   ## Cessation - No cessation before 18
-  p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
+  p.CF = unname(v.policy["cesseff"])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
   
   rr.DX = c(rep(1,18),rep(rr.DX_18.25,8),rep(rr.DX_26.34,9),rep(rr.DX_35.49,15),rep(rr.DX_50.64,15),rep(rr.DX_65.99,34),1)
   

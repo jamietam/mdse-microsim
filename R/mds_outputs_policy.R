@@ -1,5 +1,6 @@
 # Run the model (again) ---------------------------------------------------
-model_res<-main(v.params, c(initeff = 1, cesseff = 1))
+model_res <- main(v.params, c(initeff = 1, cesseff = 1))
+model_res_policy <- main(v.params, v.policy)
 
 v.GOF <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
 for (r in 1:length(lst_calibtargets)){ # sum of squared differences
@@ -46,10 +47,10 @@ yearinc_p.HD <- ifelse(calib_inputs["yearinc_p.HD","calib"]==1,v.params["yearinc
 yearinc_p.HD <- round(yearinc_p.HD)
 
 ## Initiation - No initiation after 25
-p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
+p.NC = unname(v.policy["initeff"])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
 
 ## Cessation - No cessation before 18
-p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
+p.CF = unname(v.policy["cesseff"])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
 
 rr.DX = c(rep(1,18),rep(rr.DX_18.25,8),rep(rr.DX_26.34,9),rep(rr.DX_35.49,15),rep(rr.DX_50.64,15),rep(rr.DX_65.99,34),1)
 modelprev <- rbind(cbind(data.frame(model_res$N),status="neversmoker"),
@@ -59,6 +60,14 @@ modelprev <- rbind(cbind(data.frame(model_res$N),status="neversmoker"),
                    cbind(data.frame(model_res$ND),status="neversmokerD"),
                    cbind(data.frame(model_res$CD),status="currentsmokerD"),
                    cbind(data.frame(model_res$FD),status="formersmokerD"))
+
+modelprev_policy <- rbind(cbind(data.frame(model_res_policy$N),status="neversmoker"),
+                          cbind(data.frame(model_res_policy$C),status="currentsmoker"),
+                          cbind(data.frame(model_res_policy$F),status="formersmoker"),
+                          cbind(data.frame(model_res_policy$D),status="depressed"),
+                          cbind(data.frame(model_res_policy$ND),status="neversmokerD"),
+                          cbind(data.frame(model_res_policy$CD),status="currentsmokerD"),
+                          cbind(data.frame(model_res_policy$FD),status="formersmokerD"))
 
 calibtargets = rbind(cbind(data.frame(lst_targets[["N"]]),status="neversmoker"),
                      cbind(data.frame(lst_targets[["C"]]),status="currentsmoker"),
@@ -211,9 +220,10 @@ ncf_totalD <- ggplot() +
   geom_pointrange(data=subset(calibtargets,age==18.99 & (status=="neversmokerD" | status=="currentsmokerD" | status=="formersmokerD")), 
                   aes(x = survey_year, y = prev,ymin=prev_lowCI, ymax=prev_highCI, color=status,shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, age==18.99 & (status=="neversmokerD" | status=="currentsmokerD" | status=="formersmokerD")),  aes(x=year, y= prev,color=status))+
+  geom_line(data = subset(modelprev_policy, age==18.99 & (status=="neversmokerD" | status=="currentsmokerD" | status=="formersmokerD")),  aes(x=year, y= prev,color=status), linetype = "dashed")+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
-  labs(title=paste0("Smoking distribution - ",whichgender," ages 18-99"))+
+  labs(title=paste0("Smoking distribution - ",whichgender," ages 18-99;", " init=", v.policy[1], " cess=", v.policy[2]))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 
@@ -245,7 +255,7 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
 df.calib <- merge(as.data.frame(v.params),as.data.frame(calib_inputs),by="row.names",all.x=TRUE,all.y=TRUE,sort=FALSE)
 colnames(df.calib)[1:3] <- c("parameters", "est","initial")
 
-pdf(file = paste0(whichgender,"_mds_calib_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I:%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
+pdf(file = paste0(whichgender,"_mds_calib_policy_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I:%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
 plot.new()
 text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
 text(.5, 1.0, "Calibration fit values", font=2, cex=1.5)
