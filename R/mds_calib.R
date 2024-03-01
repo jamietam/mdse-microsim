@@ -34,7 +34,7 @@ whichgender <- args[1]
 
 load(paste0("data/dep_precomputed_inputs_",whichgender,".RData")) 
 load(paste0("data/smk_precomputed_inputs_",whichgender,".RData")) #lst_smktargets																			  
-cohorts <- 1900:2020           # Change from 2015 to 2020
+cohorts <- 1900:2100           # Change from 2015 to 2020
 calib_startyear <-2005
 n.i   <- 1000                   # number of simulated individuals per run (cohort) - eventually want to run 10,000
 n.t   <- 100                    # time horizon per person, number of years

@@ -1,4 +1,11 @@
-v.policy <- c(initeff = 1.05, cesseff = .85)
+initeff <- matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2])
+cesseff <- matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])
+policy_startyear <- 2024
+
+initeff[row(initeff) + col(initeff) > (policy_startyear-1899)] <- 0.9
+cesseff[row(cesseff) + col(cesseff) > (policy_startyear-1899)] <- 0.8
+
+v.policy <- list(initeff = initeff, cesseff = cesseff)
 
 main = function(v.params, v.policy) { # v.params: run model for parameter calibration; v.policy: policy effects
   
@@ -50,10 +57,10 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
     }
   }
   ## Initiation - No initiation after 25
-  p.NC = unname(v.policy["initeff"])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
+  p.NC = unname(v.policy[["initeff"]])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
   
   ## Cessation - No cessation before 18
-  p.CF = unname(v.policy["cesseff"])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
+  p.CF = unname(v.policy[["cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
   
   rr.DX = c(rep(1,18),rep(rr.DX_18.25,8),rep(rr.DX_26.34,9),rep(rr.DX_35.49,15),rep(rr.DX_50.64,15),rep(rr.DX_65.99,34),1)
   

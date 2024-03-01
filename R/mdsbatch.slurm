@@ -10,4 +10,4 @@
 
 module load R/4.2.0-foss-2020b
 
-Rscript mds_calib.R males
+Rscript mds_calib.R females

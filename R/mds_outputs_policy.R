@@ -1,5 +1,6 @@
 # Run the model (again) ---------------------------------------------------
-model_res <- main(v.params, c(initeff = 1, cesseff = 1))
+model_res <- main(v.params, list(initeff = matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2]), 
+                                 cesseff = matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2]))) # matrix of 1s
 model_res_policy <- main(v.params, v.policy)
 
 v.GOF <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
@@ -47,10 +48,10 @@ yearinc_p.HD <- ifelse(calib_inputs["yearinc_p.HD","calib"]==1,v.params["yearinc
 yearinc_p.HD <- round(yearinc_p.HD)
 
 ## Initiation - No initiation after 25
-p.NC = unname(v.policy["initeff"])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
+p.NC = unname(v.policy[["initeff"]])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
 
 ## Cessation - No cessation before 18
-p.CF = unname(v.policy["cesseff"])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
+p.CF = unname(v.policy[["cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
 
 rr.DX = c(rep(1,18),rep(rr.DX_18.25,8),rep(rr.DX_26.34,9),rep(rr.DX_35.49,15),rep(rr.DX_50.64,15),rep(rr.DX_65.99,34),1)
 modelprev <- rbind(cbind(data.frame(model_res$N),status="neversmoker"),
@@ -223,7 +224,7 @@ ncf_totalD <- ggplot() +
   geom_line(data = subset(modelprev_policy, age==18.99 & (status=="neversmokerD" | status=="currentsmokerD" | status=="formersmokerD")),  aes(x=year, y= prev,color=status), linetype = "dashed")+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
-  labs(title=paste0("Smoking distribution - ",whichgender," ages 18-99;", " init=", v.policy[1], " cess=", v.policy[2]))+
+  labs(title=paste0("Smoking distribution - ",whichgender," ages 18-99;", " init=", v.policy[["initeff"]][1,201], " cess=", v.policy[["cesseff"]][1,201]))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 

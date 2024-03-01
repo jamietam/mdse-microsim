@@ -1,5 +1,8 @@
 # Run the model (again) ---------------------------------------------------
-model_res<-main(v.params, c(initeff = 1, cesseff = 1))
+model_res<-main(v.params, list(initeff = matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2]), 
+                               cesseff = matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])))
+# Test
+# model_res <- main(v.params, v.policy)
 
 v.GOF <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
 for (r in 1:length(lst_calibtargets)){ # sum of squared differences
