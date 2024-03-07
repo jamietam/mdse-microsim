@@ -34,7 +34,7 @@ whichgender <- args[1]
 
 load(paste0("data/dep_precomputed_inputs_",whichgender,".RData")) 
 load(paste0("data/smk_precomputed_inputs_",whichgender,".RData")) #lst_smktargets																			  
-cohorts <- 1900:2100           # Change from 2015 to 2020
+cohorts <- 1900:2020           # Change from 2015 to 2020
 calib_startyear <-2005
 n.i   <- 1000                   # number of simulated individuals per run (cohort) - eventually want to run 10,000
 n.t   <- 100                    # time horizon per person, number of years
@@ -67,57 +67,61 @@ v.M_1 <- rep("NH", n.i)         # everyone begins in the Never smoker Never MD s
 # w.CD <- rep(35000, n.t)
 # w.FD <- rep(40000, n.t)
 
-## CALIBRATION PARAMETERS
-param_names <- c("s.NC_9.17","s.NC_18.25",
-                 "s.CF_18.25", "s.CF_26.34", "s.CF_35.49" ,"s.CF_50.64"  ,"s.CF_65.99" , 
-                 "p.DR","s.HD_12.17", "s.HD_18.25", "s.HD_26.34",
-                 "rr.DX_18.25","rr.DX_26.34", "rr.DX_35.49","rr.DX_50.64","rr.DX_65.99", 
-                 "rr.ND.CD", "rr.CH.CD","rr.CR.CD","rr.CD.FD", "yearinc_p.HD")
-
-# Parameter Values
+## CALIBRATION PARAMETERS - Specify which parameters you want to calibrate (0 vs 1 in column 4), and provide upper and lower bounds for the search algorithm
 if (length(args) > 0) {
   if (args[1] == "males") {
-    value <- c(2.05287465042159, 0.0848159716005523,
-               0.758981274877442, 0.616667582480333, 0.746427943601139, 0.912583380690363, 0.720470979706167,
-               0.28702367776264, 7.078470, 1.690519, 2,
-               1.08073196073528, 3.69236171640223, 3.77460941897007, 3.43143755495548, 2.49499687193893,
-               2.70249504281674, 1.4132489374518, 2.41892186717596, 1.54728820101549, 2015)
-    } else if (args[1] == "females") {
-      value <- c(2.081761888, 0,
-               0.993978012, 0.564477195, 0.87073767, 0.654785173, 0.664328015,
-               0.3793009, 2.1019429, 3.6714343, 4,
-               7.284504694, 5.400727017, 5.518611922, 6.34692571, 3.801531806,
-               1.271321945, 1.848291364, 1.528161447, 1.220915551, 2014)
+    calib_inputs <-rbind( 
+      "s.NC_9.17" = c(2.05287465042159, 2.0, 2.5, 0),
+      "s.NC_18.25" = c(0.0848159716005523, 0, 1, 0),
+      "s.CF_18.25" = c(0.758981274877442, 0.50, 1.0, 0),
+      "s.CF_26.34" = c(0.616667582480333, 0.50, 1.0, 0),
+      "s.CF_35.49" = c(0.746427943601139, 0.50, 1.0, 0),
+      "s.CF_50.64" = c(0.912583380690363, 0.50, 1.0, 0),
+      "s.CF_65.99" = c(0.720470979706167, 0.50, 1.0, 0),
+      "p.DR" = c(0.28702367776264, 0.0, 1.0, 0),
+      "s.HD_12.17" = c(7.078470, 0.0, 10.0, 0),
+      "s.HD_18.25" = c(1.690519, 0.0, 10.0, 0), 
+      "s.HD_26.34" = c(2.0, 0.0, 10.0, 0),
+      "rr.DX_18.25" = c(1.08073196073528, 1.0, 8.0, 0),
+      "rr.DX_26.34" = c(3.69236171640223, 1.0, 8.0, 0),
+      "rr.DX_35.49" = c(3.77460941897007, 1.0, 8.0, 0),
+      "rr.DX_50.64" = c(3.43143755495548, 1.0, 8.0, 0),
+      "rr.DX_65.99" = c(2.49499687193893, 1.0, 8.03, 0),
+      "rr.ND.CD" = c(2.70249504281674, 1.0, 4.0, 0),
+      "rr.CH.CD" = c(1.4132489374518, 1.0, 4.0, 0),
+      "rr.CR.CD" = c(2.41892186717596, 1.0, 4.0, 0),
+      "rr.CD.FD" = c(1.54728820101549, 1.0, 4.0, 0),
+      "yearinc_p.HD" = c(2015, 2012.5, 2016.5, 0))
+  } else if (args[1] == "females") {
+    calib_inputs <-rbind( 
+      "s.NC_9.17" = c(2.081761888, 2.0, 2.5, 0),
+      "s.NC_18.25" = c(0, 0, 1, 0),
+      "s.CF_18.25" = c(0.993978012, 0.50, 1.0, 0),
+      "s.CF_26.34" = c(0.564477195, 0.50, 1.0, 0),
+      "s.CF_35.49" = c(0.87073767, 0.50, 1.0, 0),
+      "s.CF_50.64" = c(0.654785173, 0.50, 1.0, 0),
+      "s.CF_65.99" = c(0.664328015, 0.50, 1.0, 0),
+      "p.DR" = c(0.3793009, 0.0, 1.0, 0),
+      "s.HD_12.17" = c(2.1019429, 0.0, 10.0, 0),
+      "s.HD_18.25" = c(3.6714343, 0.0, 10.0, 0), 
+      "s.HD_26.34" = c(4.0, 0.0, 10.0, 0),
+      "rr.DX_18.25" = c(7.284504694, 1.0, 8.0, 0),
+      "rr.DX_26.34" = c(5.400727017, 1.0, 8.0, 0),
+      "rr.DX_35.49" = c(5.518611922, 1.0, 8.0, 0),
+      "rr.DX_50.64" = c(6.34692571, 1.0, 8.0, 0),
+      "rr.DX_65.99" = c(3.801531806, 1.0, 8.0, 0),
+      "rr.ND.CD" = c(1.271321945, 1.0, 4.0, 0),
+      "rr.CH.CD" = c(1.848291364, 1.0, 4.0, 0),
+      "rr.CR.CD" = c(1.528161447, 1.0, 4.0, 0),
+      "rr.CD.FD" = c(1.220915551, 1.0, 4.0, 0),
+      "yearinc_p.HD" = c(2014, 2012.5, 2016.5, 0))
   } else {
     stop("Invalid argument. Please use 'males' or 'females'.")
   }
 } else {
   stop("No argument provided. Please specify 'males' or 'females'.")
 }
-
-
-upper <- c(2.5,1,
-           rep(1,5),
-           1,rep(10,3),
-           rep(8,5),
-           rep(3,4),
-           2016.5)
-lower <- c(2.0,0,
-           rep(0.5,5),
-           0,rep(0,3),
-           rep(1,5),
-           rep(1,4),
-           2012.5)
-
-## Specify which parameters you want to calibrate
-calib <-c(0,0, 
-          rep(0,5), 
-          1, rep(1,3),
-          rep(1,5),
-          1,1,1,1,
-          1)
-calib_inputs <- cbind(value,lower,upper,calib)  
-rownames(calib_inputs) <- param_names
+colnames(calib_inputs) =c("value","lower","upper","calib")  
 v.params <- calib_inputs[calib_inputs[,"calib"]==1,][,"value"]  
 n.param <- length(v.params) # number of parameters to calibrate
 
@@ -187,7 +191,7 @@ source("R/mds_main.R", echo=FALSE)
 # print(m.calib_res)
 # print(whichgender)
 
-## GENERATE OUTPUTS
-source("R/mds_outputs.R", echo=FALSE)
+## GENERATE OUTPUTS - DO NOT RUN BOTH, the second file will generate an incorrect output.
+# source("R/mds_outputs.R", echo=FALSE)
 
 source("R/mds_outputs_policy.R", echo=FALSE)

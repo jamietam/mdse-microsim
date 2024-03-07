@@ -128,7 +128,7 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   # print birth cohort and age for debugging problematic transition probabilities
   # print(paste0("bc: ", bc, ", age: ",t))
   check_transition_probability(m.p_t,verbose=FALSE)
-  check_sum_of_transition_array(m.p_t, n_rows=n.i, n_cycles= n.t, verbose = FALSE)
+  check_sum_of_transition_array(t(m.p_t), n_rows=n.i, n_cycles= n.t, verbose = FALSE)
   return(t(m.p_t)) 
 }       
 

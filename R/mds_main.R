@@ -1,12 +1,3 @@
-initeff <- matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2])
-cesseff <- matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])
-policy_startyear <- 2024
-
-initeff[row(initeff) + col(initeff) > (policy_startyear-1899)] <- 0.9
-cesseff[row(cesseff) + col(cesseff) > (policy_startyear-1899)] <- 0.8
-
-v.policy <- list(initeff = initeff, cesseff = cesseff)
-
 main = function(v.params, v.policy) { # v.params: run model for parameter calibration; v.policy: policy effects
   
   t_init <- Sys.time() # Start timer

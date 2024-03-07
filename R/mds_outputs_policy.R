@@ -1,7 +1,22 @@
-# Run the model (again) ---------------------------------------------------
-model_res <- main(v.params, list(initeff = matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2]), 
-                                 cesseff = matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2]))) # matrix of 1s
+# Run policy model ------------------------------
+initeff <- matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2])
+cesseff <- matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])
+policy_startyear <- 2024
+
+initeff[row(initeff) + col(initeff) > (policy_startyear-1899)] <- 0.9
+cesseff[row(cesseff) + col(cesseff) > (policy_startyear-1899)] <- 0.8
+
+v.policy <- list(initeff = initeff, cesseff = cesseff)
+
 model_res_policy <- main(v.params, v.policy)
+
+
+# Run the model (again) ---------------------------------------------------
+model_res<-main(v.params, list(initeff = matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2]), 
+                               cesseff = matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])))
+# Test
+# model_res <- main(v.params, v.policy)
+
 
 v.GOF <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
 for (r in 1:length(lst_calibtargets)){ # sum of squared differences
@@ -48,10 +63,12 @@ yearinc_p.HD <- ifelse(calib_inputs["yearinc_p.HD","calib"]==1,v.params["yearinc
 yearinc_p.HD <- round(yearinc_p.HD)
 
 ## Initiation - No initiation after 25
-p.NC = unname(v.policy[["initeff"]])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
+p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
+p.NC_policy = unname(v.policy[["initeff"]])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
 
 ## Cessation - No cessation before 18
-p.CF = unname(v.policy[["cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
+p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
+p.CF_policy = unname(v.policy[["cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
 
 rr.DX = c(rep(1,18),rep(rr.DX_18.25,8),rep(rr.DX_26.34,9),rep(rr.DX_35.49,15),rep(rr.DX_50.64,15),rep(rr.DX_65.99,34),1)
 modelprev <- rbind(cbind(data.frame(model_res$N),status="neversmoker"),
@@ -77,6 +94,7 @@ calibtargets = rbind(cbind(data.frame(lst_targets[["N"]]),status="neversmoker"),
                      cbind(data.frame(lst_targets[["ND"]]),status="neversmokerD"),
                      cbind(data.frame(lst_targets[["CD"]]),status="currentsmokerD"),
                      cbind(data.frame(lst_targets[["FD"]]),status="formersmokerD"))
+
 
 p.NCsmk_init <- as.data.frame(cbind(c(p.NC[,100],rr.ND.CD*p.NC[,100],smk_init[,100]),c(rep("calibrated",100),rep("rr.ND.CD",100),rep("CISNET",100)),c(rep(0:99,3))))
 names(p.NCsmk_init) <- c("prob","inputs","age")
