@@ -57,12 +57,12 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
   
   # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
   m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
-                          .export=c('mds_microsim','probs','get_prevs',
-                                    'n.i','n.t','v.n','n.s','v.M_1',
-                                    'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
-                                    'rr.DX','p.HD', 'p.DR', 'p.RD',
-                                    'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD')) %dopar% {
-                                      mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
+                 .export=c('mds_microsim','probs','get_prevs_by_age',
+                           'n.i','n.t','v.n','n.s','v.M_1',
+                           'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
+                           'rr.DX','p.HD', 'p.DR', 'p.RD',
+                           'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD')) %dopar% {
+                             mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
   }
   # run in serial for debugging:
   # m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
@@ -75,7 +75,7 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
   colnames(m.M_cy) <- c(min(cohorts):(max(cohorts)+100))
 
   # Output prevalence results as a list
-  model_res <- lapply(c("N","C","F","D"), get_prevs, m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
+  model_res <- lapply(c("N","C","F","D"), get_prevs_by_age, m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
   model_res <- c(model_res, lapply(c("ND","CD","FD"), get_subgroup_prevs, denom="D",m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
   names(model_res) <- c("N","C","F","D","ND","CD","FD")
   for (l in 1:length(model_res)){

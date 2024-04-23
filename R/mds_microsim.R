@@ -213,6 +213,28 @@ get_prevs <- function(state,m_cohortbyyear,minyear,maxyear){ # Get counts/preval
   return(m.m_prevs) 
 }
 
+get_prevs_by_age <- function(state,m_cohortbyyear,minyear,maxyear){ # Get counts/prevalence of individuals in a health state by age group and year
+  agerownames<-c(18:99)
+  agegroupstart <- c(18:99)
+  agegroupend <- c(18:99)
+  m.m_prevs <- NULL 
+  for (age in 1:length(agegroupstart)){
+    for (year in minyear:maxyear){
+      cohortmin = year-agegroupend[age]
+      if(cohortmin<1900) {next}
+      cohortmax = year-agegroupstart[age]
+      select = m_cohortbyyear[(n.i*(cohortmin-1900)+1):(n.i*(cohortmax-1900)+n.i),paste(year)] # birth cohort 1905 begins in row 26, and birth cohort 1912 ends in row 65
+      alive <- sum(select!="X",na_rm=TRUE)
+      dead <- sum(select=="X",na_rm=TRUE) 
+      counts <- sum(str_count(select,state),na_rm=TRUE)
+      prev <- sum(str_count(select,state),na_rm=TRUE)/sum(select!="X",na_rm=TRUE)
+      m.m_prevs<-rbind(m.m_prevs,c(agerownames[age],year, prev,counts,alive,dead))
+    }
+  }
+  colnames(m.m_prevs)<-c("age","year", "prev","counts","alive","dead")
+  return(m.m_prevs) 
+}
+
 get_subgroup_prevs <- function(state,denom, m_cohortbyyear,minyear,maxyear){ # Get counts/prevalence of individuals in a health state by age group and year
   agerownames<-c(18.99,18.25, 26.34, 35.49, 50.64, 65.99)
   agegroupstart <- c(18, 18,26,35,50,65)
