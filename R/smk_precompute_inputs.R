@@ -1,10 +1,11 @@
 rm(list = ls())  # remove any variables in R's memory
-setwd(file.path("C:/Users/JT936/Dropbox/GitHub/mds-microsim/data"))
+# setwd(file.path("C:/Users/JT936/Dropbox/GitHub/mds-microsim/data"))
+setwd(file.path("/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/"))
 
 whichgender <- "males"
 
 # Precompute all smoking and mortality probabilities by birth cohort
-load(paste0("smk_inputs_",whichgender,".RData")) # Load all smoking and mortality inputs as matrices
+load(paste0("data/smk_inputs_",whichgender,".RData")) # Load all smoking and mortality inputs as matrices
 cohorts=1900:2100
 
 precompute_diag <- function(statdata, cohorts, finval) { 
@@ -33,61 +34,31 @@ for(i in 1:nrow(p.CX)){
   smk_cess[i,which(is.na(smk_cess[i,])):201]<-smk_cess[i,(min(which(is.na(smk_cess[i,])))-1)]
 }
 
-# Create array for 40 years since quitting
-p.FX.ysq = vector("list", 40)
-for (j in 1:40){
-  p.FX.ysq[[j]] = matrix(, nrow = 100, ncol = 201)
-}
-# Get former smoker relative risk of mortality compared to current smoker - See Thun (2013) & Tam (2021) Graphic Health Warnings Supplement
-if (whichgender=="females"){
-  rr.FX.CX <- pmin(1,0.8613*exp(-0.023*(1:40)))
-}
-if (whichgender=="males"){
-  rr.FX.CX <- pmin(1,1.0313*exp(-0.024*(1:40)))
-}
-for (j in 1:40){
-  for (age in 1:100){
-    for (bc in 1:201){
-      p.FX.ysq[[j]][age,bc]=pmax(rr.FX.CX[j]*p.CX[age,bc],p.NX[age,bc]) 
-    }
-  }
-}
+# # Create array for 40 years since quitting
+# p.FX.ysq = vector("list", 40)
+# for (j in 1:40){
+#   p.FX.ysq[[j]] = matrix(, nrow = 100, ncol = 201)
+# }
+# # Get former smoker relative risk of mortality compared to current smoker - See Thun (2013) & Tam (2021) Graphic Health Warnings Supplement
+# if (whichgender=="females"){
+#   rr.FX.CX <- pmin(1,0.8613*exp(-0.023*(1:40)))
+# }
+# if (whichgender=="males"){
+#   rr.FX.CX <- pmin(1,1.0313*exp(-0.024*(1:40)))
+# }
+# for (j in 1:40){
+#   for (age in 1:100){
+#     for (bc in 1:201){
+#       p.FX.ysq[[j]][age,bc]=pmax(rr.FX.CX[j]*p.CX[age,bc],p.NX[age,bc]) 
+#     }
+#   }
+# }
 
 # Format mortality by years since quit as an array instead of a list because it runs faster
-a_p.FX.ysq <- array(NA, dim = c(100,201,99))
+a_p.FX.ysq <- array(NA, dim = c(100,201,40))
 for (i in 1: 40){
   a_p.FX.ysq[,,i] <-  p.FX.ysq[[i]]
 }
 
-for (i in 41:99){ # Fix mortality after 40 years since quitting
-  a_p.FX.ysq[,,i] <-  p.FX.ysq[[40]]
-}
-
-
 rm(smk_cess_cisnet,smk_init_cisnet,death_cs,death_fs,death_ns)
 save(p.NX,p.CX,a_p.FX.ysq,smk_init,smk_cess,file=paste0("data/smk_precomputed_inputs_",whichgender,".RData"))
-
-
-# p.CX[,121:201] <- p.CX[,120] # hold mortality rates constant from 2020 bc onwards
-# p.NX[,121:201] <- p.NX[,120]
-# p.FX[,121:201] <- p.FX[,120]
-# 
-# smk_init <- as.data.frame(smk_init)
-# smk_init[is.na(smk_init)] <- 0
-# smk_init <- as.matrix(smk_init)
-# 
-# smk_cess <- as.data.frame(smk_cess)
-# smk_cess[is.na(smk_cess)] <- 0
-# smk_cess <- as.matrix(smk_cess)
-# 
-# p.NX <- as.data.frame(p.NX)
-# p.NX[is.na(p.NX)] <- 0
-# p.NX <- as.matrix(p.NX)
-# 
-# p.CX <- as.data.frame(p.CX)
-# p.CX[is.na(p.CX)] <- 0
-# p.CX <- as.matrix(p.CX)
-# 
-# p.FX <- as.data.frame(p.FX)
-# p.FX[is.na(p.FX)] <- 0
-# p.FX <- as.matrix(p.FX)
