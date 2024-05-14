@@ -1,21 +1,21 @@
+library("readxl")
+
 # Mortality
-# assume population is constant
 # get_prevs_by_age
 
 setwd(file.path("/Users/john/Documents/Yale/YSPH Research/mds-microsim-policy/"))
 
 # Run model
-model_res<-main(v.params, list(initeff = matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2]), 
+model_res<-main.byage(v.params, list(initeff = matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2]), 
                                cesseff = matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])))
 
-library("readxl")
-library(dplyr)
+
 # Population
 pop <- read.csv("data/np2023_d1_mid.csv")
-
 pop_f <- pop[pop$SEX == 2 & pop$ORIGIN == 0 & pop$RACE == 0,]
 pop_m <- pop[pop$SEX == 1 & pop$ORIGIN == 0 & pop$RACE == 0,]
 
+# Cleaning/formatting dataframe to include total population for each gender by year
 pop_f <- t(pop_f[, -c(1:3,5)])
 colnames(pop_f) <- c(2022:2100)
 pop_f <- pop_f[-1,]
@@ -63,6 +63,7 @@ deathrates_ns_m <- deathrates_ns_m[as.character(age_range+1), as.character(year_
 pop_f <- pop_f[as.character(age_range), as.character(year_range)]
 pop_m <- pop_m[as.character(age_range), as.character(year_range)]
 
+# The gender for this depends on what the input is into the main model
 prev_cs <- xtabs(prev ~ age + year, data = model_res$C)
 attr(prev_cs, "class") <- NULL
 attr(prev_cs, "call") <- NULL
@@ -77,4 +78,5 @@ prev_fs <- prev_fs[as.character(age_range), as.character(year_range)]
 # For females
 female_SAD <- colSums(pop_f * (prev_cs * (deathrates_cs_f - deathrates_ns_f) + prev_fs * (deathrates_fs_f - deathrates_ns_f)))
 
+# For males
 male_SAD <- colSums(pop_m * (prev_cs * (deathrates_cs_m - deathrates_ns_m) + prev_fs * (deathrates_fs_m - deathrates_ns_m)))

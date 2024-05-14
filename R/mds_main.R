@@ -57,7 +57,7 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
   
   # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
   m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
-                 .export=c('mds_microsim','probs','get_prevs_by_age',
+                 .export=c('mds_microsim','probs','get_prevs',
                            'n.i','n.t','v.n','n.s','v.M_1',
                            'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
                            'rr.DX','p.HD', 'p.DR', 'p.RD',
@@ -74,6 +74,122 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
   }
   colnames(m.M_cy) <- c(min(cohorts):(max(cohorts)+100))
 
+  # Output prevalence results as a list
+  model_res <- lapply(c("N","C","F","D"), get_prevs, m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
+  model_res <- c(model_res, lapply(c("ND","CD","FD"), get_subgroup_prevs, denom="D",m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
+  names(model_res) <- c("N","C","F","D","ND","CD","FD")
+  for (l in 1:length(model_res)){
+    model_res[[l]] <- model_res[[l]][order(model_res[[l]][,"age"],decreasing=FALSE),] # re-order the age groups from 18.25, 18.99, 26.34, etc
+  }
+  
+  # Calculate costs, utilities, and productivity for each health state by age in the population
+  # m.C <- costs(m.M)
+  # m.U <- utils(m.M)
+  # m.W <- productivity(m.M)
+  # m.C_cy <- m.W_cy <- m.U_cy <- matrix(nrow = n.i*length(cohorts), ncol = (length(cohorts)+100))
+  # for (b in 1:length(cohorts)){
+  # m.C_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.C[(n.i*(b-1)+1):(n.i*b),]
+  # m.U_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.U[(n.i*(b-1)+1):(n.i*b),]
+  # m.W_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.W[(n.i*(b-1)+1):(n.i*b),]
+  # }
+  # total_cuw <- rbind(colSums(m.C_cy,na.rm=TRUE),colSums(m.U_cy,na.rm=TRUE),colSums(m.W_cy,na.rm=TRUE))
+  # rownames(total_cuw)<-c("total costs","total QALYs","total productivity")
+  # colnames(total_cuw) <-colnames(m.C_cy) <- colnames(m.U_cy) <- colnames(m.W_cy) <- c(min(cohorts):(max(cohorts)+100))
+  # v.d_c <- 1 / (1 + d.c) ^ (0:n.t)   # calculate the cost discount weight based on the discount rate d.c
+  # v.d_u <- 1 / (1 + d.u) ^ (0:n.t)   # calculate the QALY discount weight based on the discount rate d.u
+  # v.d_w <- 1 / (1 + d.w) ^ (0:n.t)   # calculate the QALY discount weight based on the discount rate d.u
+  
+  # tc <- m.C %*% v.d_c       # total (discounted) costs across population
+  # tu <- m.U %*% v.d_u       # total (discounted) QALYs
+  # tw <- m.W %*% v.d_w       # total (discounted) productivity
+  
+  # tc_hat <- mean(tc)        # average (discounted) cost 
+  # tu_hat <- mean(tu)        # average (discounted) QALYs
+  # tw_hat <- mean(tw)
+  
+  cat(paste0("\n  ", v.params," "))
+  print(Sys.time() - t_init) # End timer
+  return(model_res)
+}
+
+# function for mortality, get_prevs_by_age
+
+main.byage = function(v.params, v.policy) { # v.params: run model for parameter calibration; v.policy: policy effects
+  
+  t_init <- Sys.time() # Start timer
+  
+  s.NC_9.17 <- ifelse(calib_inputs["s.NC_9.17","calib"]==1,v.params["s.NC_9.17"],calib_inputs["s.NC_9.17","value"])
+  s.NC_18.25 <- ifelse(calib_inputs["s.NC_18.25","calib"]==1,v.params["s.NC_18.25"],calib_inputs["s.NC_18.25","value"])
+  
+  s.CF_18.25 <- ifelse(calib_inputs["s.CF_18.25","calib"]==1,v.params["s.CF_18.25"],calib_inputs["s.CF_18.25","value"])
+  s.CF_26.34 <- ifelse(calib_inputs["s.CF_26.34","calib"]==1,v.params["s.CF_26.34"],calib_inputs["s.CF_26.34","value"])
+  s.CF_35.49 <- ifelse(calib_inputs["s.CF_35.49","calib"]==1,v.params["s.CF_35.49"],calib_inputs["s.CF_35.49","value"])
+  s.CF_50.64 <- ifelse(calib_inputs["s.CF_50.64","calib"]==1,v.params["s.CF_50.64"],calib_inputs["s.CF_50.64","value"])
+  s.CF_65.99 <- ifelse(calib_inputs["s.CF_65.99","calib"]==1,v.params["s.CF_65.99"],calib_inputs["s.CF_65.99","value"])
+  
+  s.HD_12.17 <-  ifelse(calib_inputs["s.HD_12.17","calib"]==1,v.params["s.HD_12.17"],calib_inputs["s.HD_12.17","value"])
+  s.HD_18.25 <-  ifelse(calib_inputs["s.HD_18.25","calib"]==1,v.params["s.HD_18.25"],calib_inputs["s.HD_18.25","value"])
+  s.HD_26.34 <-  ifelse(calib_inputs["s.HD_26.34","calib"]==1,v.params["s.HD_26.34"],calib_inputs["s.HD_26.34","value"])
+  
+  rr.DX_18.25 <- ifelse(calib_inputs["rr.DX_18.25","calib"]==1,v.params["rr.DX_18.25"],calib_inputs["rr.DX_18.25","value"])
+  rr.DX_26.34 <- ifelse(calib_inputs["rr.DX_26.34","calib"]==1,v.params["rr.DX_26.34"],calib_inputs["rr.DX_26.34","value"])
+  rr.DX_35.49 <- ifelse(calib_inputs["rr.DX_35.49","calib"]==1,v.params["rr.DX_35.49"],calib_inputs["rr.DX_35.49","value"])
+  rr.DX_50.64 <- ifelse(calib_inputs["rr.DX_50.64","calib"]==1,v.params["rr.DX_50.64"],calib_inputs["rr.DX_50.64","value"])
+  rr.DX_65.99 <- ifelse(calib_inputs["rr.DX_65.99","calib"]==1,v.params["rr.DX_65.99"],calib_inputs["rr.DX_65.99","value"])
+  
+  rr.ND.CD <- ifelse(calib_inputs["rr.ND.CD","calib"]==1,v.params["rr.ND.CD"],calib_inputs["rr.ND.CD","value"])
+  rr.CH.CD <- ifelse(calib_inputs["rr.CH.CD","calib"]==1,v.params["rr.CH.CD"],calib_inputs["rr.CH.CD","value"])
+  rr.CR.CD <- ifelse(calib_inputs["rr.CR.CD","calib"]==1,v.params["rr.CR.CD"],calib_inputs["rr.CR.CD","value"])
+  rr.CD.FD <- ifelse(calib_inputs["rr.CD.FD","calib"]==1,v.params["rr.CD.FD"],calib_inputs["rr.CD.FD","value"])
+  
+  yearinc_p.HD <- ifelse(calib_inputs["yearinc_p.HD","calib"]==1,v.params["yearinc_p.HD"],calib_inputs["yearinc_p.HD","value"])
+  yearinc_p.HD <- round(yearinc_p.HD)
+  p.DR=NULL
+  p.DR[1:12] <- p.DR[100] <- 0 # probability to recover, final value = 0 because mortality prob = 1
+  p.DR[13:99] <- ifelse(calib_inputs["p.DR","calib"]==1,v.params["p.DR"],calib_inputs["p.DR","value"]) # assumes constant recovery by age
+  
+  ## Incidence
+  for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
+    bc1 = bc-1899
+    for (age in 0:34){ # increase applies to youth and young adults ages 0-25
+      if ((bc+age)>=yearinc_p.HD & age>=18 & age<=25){ # starting in 2016
+        p.HD[(age+1),bc1] = s.HD_18.25*p.HD[(age+1),bc1]
+      }
+      if ((bc+age)>=yearinc_p.HD & age<18){
+        p.HD[(age+1),bc1] = s.HD_12.17*p.HD[(age+1),bc1]
+      }
+      if ((bc+age)>=yearinc_p.HD & age>=26){
+        p.HD[(age+1),bc1] = s.HD_26.34*p.HD[(age+1),bc1]
+      }
+    }
+  }
+  ## Initiation - No initiation after 25
+  p.NC = unname(v.policy[["initeff"]])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
+  
+  ## Cessation - No cessation before 18
+  p.CF = unname(v.policy[["cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
+  
+  rr.DX = c(rep(1,18),rep(rr.DX_18.25,8),rep(rr.DX_26.34,9),rep(rr.DX_35.49,15),rep(rr.DX_50.64,15),rep(rr.DX_65.99,34),1)
+  
+  # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
+  m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
+                 .export=c('mds_microsim','probs','get_prevs_by_age',
+                           'n.i','n.t','v.n','n.s','v.M_1',
+                           'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
+                           'rr.DX','p.HD', 'p.DR', 'p.RD',
+                           'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD')) %dopar% {
+                             mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
+                           }
+  # run in serial for debugging:
+  # m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
+  
+  # Convert matrix from cohort-age to cohort-year (cy)
+  m.M_cy <- matrix(nrow = n.i*length(cohorts), ncol = (length(cohorts)+100))
+  for (b in 1:length(cohorts)){
+    m.M_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.M[(n.i*(b-1)+1):(n.i*b),]
+  }
+  colnames(m.M_cy) <- c(min(cohorts):(max(cohorts)+100))
+  
   # Output prevalence results as a list
   model_res <- lapply(c("N","C","F","D"), get_prevs_by_age, m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
   model_res <- c(model_res, lapply(c("ND","CD","FD"), get_subgroup_prevs, denom="D",m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation

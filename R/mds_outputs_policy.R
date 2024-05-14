@@ -13,7 +13,7 @@ apply_policy <- function(coef_initeff, coef_cesseff, yearpolicy, v.affected_ages
   return(list(model_res_policy = main(v.params, v.policy), v.policy = v.policy, coef_initeff = coef_initeff, coef_cesseff = coef_cesseff))
 }
 
-# keep function, run scenario 3 times with lower and upper bounds and combine dataframes
+
 model_res_policy1 <- apply_policy(0.8, 1.2, 2024, c(18:25))
 model_res_policy2 <- apply_policy(0.5, 1.5, 2024, c(18:25))
 
