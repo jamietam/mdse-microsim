@@ -34,7 +34,6 @@ mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, 
     
     m.P <- probs(bc, t, v.ysq, m.M[, t])           # calculate the transition probabilities at cycle t 
     m.M[, t+1] <- samplev(m.P, 1)      # sample the next health state and store that state in matrix m.M 
-    
   }                                                       # close the loop for the time points 
   
   if (TS.out == TRUE) {  # create a  matrix of transitions across states
@@ -133,62 +132,53 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
 }       
 
 ## COSTS FUNCTION ----------------------------------------------------
-costs <- function(m.M) { # gets the costs for each person based on health state M and age t
-  m.C <- matrix(nrow = n.i*length(cohorts), ncol = n.t + 1, 
-                              dimnames = dimnames(m.M))  
-  for (t in 1:n.t){
-    m.C[m.M =="NH"] <- c.NH[t] 
-    m.C[m.M =="CH"] <- c.CH[t]
-    m.C[m.M =="FH"] <- c.FH[t]
-    m.C[m.M =="ND"] <- c.ND[t]
-    m.C[m.M =="CD"] <- c.CD[t]
-    m.C[m.M =="FD"] <- c.FD[t]
-    m.C[m.M =="NR"] <- c.NR[t]
-    m.C[m.M =="CR"] <- c.CR[t]
-    m.C[m.M =="FR"] <- c.FR[t]
-    m.C[m.M =="X"] <- 0
-  }
-  return(m.C) 
+costs <- function(M_t,t) { # gets the costs for each person based on health state M and age t
+    
+    m.c_t <- matrix(data = 0, nrow = n.i, ncol = 1)  
+  
+    m.c_t[M_t =="NH"] <- c.NH[t] 
+    m.c_t[M_t =="CH"] <- c.CH[t]
+    m.c_t[M_t =="FH"] <- c.FH[t]
+    m.c_t[M_t =="ND"] <- c.ND[t]
+    m.c_t[M_t =="CD"] <- c.CD[t]
+    m.c_t[M_t =="FD"] <- c.FD[t]
+    m.c_t[M_t =="NR"] <- c.NR[t]
+    m.c_t[M_t =="CR"] <- c.CR[t]
+    m.c_t[M_t =="FR"] <- c.FR[t]
+    m.c_t[M_t =="X"] <- 0
+    
+  return(m.c_t) 
 }      
 
 ## UTILITIES FUNCTION ----------------------------------------------------
-utils <- function(m.M) { # gets the utilities for each person based on health state M and age t
-  m.U <- matrix(nrow = n.i*length(cohorts), ncol = n.t + 1, 
-                dimnames = dimnames(m.M))  
-  for (t in 1:n.t){
-    m.U[m.M =="NH"] <- u.NH[t] 
-    m.U[m.M =="CH"] <- u.CH[t]
-    m.U[m.M =="FH"] <- u.FH[t]
-    m.U[m.M =="ND"] <- u.ND[t]
-    m.U[m.M =="CD"] <- u.CD[t]
-    m.U[m.M =="FD"] <- u.FD[t]
-    m.U[m.M =="NR"] <- u.NR[t]
-    m.U[m.M =="CR"] <- u.CR[t]
-    m.U[m.M =="FR"] <- u.FR[t]
-    m.U[m.M =="X"] <- 0
-  }
-  return(m.U) 
+utils <- function(M_t,t) { # gets the utilities for each person based on health state M and age t
+  
+  m.u_t <- matrix(data= NA, nrow = n.i, ncol = 1)  
+  
+  m.u_t[M_t =="NH"] <- u.NH[t] 
+  m.u_t[M_t =="CH"] <- u.CH[t]
+  m.u_t[M_t =="FH"] <- u.FH[t]
+  m.u_t[M_t =="ND"] <- u.ND[t]
+  m.u_t[M_t =="CD"] <- u.CD[t]
+  m.u_t[M_t =="FD"] <- u.FD[t]
+  m.u_t[M_t =="NR"] <- u.NR[t]
+  m.u_t[M_t =="CR"] <- u.CR[t]
+  m.u_t[M_t =="FR"] <- u.FR[t]
+  m.u_t[M_t =="X"] <- 0
+
+  return(m.u_t) 
 }      
 
-## PRODUCTIVITY FUNCTION ----------------------------------------------------
-productivity <- function(m.M) { # gets the utilities for each person based on health state M and age t
-  m.W <- matrix(nrow = n.i*length(cohorts), ncol = n.t + 1, 
-                dimnames = dimnames(m.M))  
-  for (t in 1:n.t){
-    m.W[m.M =="NH"] <- w.NH[t] 
-    m.W[m.M =="CH"] <- w.CH[t]
-    m.W[m.M =="FH"] <- w.FH[t]
-    m.W[m.M =="ND"] <- w.ND[t]
-    m.W[m.M =="CD"] <- w.CD[t]
-    m.W[m.M =="FD"] <- w.FD[t]
-    m.W[m.M =="NR"] <- w.NR[t]
-    m.W[m.M =="CR"] <- w.CR[t]
-    m.W[m.M =="FR"] <- w.FR[t]
-    m.W[m.M =="X"] <- 0
-  }
-  return(m.W) 
-}    
-
+## PRODUCTIVITIES FUNCTION ----------------------------------------------------
+prods <- function(M_t,t) { # gets the work productivity for each person based on health state M and age t
+  
+  m.w_t <- matrix(data= NA, nrow = n.i, ncol = 1)  
+  
+  m.w_t[M_t !="X"] <- w[t] 
+  m.w_t[M_t =="X"] <- 0
+  
+  return(m.w_t) 
+}      
 
 ## MODEL PREVALENCE RESULTS ------------------------------------------------
 get_prevs <- function(state,m_cohortbyyear,minyear,maxyear){ # Get counts/prevalence of individuals in a health state by age group and year
@@ -256,6 +246,7 @@ get_subgroup_prevs <- function(state,denom, m_cohortbyyear,minyear,maxyear){ # G
   colnames(m.m_prevs)<-c("age","year", "prev","counts","alive","dead")
   return(m.m_prevs) 
 }
+
 
 ############################################################################################
 # The MDS microsimulation model was developed by Jamie Tam and last updated on 11/3/2021
