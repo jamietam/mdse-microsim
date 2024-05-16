@@ -1,8 +1,30 @@
+# Run policy model ------------------------------
+apply_policy <- function(coef_initeff, coef_cesseff, yearpolicy, v.affected_ages) {
+  initeff <- matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2])
+  cesseff <- matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])
+  
+  for (age in v.affected_ages) {
+    initeff[row(initeff) + col(initeff) > (yearpolicy-1899) & row(initeff) == age] <- coef_initeff
+    cesseff[row(cesseff) + col(cesseff) > (yearpolicy-1899) & row(cesseff) == age] <- coef_cesseff
+  }
+  
+  v.policy <- list(initeff = initeff, cesseff = cesseff)
+  
+  return(list(model_res_policy = main(v.params, v.policy), v.policy = v.policy, coef_initeff = coef_initeff, coef_cesseff = coef_cesseff))
+}
+
+
+model_res_policy1 <- apply_policy(0.8, 1.2, 2024, c(18:25))
+model_res_policy2 <- apply_policy(0.5, 1.5, 2024, c(18:25))
+
+
+
 # Run the model (again) ---------------------------------------------------
 model_res<-main(v.params, list(initeff = matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2]), 
                                cesseff = matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])))
 # Test
 # model_res <- main(v.params, v.policy)
+
 
 v.GOF <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
 for (r in 1:length(lst_calibtargets)){ # sum of squared differences
@@ -55,13 +77,33 @@ p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
 p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
 
 rr.DX = c(rep(1,18),rep(rr.DX_18.25,8),rep(rr.DX_26.34,9),rep(rr.DX_35.49,15),rep(rr.DX_50.64,15),rep(rr.DX_65.99,34),1)
-modelprev <- rbind(cbind(data.frame(model_res$N),status="neversmoker"),
-                   cbind(data.frame(model_res$C),status="currentsmoker"),
-                   cbind(data.frame(model_res$F),status="formersmoker"),
-                   cbind(data.frame(model_res$D),status="depressed"),
-                   cbind(data.frame(model_res$ND),status="neversmokerD"),
-                   cbind(data.frame(model_res$CD),status="currentsmokerD"),
-                   cbind(data.frame(model_res$FD),status="formersmokerD"))
+
+
+create_model_prev <- function(model_res) {
+  df_list <- list(
+    cbind(data.frame(model_res$N), status = "neversmoker"),
+    cbind(data.frame(model_res$C), status = "currentsmoker"),
+    cbind(data.frame(model_res$F), status = "formersmoker"),
+    cbind(data.frame(model_res$D), status = "depressed"),
+    cbind(data.frame(model_res$ND), status = "neversmokerD"),
+    cbind(data.frame(model_res$CD), status = "currentsmokerD"),
+    cbind(data.frame(model_res$FD), status = "formersmokerD")
+  )
+  modelprev <- do.call(rbind, df_list)
+  
+  return(modelprev)
+}
+
+modelprev <- create_model_prev(model_res)
+modelprev_policy1 <- create_model_prev(model_res_policy1[["model_res_policy"]])
+modelprev_policy2 <- create_model_prev(model_res_policy2[["model_res_policy"]])
+
+modelprev$scenario <- "baseline"
+modelprev_policy1$scenario <- "policy1"
+modelprev_policy2$scenario <- "policy2"
+
+modelprev_policy <- rbind(modelprev, modelprev_policy1, modelprev_policy2)
+
 
 calibtargets = rbind(cbind(data.frame(lst_targets[["N"]]),status="neversmoker"),
                      cbind(data.frame(lst_targets[["C"]]),status="currentsmoker"),
@@ -70,6 +112,7 @@ calibtargets = rbind(cbind(data.frame(lst_targets[["N"]]),status="neversmoker"),
                      cbind(data.frame(lst_targets[["ND"]]),status="neversmokerD"),
                      cbind(data.frame(lst_targets[["CD"]]),status="currentsmokerD"),
                      cbind(data.frame(lst_targets[["FD"]]),status="formersmokerD"))
+
 
 p.NCsmk_init <- as.data.frame(cbind(c(p.NC[,100],rr.ND.CD*p.NC[,100],smk_init[,100]),c(rep("calibrated",100),rep("rr.ND.CD",100),rep("CISNET",100)),c(rep(0:99,3))))
 names(p.NCsmk_init) <- c("prob","inputs","age")
@@ -138,9 +181,15 @@ for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort forma
     }
   }
 }
-p.HD_age <- ggplot() + geom_line(aes(x=0:99,y=p.HD[,(2020-1900)],col="bc 2020")) +
+p.HD_age <- ggplot() + #geom_line(aes(x=0:99,y=p.HD[,(2020-1900)],col="bc 2020")) +
+  #geom_line(aes(x=0:99,y=p.HD[,(1980-1900)],col="bc 1980")) +
+  #geom_line(aes(x=0:99,y=p.HD[,(1995-1900)],col="bc 1995")) +
   geom_line(aes(x=0:99,y=p.HD[,(1980-1900)],col="bc 1980")) +
+  geom_line(aes(x=0:99,y=p.HD[,(1985-1900)],col="bc 1985")) +
+  geom_line(aes(x=0:99,y=p.HD[,(1990-1900)],col="bc 1990")) +
   geom_line(aes(x=0:99,y=p.HD[,(1995-1900)],col="bc 1995")) +
+  geom_line(aes(x=0:99,y=p.HD[,(2000-1900)],col="bc 2000")) +
+  geom_line(aes(x=0:99,y=p.HD[,(2025-1900)],col="bc 2025")) +
   scale_y_continuous(name="Annual incidence probability (p.HD)", limits=c(0,1), breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Age", limits=c(0,99), breaks=c(0,12,26,36,50,65,100)) +
   labs(title="Incidence, calibrated estimates",color=NULL)
@@ -213,9 +262,9 @@ fs_ageD <-ggplot() +
 ncf_totalD <- ggplot() +
   geom_pointrange(data=subset(calibtargets,age==18.99 & (status=="neversmokerD" | status=="currentsmokerD" | status=="formersmokerD")), 
                   aes(x = survey_year, y = prev,ymin=prev_lowCI, ymax=prev_highCI, color=status,shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, age==18.99 & (status=="neversmokerD" | status=="currentsmokerD" | status=="formersmokerD")),  aes(x=year, y= prev,color=status))+
+  geom_line(data = subset(modelprev_policy, age==18.99 & (status=="neversmokerD" | status=="currentsmokerD" | status=="formersmokerD")),  aes(x=year, y= prev,color=status, linetype = scenario))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),5))  +
   labs(title=paste0("Smoking distribution - ",whichgender," ages 18-99"))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
@@ -248,7 +297,7 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
 df.calib <- merge(as.data.frame(v.params),as.data.frame(calib_inputs),by="row.names",all.x=TRUE,all.y=TRUE,sort=FALSE)
 colnames(df.calib)[1:3] <- c("parameters", "est","initial")
 
-pdf(file = paste0(whichgender,"_mds_calib_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I:%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
+pdf(file = paste0(whichgender,"_mds_calib_policy_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I:%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
 plot.new()
 text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
 text(.5, 1.0, "Calibration fit values", font=2, cex=1.5)

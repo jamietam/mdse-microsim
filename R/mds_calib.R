@@ -12,7 +12,7 @@ library(lhs)
 library(darthtools)
 library(matrixStats)
 # setwd(file.path("/Users/JT936/Dropbox/GitHub/mds-microsim/"))
-setwd(file.path("/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/"))
+setwd(file.path("/gpfs/gibbs/project/tam_jamie/jzl9/mds-microsim/"))
 here::i_am("R/mds_calib.R")
 
 ####### For HPC runs ###########################################################
@@ -42,6 +42,7 @@ n.t   <- 100                    # time horizon per person, number of years
 v.n   <- c( "NH","CH","FH","ND","CD","FD","NR","CR","FR","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), "Happy" (H), Depressed (D), "Recovered" (R), Dead (X)
 n.s   <- length(v.n)            # the number of health states
 v.M_1 <- rep("NH", n.i)         # everyone begins in the Never smoker Never MD state
+
 d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by 3%
 
 ## CALIBRATION PARAMETERS - Specify which parameters you want to calibrate (0 vs 1 in column 4), and provide upper and lower bounds for the search algorithm
@@ -97,7 +98,7 @@ v.params <- calib_inputs[calib_inputs[,"calib"]==1,][,"value"]
 n.param <- length(v.params) # number of parameters to calibrate
 
 # Number of initial starting points
-n.init <- 20 
+n.init <- 40
 
 # Provide ranges for input search space
 lb <- calib_inputs[calib_inputs[,"calib"]==1,][,"lower"] # lower bound
@@ -121,46 +122,49 @@ source("R/mds_main.R", echo=FALSE)
 
 ## RUN CALIBRATION
 # Calibrate! --------------------------------------------------------------
-
+# 
 ##  Select multiple random starting values with Latin Hypercube Sampling ###
-set.seed(32788)
-X <- randomLHS(n.init,length(v.params)) # LHS to cover parameter space evenly
+# set.seed(32788)
+# X <- randomLHS(n.init,length(v.params)) # LHS to cover parameter space evenly
+# 
+# v.params_init <- matrix(nrow=n.init,ncol=n.param)
+# 
+# for (i in 1:n.param){
+#   v.params_init[,i] <- qunif(X[,i],min=lb[i],max=ub[i])
+# }
+# colnames(v.params_init) <- names(v.params)
+# 
+# # v.params_init[1,] <- v.params # replace first initial set with v.params
+# 
+# # record start time of calibration
+# t_init <- Sys.time()
+# 
+# # ###  Run optimization algorithm for each starting point  ###
+# m.calib_res <- matrix(nrow = n.init, ncol = n.param+1)
+# colnames(m.calib_res) <- c(names(v.params), "Overall_fit")
+# for (j in 1:n.init){ # j <- 1
+# 
+#   # L-BFGS-B optimization method - minimization
+#   fit_nm <- lbfgsb3c(par = v.params_init[j,], fn = f_gof, lower=lb, upper=ub)
+# 
+#   m.calib_res[j,] <- c(fit_nm$par, fit_nm$value)
+# }
+# 
+# # Calculate computation time
+# comp_time <- Sys.time() - t_init
+# 
+# ### Arrange parameter sets in order of fit
+# m.calib_res <- m.calib_res[order(m.calib_res[,"Overall_fit"]),]
+# 
+# v.params = m.calib_res[1,1:length(v.params)] # store best fit as v.params
+# 
+# # print parameter initial values, calibrated estimates
+# print(v.params_init)
+# print(m.calib_res)
+# print(whichgender)
 
-v.params_init <- matrix(nrow=n.init,ncol=n.param)
+## GENERATE OUTPUTS - DO NOT RUN BOTH, the second file will generate an incorrect output.
+# source("R/mds_outputs.R", echo=FALSE)
 
-for (i in 1:n.param){
-  v.params_init[,i] <- qunif(X[,i],min=lb[i],max=ub[i]) 
-}
-colnames(v.params_init) <- names(v.params)
-
-# v.params_init[1,] <- v.params # replace first initial set with v.params
-
-# record start time of calibration
-t_init <- Sys.time()
-
-###  Run optimization algorithm for each starting point  ###
-m.calib_res <- matrix(nrow = n.init, ncol = n.param+1)
-colnames(m.calib_res) <- c(names(v.params), "Overall_fit")
-for (j in 1:n.init){ # j <- 1
-  
-  # L-BFGS-B optimization method - minimization 
-  fit_nm <- lbfgsb3c(par = v.params_init[j,], fn = f_gof, lower=lb, upper=ub)
-  
-  m.calib_res[j,] <- c(fit_nm$par, fit_nm$value)
-}
-
-# Calculate computation time
-comp_time <- Sys.time() - t_init
-
-### Arrange parameter sets in order of fit
-m.calib_res <- m.calib_res[order(m.calib_res[,"Overall_fit"]),]
-
-v.params = m.calib_res[1,1:length(v.params)] # store best fit as v.params
-
-# print parameter initial values, calibrated estimates
-print(v.params_init)
-print(m.calib_res)
-print(whichgender)
-
-## GENERATE OUTPUTS
+                           ## GENERATE OUTPUTS
 source("R/mds_outputs.R", echo=TRUE)
