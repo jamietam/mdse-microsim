@@ -3,10 +3,7 @@
 
 # Run the model ---------------------------------------------------
   
-model_res<-main(v.params, list(initeff = matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2]), 
-                               cesseff = matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])))
-# Test
-# model_res <- main(v.params, v.policy)
+model_res<-main_calib(v.params)
 
 v.GOF <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
 for (r in 1:length(lst_calibtargets)){ # sum of squared differences
@@ -30,9 +27,25 @@ s.CF_35.49 <- ifelse(calib_inputs["s.CF_35.49","calib"]==1,v.params["s.CF_35.49"
 s.CF_50.64 <- ifelse(calib_inputs["s.CF_50.64","calib"]==1,v.params["s.CF_50.64"],calib_inputs["s.CF_50.64","value"])
 s.CF_65.99 <- ifelse(calib_inputs["s.CF_65.99","calib"]==1,v.params["s.CF_65.99"],calib_inputs["s.CF_65.99","value"])
 
+# Recovery
 p.DR=NULL
-p.DR[1:12] <- p.DR[100] <- 0 # probability to recover, final value = 0 because mortality prob = 1
-p.DR[13:99] <- ifelse(calib_inputs["p.DR","calib"]==1,v.params["p.DR"],calib_inputs["p.DR","value"])
+p.DR[1:12] <- p.DR[100] <- 0 # final value = 0 because mortality prob = 1
+p.DR[13:18] <- ifelse(calib_inputs["p.DR_12.17","calib"]==1,v.params["p.DR_12.17"],calib_inputs["p.DR_12.17","value"])
+p.DR[19:26] <- ifelse(calib_inputs["p.DR_18.25","calib"]==1,v.params["p.DR_18.25"],calib_inputs["p.DR_18.25","value"])
+p.DR[27:35] <- ifelse(calib_inputs["p.DR_26.34","calib"]==1,v.params["p.DR_26.34"],calib_inputs["p.DR_26.34","value"])
+p.DR[36:50] <- ifelse(calib_inputs["p.DR_35.49","calib"]==1,v.params["p.DR_35.49"],calib_inputs["p.DR_35.49","value"])
+p.DR[51:65] <- ifelse(calib_inputs["p.DR_50_64","calib"]==1,v.params["p.DR_50_64"],calib_inputs["p.DR_50_64","value"])
+p.DR[66:99] <- ifelse(calib_inputs["p.DR_65_99","calib"]==1,v.params["p.DR_65_99"],calib_inputs["p.DR_65_99","value"])
+
+# Recurrence
+p.RD = NULL
+p.RD[1:12] <- p.RD[100] <- 0 # final value = 0 because mortality prob = 1
+p.RD[13:18] <- ifelse(calib_inputs["p.RD_12.17","calib"]==1,v.params["p.RD_12.17"],calib_inputs["p.RD_12.17","value"])
+p.RD[19:26] <- ifelse(calib_inputs["p.RD_18.25","calib"]==1,v.params["p.RD_18.25"],calib_inputs["p.RD_18.25","value"])
+p.RD[27:35] <- ifelse(calib_inputs["p.RD_26.34","calib"]==1,v.params["p.RD_26.34"],calib_inputs["p.RD_26.34","value"])
+p.RD[36:50] <- ifelse(calib_inputs["p.RD_35.49","calib"]==1,v.params["p.RD_35.49"],calib_inputs["p.RD_35.49","value"])
+p.RD[51:65] <- ifelse(calib_inputs["p.RD_50_64","calib"]==1,v.params["p.RD_50_64"],calib_inputs["p.RD_50_64","value"])
+p.RD[66:99]  <- ifelse(calib_inputs["p.RD_65_99","calib"]==1,v.params["p.RD_65_99"],calib_inputs["p.RD_65_99","value"])
 
 s.HD_12.17 <-  ifelse(calib_inputs["s.HD_12.17","calib"]==1,v.params["s.HD_12.17"],calib_inputs["s.HD_12.17","value"])
 s.HD_18.25 <-  ifelse(calib_inputs["s.HD_18.25","calib"]==1,v.params["s.HD_18.25"],calib_inputs["s.HD_18.25","value"])
@@ -252,7 +265,7 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
 df.calib <- merge(as.data.frame(v.params),as.data.frame(calib_inputs),by="row.names",all.x=TRUE,all.y=TRUE,sort=FALSE)
 colnames(df.calib)[1:3] <- c("parameters", "est","initial")
 
-pdf(file = paste0(mainDir,"outputs/", whichgender,"_mds_calib_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I:%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
+pdf(file = paste0(mainDir,"output/", whichgender,"_mds_calib_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I:%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
 plot.new()
 text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
 text(.5, 1.0, "Calibration fit values", font=2, cex=1.5)

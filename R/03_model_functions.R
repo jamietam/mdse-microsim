@@ -258,13 +258,13 @@ f_gof <- function(v.params){
   
   # Calibrate to N, C, F, D and ND/D, CD/D, FD/D prevalences
   for (r in 1:length(lst_calibtargets)){ # sum of squared differences
-    # for (r in 1:4){
+  # for (r in 1:4){
     gof<- sum((lst_calibtargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
     v.GOF[r] <-gof
   }
   
   # OVERALL
-  v.weights <- rep(1,n.target) # can assign targets different weights
+  v.weights <- c(1,1,1,3,1,1,1) # can assign targets different weights
   # weighted sum
   GOF_overall <- sum(v.GOF[1:n.target] * v.weights)
   cat(GOF_overall)
@@ -272,7 +272,7 @@ f_gof <- function(v.params){
   return(GOF_overall)
 }
 
-main_calib = function(v.params, v.policy) { # v.params: run model for parameter calibration; v.policy: policy effects
+main_calib = function(v.params) { # v.params: run model for parameter calibration; no policy effects
   
   t_init <- Sys.time() # Start timer
   
@@ -302,9 +302,26 @@ main_calib = function(v.params, v.policy) { # v.params: run model for parameter 
   
   yearinc_p.HD <- ifelse(calib_inputs["yearinc_p.HD","calib"]==1,v.params["yearinc_p.HD"],calib_inputs["yearinc_p.HD","value"])
   yearinc_p.HD <- round(yearinc_p.HD)
+  
+  # Recovery
   p.DR=NULL
-  p.DR[1:12] <- p.DR[100] <- 0 # probability to recover, final value = 0 because mortality prob = 1
-  p.DR[13:99] <- ifelse(calib_inputs["p.DR","calib"]==1,v.params["p.DR"],calib_inputs["p.DR","value"]) # assumes constant recovery by age
+  p.DR[1:12] <- p.DR[100] <- 0 # final value = 0 because mortality prob = 1
+  p.DR[13:18] <- ifelse(calib_inputs["p.DR_12.17","calib"]==1,v.params["p.DR_12.17"],calib_inputs["p.DR_12.17","value"])
+  p.DR[19:26] <- ifelse(calib_inputs["p.DR_18.25","calib"]==1,v.params["p.DR_18.25"],calib_inputs["p.DR_18.25","value"])
+  p.DR[27:35] <- ifelse(calib_inputs["p.DR_26.34","calib"]==1,v.params["p.DR_26.34"],calib_inputs["p.DR_26.34","value"])
+  p.DR[36:50] <- ifelse(calib_inputs["p.DR_35.49","calib"]==1,v.params["p.DR_35.49"],calib_inputs["p.DR_35.49","value"])
+  p.DR[51:65] <- ifelse(calib_inputs["p.DR_50_64","calib"]==1,v.params["p.DR_50_64"],calib_inputs["p.DR_50_64","value"])
+  p.DR[66:99] <- ifelse(calib_inputs["p.DR_65_99","calib"]==1,v.params["p.DR_65_99"],calib_inputs["p.DR_65_99","value"])
+  
+  # Recurrence
+  p.RD = NULL
+  p.RD[1:12] <- p.RD[100] <- 0 # final value = 0 because mortality prob = 1
+  p.RD[13:18] <- ifelse(calib_inputs["p.RD_12.17","calib"]==1,v.params["p.RD_12.17"],calib_inputs["p.RD_12.17","value"])
+  p.RD[19:26] <- ifelse(calib_inputs["p.RD_18.25","calib"]==1,v.params["p.RD_18.25"],calib_inputs["p.RD_18.25","value"])
+  p.RD[27:35] <- ifelse(calib_inputs["p.RD_26.34","calib"]==1,v.params["p.RD_26.34"],calib_inputs["p.RD_26.34","value"])
+  p.RD[36:50] <- ifelse(calib_inputs["p.RD_35.49","calib"]==1,v.params["p.RD_35.49"],calib_inputs["p.RD_35.49","value"])
+  p.RD[51:65] <- ifelse(calib_inputs["p.RD_50_64","calib"]==1,v.params["p.RD_50_64"],calib_inputs["p.RD_50_64","value"])
+  p.RD[66:99]  <- ifelse(calib_inputs["p.RD_65_99","calib"]==1,v.params["p.RD_65_99"],calib_inputs["p.RD_65_99","value"])
   
   ## Incidence
   for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
@@ -322,10 +339,10 @@ main_calib = function(v.params, v.policy) { # v.params: run model for parameter 
     }
   }
   ## Initiation - No initiation after 25
-  p.NC = unname(v.policy[["initeff"]])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
+  p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
   
   ## Cessation - No cessation before 18
-  p.CF = unname(v.policy[["cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
+  p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
   
   rr.DX = c(rep(1,18),rep(rr.DX_18.25,8),rep(rr.DX_26.34,9),rep(rr.DX_35.49,15),rep(rr.DX_50.64,15),rep(rr.DX_65.99,34),1)
   
@@ -395,9 +412,25 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
   
   yearinc_p.HD <- ifelse(calib_inputs["yearinc_p.HD","calib"]==1,v.params["yearinc_p.HD"],calib_inputs["yearinc_p.HD","value"])
   yearinc_p.HD <- round(yearinc_p.HD)
+  # Recovery
   p.DR=NULL
-  p.DR[1:12] <- p.DR[100] <- 0 # probability to recover, final value = 0 because mortality prob = 1
-  p.DR[13:99] <- ifelse(calib_inputs["p.DR","calib"]==1,v.params["p.DR"],calib_inputs["p.DR","value"]) # assumes constant recovery by age
+  p.DR[1:12] <- p.DR[100] <- 0 # final value = 0 because mortality prob = 1
+  p.DR[13:18] <- ifelse(calib_inputs["p.DR_12.17","calib"]==1,v.params["p.DR_12.17"],calib_inputs["p.DR_12.17","value"])
+  p.DR[19:26] <- ifelse(calib_inputs["p.DR_18.25","calib"]==1,v.params["p.DR_18.25"],calib_inputs["p.DR_18.25","value"])
+  p.DR[27:35] <- ifelse(calib_inputs["p.DR_26.34","calib"]==1,v.params["p.DR_26.34"],calib_inputs["p.DR_26.34","value"])
+  p.DR[36:50] <- ifelse(calib_inputs["p.DR_35.49","calib"]==1,v.params["p.DR_35.49"],calib_inputs["p.DR_35.49","value"])
+  p.DR[51:65] <- ifelse(calib_inputs["p.DR_50_64","calib"]==1,v.params["p.DR_50_64"],calib_inputs["p.DR_50_64","value"])
+  p.DR[66:99] <- ifelse(calib_inputs["p.DR_65_99","calib"]==1,v.params["p.DR_65_99"],calib_inputs["p.DR_65_99","value"])
+  
+  # Recurrence
+  p.RD = NULL
+  p.RD[1:12] <- p.RD[100] <- 0 # final value = 0 because mortality prob = 1
+  p.RD[13:18] <- ifelse(calib_inputs["p.RD_12.17","calib"]==1,v.params["p.RD_12.17"],calib_inputs["p.RD_12.17","value"])
+  p.RD[19:26] <- ifelse(calib_inputs["p.RD_18.25","calib"]==1,v.params["p.RD_18.25"],calib_inputs["p.RD_18.25","value"])
+  p.RD[27:35] <- ifelse(calib_inputs["p.RD_26.34","calib"]==1,v.params["p.RD_26.34"],calib_inputs["p.RD_26.34","value"])
+  p.RD[36:50] <- ifelse(calib_inputs["p.RD_35.49","calib"]==1,v.params["p.RD_35.49"],calib_inputs["p.RD_35.49","value"])
+  p.RD[51:65] <- ifelse(calib_inputs["p.RD_50_64","calib"]==1,v.params["p.RD_50_64"],calib_inputs["p.RD_50_64","value"])
+  p.RD[66:99]  <- ifelse(calib_inputs["p.RD_65_99","calib"]==1,v.params["p.RD_65_99"],calib_inputs["p.RD_65_99","value"])
   
   ## Incidence
   for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
@@ -468,9 +501,6 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
     model_res1[[l]] <- model_res1[[l]][order(model_res1[[l]][,"age"],decreasing=FALSE),] # re-order the age groups from 18.25, 18.99, 26.34, etc
   }
   
-  # Mortality
-  # m.M_cy
-  
   # Calculate costs, utilities, and productivity for each health state by age in the population
   total_cuw <- rbind(colSums(m.C_cy,na.rm=TRUE),colSums(m.U_cy,na.rm=TRUE),colSums(m.W_cy,na.rm=TRUE))
   rownames(total_cuw)<-c("total costs","total QALYs","total productivity")
@@ -486,7 +516,7 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
   
   # Calculate smoking-attributable mortality 2022-2100
   age_range <- 18:99
-  year_range <- 2022:2100
+  year_range <- cohorts
   prev_cs <- xtabs(prev ~ age + year, data = model_res1$C)
   prev_fs <- xtabs(prev ~ age + year, data = model_res1$F)
   attr(prev_cs, "class") <- attr(prev_cs, "call") <-  attr(prev_fs, "class") <- attr(prev_fs, "call") <- NULL

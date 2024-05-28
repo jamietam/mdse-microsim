@@ -1,10 +1,14 @@
+rm(list = ls()) ## Clean up the workspace
+mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" # Set working directory
+setwd(file.path(mainDir))
+
 ## RUN CALIBRATION
 source(paste0(mainDir,"R/01_environment.R"), echo=FALSE)
 source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE)
-source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
+source(paste0(mainDir,"R/03_model_functions.R"), echo=FALSE) # microsimulation model and probability functions
 
 # Number of initial starting points
-n.init <- 40
+n.init <- as.numeric(args[4])
 
 # Provide ranges for input search space
 lb <- calib_inputs[calib_inputs[,"calib"]==1,][,"lower"] # lower bound
