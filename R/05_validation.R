@@ -1,4 +1,8 @@
-# Run the model (again) ---------------------------------------------------
+## VALIDATION
+# Internal validation to compare model-predicted outputs evaluated at calibrated parameters vs the calibration targets
+
+# Run the model ---------------------------------------------------
+  
 model_res<-main(v.params, list(initeff = matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2]), 
                                cesseff = matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])))
 # Test
@@ -248,7 +252,7 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
 df.calib <- merge(as.data.frame(v.params),as.data.frame(calib_inputs),by="row.names",all.x=TRUE,all.y=TRUE,sort=FALSE)
 colnames(df.calib)[1:3] <- c("parameters", "est","initial")
 
-pdf(file = paste0(whichgender,"_mds_calib_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I:%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
+pdf(file = paste0(mainDir,"outputs/", whichgender,"_mds_calib_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I:%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
 plot.new()
 text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
 text(.5, 1.0, "Calibration fit values", font=2, cex=1.5)
@@ -262,14 +266,7 @@ grid_arrange_shared_legend(list(ns_age, cs_age, fs_age),3,"Smoking distribution"
 ncf_total
 grid_arrange_shared_legend(list(p.HD_age,p.HD_ageC),2,"Incidence by smoking status")
 grid.arrange(p.DR_age,p.RD_age,ncol=2)
-Sys.sleep(3)
-# D_age
-# Sys.sleep(3)
-# D_total
 grid_arrange_shared_legend(list(D_age, D_total),2,"MDE")
 grid_arrange_shared_legend(list(ns_ageD, cs_ageD, fs_ageD),3,"Smoking distribution among people with depression")
-Sys.sleep(3)
 grid_arrange_shared_legend(list(ncf_totalD, p.NCFX_age),2,"NCF")
-# ncf_totalD
-# p.NCFX_age
 dev.off()
