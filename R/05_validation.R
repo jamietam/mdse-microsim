@@ -93,7 +93,7 @@ names(p.NCsmk_init) <- c("prob","inputs","age")
 p.NCsmk_init$prob<-as.numeric(as.character(p.NCsmk_init$prob))
 p.NCsmk_init$age<-as.numeric(as.character(p.NCsmk_init$age))
 p.NC_age <- ggplot(data=p.NCsmk_init) +  geom_line( aes(x=age, y=prob, linetype=inputs, color=inputs)) + 
-  scale_x_continuous(name="Age", limits=c(0,99), breaks=seq(0,99,10)) +
+  scale_x_continuous(name="Age", limits=c(0,50), breaks=seq(0,99,10)) +
   labs(title="Initiation probabilities")
 
 p.CFsmk_cess <- as.data.frame(cbind(c(p.CF[,100],rr.CD.FD*p.CF[,100],smk_cess[,100]),c(rep("calibrated",100),rep("rr.CD.FD",100),rep("CISNET",100)),c(rep(0:99,3))))
@@ -238,15 +238,16 @@ ncf_totalD <- ggplot() +
 
 
 ## Figures for mortality by smoking and dep status  
-p.NCFX <- as.data.frame(cbind(c(p.NX[,100],p.CX[,100],a_p.FX.ysq[,100,5]),c(rep("NX",100),rep("CX",100),rep("FX",100)),c(rep(0:99,3))))
+p.NCFX <- as.data.frame(cbind(c(p.NX[,100],p.CX[,100],a_p.FX.ysq[,100,5]),c(rep("p.NX",100),rep("p.CX",100),rep("p.FX.ysq",100)),c(rep(0:99,3))))
 names(p.NCFX) <- c("prob","status","age")
 p.NCFX$prob <- as.numeric(p.NCFX$prob)
 p.NCFX$age <- as.numeric(p.NCFX$age)
 p.NCFX_age <- ggplot(data=p.NCFX) +  geom_line( aes(x=age, y=prob, color=status)) + 
-  geom_line(aes(x=age,y=prob*rr.DX,linetype=status,color=status))+
-  scale_y_continuous(name="Annual mortality by smoking status (rr.DX)", limits=c(0,1), breaks=seq(0,1,0.05)) +
+  geom_line(aes(x=age,y=prob*rr.DX,color=status),linetype=2)+
+  scale_color_manual(values=c('red', 'blue', 'springgreen3'))+
+  scale_y_continuous(name="Annual mortality by smoking status (rr.DX)", limits=c(0,1), breaks=seq(0,1,0.1)) +
   scale_x_continuous(name="Age", limits=c(0,99), breaks=seq(0,99,10)) +
-  labs(title="Mortality probabilities by smoking and MDE status, rr.DX")
+  labs(title="Mortality probabilities by smoking and MDE status")
 
 
 grid_arrange_shared_legend <- function(plots,columns,titletext) {

@@ -193,10 +193,10 @@ get_prevs <- function(state,m_cohortbyyear,minyear,maxyear){ # Get counts/preval
       if(cohortmin<1900) {next}
       cohortmax = year-agegroupstart[age]
       select = m_cohortbyyear[(n.i*(cohortmin-1900)+1):(n.i*(cohortmax-1900)+n.i),paste(year)] # birth cohort 1905 begins in row 26, and birth cohort 1912 ends in row 65
-      alive <- sum(select!="X",na_rm=TRUE)
-      dead <- sum(select=="X",na_rm=TRUE) 
-      counts <- sum(str_count(select,state),na_rm=TRUE)
-      prev <- sum(str_count(select,state),na_rm=TRUE)/sum(select!="X",na_rm=TRUE)
+      alive <- sum(select!="X",na.rm=TRUE)
+      dead <- sum(select=="X",na.rm=TRUE) 
+      counts <- sum(str_count(select,state),na.rm=TRUE)
+      prev <- sum(str_count(select,state),na.rm=TRUE)/sum(select!="X",na.rm=TRUE)
       m.m_prevs<-rbind(m.m_prevs,c(agerownames[age],year, prev,counts,alive,dead))
     }
   }
@@ -215,10 +215,10 @@ get_prevs1 <- function(state,m_cohortbyyear,minyear,maxyear){ # Get counts/preva
       if(cohortmin<1900) {next}
       cohortmax = year-agegroupstart[age]
       select = m_cohortbyyear[(n.i*(cohortmin-1900)+1):(n.i*(cohortmax-1900)+n.i),paste(year)] # birth cohort 1905 begins in row 26, and birth cohort 1912 ends in row 65
-      alive <- sum(select!="X",na_rm=TRUE)
-      dead <- sum(select=="X",na_rm=TRUE) 
-      counts <- sum(str_count(select,state),na_rm=TRUE)
-      prev <- sum(str_count(select,state),na_rm=TRUE)/sum(select!="X",na_rm=TRUE)
+      alive <- sum(select!="X",na.rm=TRUE)
+      dead <- sum(select=="X",na.rm=TRUE) 
+      counts <- sum(str_count(select,state),na.rm=TRUE)
+      prev <- sum(str_count(select,state),na.rm=TRUE)/sum(select!="X",na.rm=TRUE)
       m.m_prevs<-rbind(m.m_prevs,c(agerownames[age],year, prev,counts,alive,dead))
     }
   }
@@ -237,10 +237,10 @@ get_subgroup_prevs <- function(state,denom, m_cohortbyyear,minyear,maxyear){ # G
       if(cohortmin<1900) {next}
       cohortmax = year-agegroupstart[age]
       select = m_cohortbyyear[(n.i*(cohortmin-1900)+1):(n.i*(cohortmax-1900)+n.i),paste(year)] # birth cohort 1905 begins in row 26, and birth cohort 1912 ends in row 65
-      alive <- sum(str_count(select,denom),na_rm=TRUE)
-      counts <- sum(str_count(select,state),na_rm=TRUE)
-      dead <- sum(select=="X",na_rm=TRUE) 
-      prev <- sum(str_count(select,state),na_rm=TRUE)/sum(str_count(select,denom),na_rm=TRUE)
+      alive <- sum(str_count(select,denom),na.rm=TRUE)
+      counts <- sum(str_count(select,state),na.rm=TRUE)
+      dead <- sum(select=="X",na.rm=TRUE) 
+      prev <- sum(str_count(select,state),na.rm=TRUE)/sum(str_count(select,denom),na.rm=TRUE)
       m.m_prevs<-rbind(m.m_prevs,c(agerownames[age],year, prev,counts,alive,dead))
     }
   }
@@ -272,56 +272,41 @@ f_gof <- function(v.params){
   return(GOF_overall)
 }
 
+## Function to handle the repetitive task of looking up calib_inputs by parameter name
+get_value <- function(param_name) {
+  ifelse(calib_inputs[param_name, "calib"] == 1, v.params[param_name], calib_inputs[param_name, "value"])
+}
+
 main_calib = function(v.params) { # v.params: run model for parameter calibration; no policy effects
   
   t_init <- Sys.time() # Start timer
   
-  s.NC_9.17 <- ifelse(calib_inputs["s.NC_9.17","calib"]==1,v.params["s.NC_9.17"],calib_inputs["s.NC_9.17","value"])
-  s.NC_18.25 <- ifelse(calib_inputs["s.NC_18.25","calib"]==1,v.params["s.NC_18.25"],calib_inputs["s.NC_18.25","value"])
+  # Loop over parameter names and assign values dynamically
+  for (param in rownames(calib_inputs)) {
+    assign(param, get_value(param))
+  }
   
-  s.CF_18.25 <- ifelse(calib_inputs["s.CF_18.25","calib"]==1,v.params["s.CF_18.25"],calib_inputs["s.CF_18.25","value"])
-  s.CF_26.34 <- ifelse(calib_inputs["s.CF_26.34","calib"]==1,v.params["s.CF_26.34"],calib_inputs["s.CF_26.34","value"])
-  s.CF_35.49 <- ifelse(calib_inputs["s.CF_35.49","calib"]==1,v.params["s.CF_35.49"],calib_inputs["s.CF_35.49","value"])
-  s.CF_50.64 <- ifelse(calib_inputs["s.CF_50.64","calib"]==1,v.params["s.CF_50.64"],calib_inputs["s.CF_50.64","value"])
-  s.CF_65.99 <- ifelse(calib_inputs["s.CF_65.99","calib"]==1,v.params["s.CF_65.99"],calib_inputs["s.CF_65.99","value"])
-  
-  s.HD_12.17 <-  ifelse(calib_inputs["s.HD_12.17","calib"]==1,v.params["s.HD_12.17"],calib_inputs["s.HD_12.17","value"])
-  s.HD_18.25 <-  ifelse(calib_inputs["s.HD_18.25","calib"]==1,v.params["s.HD_18.25"],calib_inputs["s.HD_18.25","value"])
-  s.HD_26.34 <-  ifelse(calib_inputs["s.HD_26.34","calib"]==1,v.params["s.HD_26.34"],calib_inputs["s.HD_26.34","value"])
-  
-  rr.DX_18.25 <- ifelse(calib_inputs["rr.DX_18.25","calib"]==1,v.params["rr.DX_18.25"],calib_inputs["rr.DX_18.25","value"])
-  rr.DX_26.34 <- ifelse(calib_inputs["rr.DX_26.34","calib"]==1,v.params["rr.DX_26.34"],calib_inputs["rr.DX_26.34","value"])
-  rr.DX_35.49 <- ifelse(calib_inputs["rr.DX_35.49","calib"]==1,v.params["rr.DX_35.49"],calib_inputs["rr.DX_35.49","value"])
-  rr.DX_50.64 <- ifelse(calib_inputs["rr.DX_50.64","calib"]==1,v.params["rr.DX_50.64"],calib_inputs["rr.DX_50.64","value"])
-  rr.DX_65.99 <- ifelse(calib_inputs["rr.DX_65.99","calib"]==1,v.params["rr.DX_65.99"],calib_inputs["rr.DX_65.99","value"])
-  
-  rr.ND.CD <- ifelse(calib_inputs["rr.ND.CD","calib"]==1,v.params["rr.ND.CD"],calib_inputs["rr.ND.CD","value"])
-  rr.CH.CD <- ifelse(calib_inputs["rr.CH.CD","calib"]==1,v.params["rr.CH.CD"],calib_inputs["rr.CH.CD","value"])
-  rr.CR.CD <- ifelse(calib_inputs["rr.CR.CD","calib"]==1,v.params["rr.CR.CD"],calib_inputs["rr.CR.CD","value"])
-  rr.CD.FD <- ifelse(calib_inputs["rr.CD.FD","calib"]==1,v.params["rr.CD.FD"],calib_inputs["rr.CD.FD","value"])
-  
-  yearinc_p.HD <- ifelse(calib_inputs["yearinc_p.HD","calib"]==1,v.params["yearinc_p.HD"],calib_inputs["yearinc_p.HD","value"])
   yearinc_p.HD <- round(yearinc_p.HD)
   
   # Recovery
   p.DR=NULL
   p.DR[1:12] <- p.DR[100] <- 0 # final value = 0 because mortality prob = 1
-  p.DR[13:18] <- ifelse(calib_inputs["p.DR_12.17","calib"]==1,v.params["p.DR_12.17"],calib_inputs["p.DR_12.17","value"])
-  p.DR[19:26] <- ifelse(calib_inputs["p.DR_18.25","calib"]==1,v.params["p.DR_18.25"],calib_inputs["p.DR_18.25","value"])
-  p.DR[27:35] <- ifelse(calib_inputs["p.DR_26.34","calib"]==1,v.params["p.DR_26.34"],calib_inputs["p.DR_26.34","value"])
-  p.DR[36:50] <- ifelse(calib_inputs["p.DR_35.49","calib"]==1,v.params["p.DR_35.49"],calib_inputs["p.DR_35.49","value"])
-  p.DR[51:65] <- ifelse(calib_inputs["p.DR_50_64","calib"]==1,v.params["p.DR_50_64"],calib_inputs["p.DR_50_64","value"])
-  p.DR[66:99] <- ifelse(calib_inputs["p.DR_65_99","calib"]==1,v.params["p.DR_65_99"],calib_inputs["p.DR_65_99","value"])
+  p.DR[13:18] <- p.DR_12.17
+  p.DR[19:26] <- p.DR_18.25
+  p.DR[27:35] <- p.DR_26.34
+  p.DR[36:50] <- p.DR_35.49
+  p.DR[51:65] <- p.DR_50_64
+  p.DR[66:99] <- p.DR_65_99
   
   # Recurrence
   p.RD = NULL
   p.RD[1:12] <- p.RD[100] <- 0 # final value = 0 because mortality prob = 1
-  p.RD[13:18] <- ifelse(calib_inputs["p.RD_12.17","calib"]==1,v.params["p.RD_12.17"],calib_inputs["p.RD_12.17","value"])
-  p.RD[19:26] <- ifelse(calib_inputs["p.RD_18.25","calib"]==1,v.params["p.RD_18.25"],calib_inputs["p.RD_18.25","value"])
-  p.RD[27:35] <- ifelse(calib_inputs["p.RD_26.34","calib"]==1,v.params["p.RD_26.34"],calib_inputs["p.RD_26.34","value"])
-  p.RD[36:50] <- ifelse(calib_inputs["p.RD_35.49","calib"]==1,v.params["p.RD_35.49"],calib_inputs["p.RD_35.49","value"])
-  p.RD[51:65] <- ifelse(calib_inputs["p.RD_50_64","calib"]==1,v.params["p.RD_50_64"],calib_inputs["p.RD_50_64","value"])
-  p.RD[66:99]  <- ifelse(calib_inputs["p.RD_65_99","calib"]==1,v.params["p.RD_65_99"],calib_inputs["p.RD_65_99","value"])
+  p.RD[13:18] <- p.RD_12.17
+  p.RD[19:26] <- p.RD_18.25
+  p.RD[27:35] <- p.RD_26.34
+  p.RD[36:50] <- p.RD_35.49
+  p.RD[51:65] <- p.RD_50_64
+  p.RD[66:99] <- p.RD_65_99
   
   ## Incidence
   for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
@@ -379,58 +364,49 @@ main_calib = function(v.params) { # v.params: run model for parameter calibratio
   return(model_res) # For calibration only
 }
 
-
 ## MAIN POLICY FUNCTIONS ------------------------------------------
 
+apply_policy <- function(rr.init, rr.cess, policyyear, v.affected_ages) {
+  initeff <- matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2])
+  cesseff <- matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])
+  
+  for (age in v.affected_ages) {
+    initeff[row(initeff) + col(initeff) > (policyyear-1899) & row(initeff) == age] <- rr.init
+    cesseff[row(cesseff) + col(cesseff) > (policyyear-1899) & row(cesseff) == age] <- rr.cess
+  }
+  v.policy <- list(initeff = initeff, cesseff = cesseff)
+  return(v.policy)
+}
 main = function(v.params, v.policy) { # v.params: run model for parameter calibration; v.policy: policy effects
   
   t_init <- Sys.time() # Start timer
   
-  s.NC_9.17 <- ifelse(calib_inputs["s.NC_9.17","calib"]==1,v.params["s.NC_9.17"],calib_inputs["s.NC_9.17","value"])
-  s.NC_18.25 <- ifelse(calib_inputs["s.NC_18.25","calib"]==1,v.params["s.NC_18.25"],calib_inputs["s.NC_18.25","value"])
+  # Loop over parameter names and assign values dynamically
+  for (param in rownames(calib_inputs)) {
+    assign(param, get_value(param))
+  }
   
-  s.CF_18.25 <- ifelse(calib_inputs["s.CF_18.25","calib"]==1,v.params["s.CF_18.25"],calib_inputs["s.CF_18.25","value"])
-  s.CF_26.34 <- ifelse(calib_inputs["s.CF_26.34","calib"]==1,v.params["s.CF_26.34"],calib_inputs["s.CF_26.34","value"])
-  s.CF_35.49 <- ifelse(calib_inputs["s.CF_35.49","calib"]==1,v.params["s.CF_35.49"],calib_inputs["s.CF_35.49","value"])
-  s.CF_50.64 <- ifelse(calib_inputs["s.CF_50.64","calib"]==1,v.params["s.CF_50.64"],calib_inputs["s.CF_50.64","value"])
-  s.CF_65.99 <- ifelse(calib_inputs["s.CF_65.99","calib"]==1,v.params["s.CF_65.99"],calib_inputs["s.CF_65.99","value"])
-  
-  s.HD_12.17 <-  ifelse(calib_inputs["s.HD_12.17","calib"]==1,v.params["s.HD_12.17"],calib_inputs["s.HD_12.17","value"])
-  s.HD_18.25 <-  ifelse(calib_inputs["s.HD_18.25","calib"]==1,v.params["s.HD_18.25"],calib_inputs["s.HD_18.25","value"])
-  s.HD_26.34 <-  ifelse(calib_inputs["s.HD_26.34","calib"]==1,v.params["s.HD_26.34"],calib_inputs["s.HD_26.34","value"])
-  
-  rr.DX_18.25 <- ifelse(calib_inputs["rr.DX_18.25","calib"]==1,v.params["rr.DX_18.25"],calib_inputs["rr.DX_18.25","value"])
-  rr.DX_26.34 <- ifelse(calib_inputs["rr.DX_26.34","calib"]==1,v.params["rr.DX_26.34"],calib_inputs["rr.DX_26.34","value"])
-  rr.DX_35.49 <- ifelse(calib_inputs["rr.DX_35.49","calib"]==1,v.params["rr.DX_35.49"],calib_inputs["rr.DX_35.49","value"])
-  rr.DX_50.64 <- ifelse(calib_inputs["rr.DX_50.64","calib"]==1,v.params["rr.DX_50.64"],calib_inputs["rr.DX_50.64","value"])
-  rr.DX_65.99 <- ifelse(calib_inputs["rr.DX_65.99","calib"]==1,v.params["rr.DX_65.99"],calib_inputs["rr.DX_65.99","value"])
-  
-  rr.ND.CD <- ifelse(calib_inputs["rr.ND.CD","calib"]==1,v.params["rr.ND.CD"],calib_inputs["rr.ND.CD","value"])
-  rr.CH.CD <- ifelse(calib_inputs["rr.CH.CD","calib"]==1,v.params["rr.CH.CD"],calib_inputs["rr.CH.CD","value"])
-  rr.CR.CD <- ifelse(calib_inputs["rr.CR.CD","calib"]==1,v.params["rr.CR.CD"],calib_inputs["rr.CR.CD","value"])
-  rr.CD.FD <- ifelse(calib_inputs["rr.CD.FD","calib"]==1,v.params["rr.CD.FD"],calib_inputs["rr.CD.FD","value"])
-  
-  yearinc_p.HD <- ifelse(calib_inputs["yearinc_p.HD","calib"]==1,v.params["yearinc_p.HD"],calib_inputs["yearinc_p.HD","value"])
   yearinc_p.HD <- round(yearinc_p.HD)
+  
   # Recovery
   p.DR=NULL
   p.DR[1:12] <- p.DR[100] <- 0 # final value = 0 because mortality prob = 1
-  p.DR[13:18] <- ifelse(calib_inputs["p.DR_12.17","calib"]==1,v.params["p.DR_12.17"],calib_inputs["p.DR_12.17","value"])
-  p.DR[19:26] <- ifelse(calib_inputs["p.DR_18.25","calib"]==1,v.params["p.DR_18.25"],calib_inputs["p.DR_18.25","value"])
-  p.DR[27:35] <- ifelse(calib_inputs["p.DR_26.34","calib"]==1,v.params["p.DR_26.34"],calib_inputs["p.DR_26.34","value"])
-  p.DR[36:50] <- ifelse(calib_inputs["p.DR_35.49","calib"]==1,v.params["p.DR_35.49"],calib_inputs["p.DR_35.49","value"])
-  p.DR[51:65] <- ifelse(calib_inputs["p.DR_50_64","calib"]==1,v.params["p.DR_50_64"],calib_inputs["p.DR_50_64","value"])
-  p.DR[66:99] <- ifelse(calib_inputs["p.DR_65_99","calib"]==1,v.params["p.DR_65_99"],calib_inputs["p.DR_65_99","value"])
+  p.DR[13:18] <- p.DR_12.17
+  p.DR[19:26] <- p.DR_18.25
+  p.DR[27:35] <- p.DR_26.34
+  p.DR[36:50] <- p.DR_35.49
+  p.DR[51:65] <- p.DR_50_64
+  p.DR[66:99] <- p.DR_65_99
   
   # Recurrence
   p.RD = NULL
   p.RD[1:12] <- p.RD[100] <- 0 # final value = 0 because mortality prob = 1
-  p.RD[13:18] <- ifelse(calib_inputs["p.RD_12.17","calib"]==1,v.params["p.RD_12.17"],calib_inputs["p.RD_12.17","value"])
-  p.RD[19:26] <- ifelse(calib_inputs["p.RD_18.25","calib"]==1,v.params["p.RD_18.25"],calib_inputs["p.RD_18.25","value"])
-  p.RD[27:35] <- ifelse(calib_inputs["p.RD_26.34","calib"]==1,v.params["p.RD_26.34"],calib_inputs["p.RD_26.34","value"])
-  p.RD[36:50] <- ifelse(calib_inputs["p.RD_35.49","calib"]==1,v.params["p.RD_35.49"],calib_inputs["p.RD_35.49","value"])
-  p.RD[51:65] <- ifelse(calib_inputs["p.RD_50_64","calib"]==1,v.params["p.RD_50_64"],calib_inputs["p.RD_50_64","value"])
-  p.RD[66:99]  <- ifelse(calib_inputs["p.RD_65_99","calib"]==1,v.params["p.RD_65_99"],calib_inputs["p.RD_65_99","value"])
+  p.RD[13:18] <- p.RD_12.17
+  p.RD[19:26] <- p.RD_18.25
+  p.RD[27:35] <- p.RD_26.34
+  p.RD[36:50] <- p.RD_35.49
+  p.RD[51:65] <- p.RD_50_64
+  p.RD[66:99] <- p.RD_65_99
   
   ## Incidence
   for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
@@ -447,10 +423,10 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
       }
     }
   }
-  ## Initiation - No initiation after 25
+  # Initiation - No initiation after 25
   p.NC = unname(v.policy[["initeff"]])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
   
-  ## Cessation - No cessation before 18
+  # Cessation - No cessation before 18
   p.CF = unname(v.policy[["cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
   
   rr.DX = c(rep(1,18),rep(rr.DX_18.25,8),rep(rr.DX_26.34,9),rep(rr.DX_35.49,15),rep(rr.DX_50.64,15),rep(rr.DX_65.99,34),1)
@@ -466,6 +442,14 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
                            }
   # run in serial for debugging:
   # m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
+  
+  # Count each death only once by removing repeated 'X' values
+  firstX = apply(m.M,1,function(x) min(which(x=="X"))) # find first cell where each individual dies by iterating across each person (row = 1)
+  for (i in 1:nrow(m.M)){
+    if(firstX[i]!=101 & firstX[i]!=Inf){
+      m.M[i, (firstX[i]+1):101]<-NA
+    }
+  }
   
   # Calculate costs, utilities, and productivity at each person's age
   m.C <- m.U <- m.W <- matrix(nrow = n.i*length(cohorts), ncol = n.t + 1, 
@@ -487,10 +471,15 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
   }
   colnames(m.M_cy) <- colnames(m.C_cy) <- colnames(m.U_cy) <- colnames(m.W_cy) <- c(min(cohorts):(max(cohorts)+100))
   
+  # Get mortality counts by year
+  n.X = apply(m.M_cy,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
+  # Get total person life-years by year
+  n.lifeyears = apply(m.M_cy,2,function(x) sum(x!="X",na.rm=TRUE)) 
+  
   # Output prevalence results as a list
   model_res <- lapply(c("N","C","F","D"), get_prevs, m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
   model_res <- c(model_res, lapply(c("ND","CD","FD"), get_subgroup_prevs, denom="D",m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
-  model_res1 <- lapply(c("C","F"), get_prevs1, m_cohortbyyear=m.M_cy, minyear=2022, maxyear=max(cohorts)) # get prevs by single year of age
+  model_res1 <- lapply(c("C","F"), get_prevs1, m_cohortbyyear=m.M_cy, minyear=policyyear, maxyear=max(cohorts)) # get prevs by single year of age
   
   names(model_res) <- c("N","C","F","D","ND","CD","FD")
   for (l in 1:length(model_res)){
@@ -516,7 +505,7 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
   
   # Calculate smoking-attributable mortality 2022-2100
   age_range <- 18:99
-  year_range <- cohorts
+  year_range <- policyyear:max(cohorts)
   prev_cs <- xtabs(prev ~ age + year, data = model_res1$C)
   prev_fs <- xtabs(prev ~ age + year, data = model_res1$F)
   attr(prev_cs, "class") <- attr(prev_cs, "call") <-  attr(prev_fs, "class") <- attr(prev_fs, "call") <- NULL
@@ -526,24 +515,8 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
   
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer
-  return(list(model_res = model_res, cuw=cuw, cuw_nodis=t(total_cuw), SAD=SAD, init = p.NC, cess = p.CF))
+  return(list(model_res = model_res, cuw=cuw, n.X=n.X, n.lifeyears, SAD=SAD, init = p.NC, cess = p.CF))
 }
-
-apply_policy <- function(rr.init, rr.cess, policyyear, v.affected_ages) {
-  initeff <- matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2])
-  cesseff <- matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])
-  
-  for (age in v.affected_ages) {
-    initeff[row(initeff) + col(initeff) > (policyyear-1899) & row(initeff) == age] <- rr.init
-    cesseff[row(cesseff) + col(cesseff) > (policyyear-1899) & row(cesseff) == age] <- rr.cess
-  }
-  
-  v.policy <- list(initeff = initeff, cesseff = cesseff)
-  
-  model_res_policy = main(v.params, v.policy)
-  return(model_res_policy)
-}
-
 
 ############################################################################################
 ## The microsimulation model code was adapted from the DARTH workgroup (www.darthworkgroup.com). 
