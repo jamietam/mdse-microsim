@@ -1,5 +1,9 @@
+## Clean up the workspace and set main working directory
+rm(list = ls()) 
+
 ## RUN MAIN MODEL
-mainDir = "/Users/JT936/Dropbox/GitHub/mds-microsim/"
+# mainDir = "/Users/jt936/Dropbox/GitHub/mds-microsim/"
+mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" # Set working directory
 
 source(paste0(mainDir,"R/01_environment.R"), echo=FALSE)
 source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE)
@@ -7,21 +11,21 @@ source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation
 
 ## Run policy scenarios
 policyyear = 2024
-baseline <- apply_policy(1.0, 1.0, policyyear, c(18:99))
-policy_init <- apply_policy(0.8, 1.0, policyyear, c(0:17))
-policy_cess <- apply_policy(1.0, 1.2, policyyear, c(18:99))
+baseline <- main(v.params, apply_policy(1.0, 1.0, policyyear, c(0:99)))
+policy_init <- main(v.params, apply_policy(0.8, 1.0, policyyear, c(0:99)))
+policy_cess <- main(v.params, apply_policy(1.0, 1.2, policyyear, c(0:99)))
 
 ## REFORMAT DATA for data visualization
 # prevalences
 create_model_prev <- function(policy) {
   df_list <- list(
-    cbind(data.frame(policy$model_res$N), status = "neversmoker"),
-    cbind(data.frame(policy$model_res$C), status = "currentsmoker"),
-    cbind(data.frame(policy$model_res$F), status = "formersmoker"),
-    cbind(data.frame(policy$model_res$D), status = "depressed"),
-    cbind(data.frame(policy$model_res$ND), status = "neversmokerD"),
-    cbind(data.frame(policy$model_res$CD), status = "currentsmokerD"),
-    cbind(data.frame(policy$model_res$FD), status = "formersmokerD")
+    cbind(data.frame(policy$model_res$N), status = "N"),
+    cbind(data.frame(policy$model_res$C), status = "C"),
+    cbind(data.frame(policy$model_res$F), status = "F"),
+    cbind(data.frame(policy$model_res$D), status = "D"),
+    cbind(data.frame(policy$model_res$ND), status = "ND"),
+    cbind(data.frame(policy$model_res$CD), status = "CD"),
+    cbind(data.frame(policy$model_res$FD), status = "FD")
   )
   modelprev <- do.call(rbind, df_list)
   return(modelprev)
@@ -59,13 +63,14 @@ colnames(smkprobs) <- c("init","cess","age", "scenario")
 smkprobs[c("init","cess","age")] <- sapply(smkprobs[c("init","cess","age")],as.numeric) # convert the columns to numeric
 
 # NSDUH prevalence data
-calibtargets = rbind(cbind(data.frame(lst_targets[["N"]]),status="neversmoker"),
-                     cbind(data.frame(lst_targets[["C"]]),status="currentsmoker"),
-                     cbind(data.frame(lst_targets[["F"]]),status="formersmoker"),
-                     cbind(data.frame(lst_targets[["D"]]),status="depressed"),
-                     cbind(data.frame(lst_targets[["ND"]]),status="neversmokerD"),
-                     cbind(data.frame(lst_targets[["CD"]]),status="currentsmokerD"),
-                     cbind(data.frame(lst_targets[["FD"]]),status="formersmokerD"))
+calibtargets = rbind(cbind(data.frame(lst_targets[["N"]]),status="N"),
+                     cbind(data.frame(lst_targets[["C"]]),status="C"),
+                     cbind(data.frame(lst_targets[["F"]]),status="F"),
+                     cbind(data.frame(lst_targets[["D"]]),status="D"),
+                     cbind(data.frame(lst_targets[["ND"]]),status="ND"),
+                     cbind(data.frame(lst_targets[["CD"]]),status="CD"),
+                     cbind(data.frame(lst_targets[["FD"]]),status="FD"))
+
 # Smoking-attributable mortality
 mortcounts <- as.data.frame(rbind(cbind(names(baseline$SAD),baseline$SAD,cumsum(baseline$SAD),"baseline"),
               cbind(names(baseline$SAD),policy_init$SAD, cumsum(policy_init$SAD),"policy_init"),
@@ -73,23 +78,58 @@ mortcounts <- as.data.frame(rbind(cbind(names(baseline$SAD),baseline$SAD,cumsum(
 names(mortcounts) <- c("year","annualSADs", "cSADs","scenario")
 mortcounts[c("year","annualSADs","cSADs")] <- sapply(mortcounts[c("year","annualSADs","cSADs")],as.numeric) # convert the columns to numeric
 
+# Mortality
+X_counts <- as.data.frame(rbind(cbind(names(baseline$n.X[paste0(policyyear:max(cohorts))]),
+                                     baseline$n.X[paste0(policyyear:max(cohorts))],
+                                     cumsum(baseline$n.X[paste0(policyyear:max(cohorts))]),"baseline"),
+                               cbind(names(policy_init$n.X[paste0(policyyear:max(cohorts))]),policy_init$n.X[paste0(policyyear:max(cohorts))],
+                                     cumsum(policy_init$n.X[paste0(policyyear:max(cohorts))]),"policy_init"),
+                               cbind(names(policy_cess$n.X[paste0(policyyear:max(cohorts))]),policy_cess$n.X[paste0(policyyear:max(cohorts))],
+                                     cumsum(policy_cess$n.X[paste0(policyyear:max(cohorts))]),"policy_cess")))
+names(X_counts) <- c("year","annual", "cumulative","scenario")
+X_counts[c("year","annual","cumulative")] <- sapply(X_counts[c("year","annual","cumulative")],as.numeric) # convert the columns to numeric
+
+# calculate change compared to baseline scenario
+X_diff <- as.data.frame(rbind(cbind(policyyear:max(cohorts), "policy_init",
+                                    X_counts[X_counts$scenario=="baseline",]$cumulative - X_counts[X_counts$scenario=="policy_init",]$cumulative),
+                              cbind(policyyear:max(cohorts), "policy_cess",
+                                    X_counts[X_counts$scenario=="baseline",]$cumulative - X_counts[X_counts$scenario=="policy_cess",]$cumulative)))
+colnames(X_diff) <- c("year","scenario","deaths_averted")
+X_diff[c("year","deaths_averted")] <- sapply(X_diff[c("year","deaths_averted")],as.numeric) # convert the columns to numeric
+
 ## FIGURES
 # Initiation and cessation
 p.NC_age <- ggplot(data=smkprobs) +  geom_line( aes(x=age, y=init, linetype=scenario, color=scenario)) +
   scale_x_continuous(name="Age", limits=c(0,99), breaks=seq(0,99,10)) +
   labs(title="Initiation probabilities")
-p.CF_age <- ggplot(data=smkprobs) +  geom_line( aes(x=age, y=init, linetype=scenario, color=scenario)) +
+p.CF_age <- ggplot(data=smkprobs) +  geom_line( aes(x=age, y=cess, linetype=scenario, color=scenario)) +
   scale_x_continuous(name="Age", limits=c(0,99), breaks=seq(0,99,10)) +
   labs(title="Cessation probabilities")
 
 # Adult smoking prevalence
 csprevs <- ggplot() +
-  geom_pointrange(data=subset(calibtargets,age==18.99 & (status=="currentsmokerD" | status=="currentsmoker")), 
-                  aes(x = survey_year, y = prev,ymin=prev_lowCI, ymax=prev_highCI, shape=status))+
-  geom_line(data = subset(modelprevs, age==18.99 & (status=="currentsmokerD" | status=="currentsmoker")),  aes(x=year, y= prev,color=scenario,linetype=status))+
-  scale_y_continuous(name="Prevalence (%)",limits=c(0,0.7),breaks=seq(0,0.7,0.05)) +
+  geom_pointrange(data=subset(calibtargets,age==18.99 & (status=="CD" | status=="C")), 
+                  aes(x = survey_year, y = prev,ymin=prev_lowCI, ymax=prev_highCI, linetype=status, shape=status),)+
+  geom_line(data = subset(modelprevs, age==18.99 & (status=="CD" | status=="C")),  aes(x=year, y= prev,color=scenario,linetype=status))+
+  scale_y_continuous(name="Prevalence (%)",limits=c(0,0.5),breaks=seq(0,0.5,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,2100),breaks=seq(2005,2100,10))  +
-  labs(title=paste0("Current smoking - ",whichgender," ages 18-99"))+
+  labs(title=paste0("Current smoking - Women ages 18-99"))+
+  theme(axis.text.x=element_text(angle=60, hjust=1))
+
+# Overall mortality
+cX_fig <- ggplot()+
+  geom_line(data=X_diff,aes(x=year,y=deaths_averted, color=scenario))+
+  scale_y_continuous(name="Cumulative deaths") +
+  scale_x_continuous(name="Year",limits=c(2020,2100),breaks=seq(2020,2100,10))  +
+  labs(title="Cumulative deaths")+
+  theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
+
+
+aX_fig <- ggplot()+
+  geom_line(data=X_counts,aes(x=year,y=annual, color=scenario))+
+  scale_y_continuous(name="Annual deaths") +
+  scale_x_continuous(name="Year",limits=c(2020,2100),breaks=seq(2020,2100,10))  +
+  labs(title="Annual deaths")+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 # Smoking-attributable mortality
@@ -151,24 +191,24 @@ cQALYs <- ggplot()+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 dcosts <- ggplot()+
-  geom_line(data=cuw_diff,aes(x=year,y=dCosts,color=scenario))+
+  geom_line(data=cuw_diff,aes(x=year,y=dCosts/100000,color=scenario))+
   scale_y_continuous(name=" Total costs ($ millions)") +
   scale_x_continuous(name="Year",limits=c(2020,2100),breaks=seq(2020,2100,10))  +
-  labs(title=paste0("Change in medical expenditures compared to baseline - ",whichgender))+
+  labs(title="Change in Medical Costs compared to baseline")+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 dprods <- ggplot()+
-  geom_line(data=cuw_diff,aes(x=year,y=dProductivity,color=scenario))+
+  geom_line(data=cuw_diff,aes(x=year,y=dProductivity/100000,color=scenario))+
   scale_y_continuous(name=" Total productivity ($ millions)") +
   scale_x_continuous(name="Year",limits=c(2020,2100),breaks=seq(2020,2100,10))  +
-  labs(title=paste0("Change in productivity compared to baseline - ",whichgender))+
+  labs(title="Change in Productivity compared to baseline")+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 dQALYs <- ggplot()+
   geom_line(data=cuw_diff,aes(x=year,y=dQALYs,color=scenario))+
   scale_y_continuous(name=" Total QALYS") +
   scale_x_continuous(name="Year",limits=c(2020,2100),breaks=seq(2020,2100,10))  +
-  labs(title=paste0("Change QALYS compared to baseline - ",whichgender))+
+  labs(title="Change in QALYS compared to baseline")+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 grid_arrange_shared_legend <- function(plots,columns,titletext) {
@@ -192,6 +232,7 @@ grid_arrange_shared_legend(list(p.NC_age,p.CF_age),2,"Smoking probabilities")
 csprevs
 grid_arrange_shared_legend(list(annualSADs,cSADs),2,"Smoking-Attributable Deaths")
 grid_arrange_shared_legend(list(acosts, aprods, aQALYs),3, "Annual Economic and Morbidity Outcomes")
+grid_arrange_shared_legend(list(dcosts, dprods),2, "Cumulative")
 grid_arrange_shared_legend(list(ccosts, cprods, cQALYs),3, "Cumulative Economic and Morbidity Outcomes")
 grid_arrange_shared_legend(list(dcosts, dprods, dQALYs),3, "Change in Economic and Morbidity Outcomes")
 dev.off()
