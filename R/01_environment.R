@@ -3,21 +3,19 @@ setwd(file.path(mainDir))
 ## R environment and install package dependencies
 packages <- c('stringr','lbfgsb3c','splines','foreach',
               'ggplot2','gridBase','gridExtra','grid','lhs','matrixStats','backports',
-              'devtools','ellipse','ggrepel','doParallel')
+              'devtools','ellipse','ggrepel','doParallel','tidyr','dplyr')
 # install.packages(packages)
 # devtools::install_github("DARTH-git/darthtools")
 lapply(c(packages, 'darthtools'), library, character.only=TRUE)
 
-## For HPC runs - Run this section of code, and NOT the one below
-# Run on a single node
-n.cores = Sys.getenv("SLURM_CPUS_PER_TASK")
-cl <- makeCluster(as.numeric(n.cores),type="FORK")
+# Determine number of cores and cluster setup based on HPC or personal computer
+n.cores <- Sys.getenv("SLURM_CPUS_PER_TASK")
+if (hpc == 1) { ## For HPC runs - Run this section of code, and NOT the one below
+  cl <- makeCluster(as.numeric(n.cores), type = "FORK")
+} else { ## For Personal Computer and Open On Demand Interface, Run this section of code and NOT the one above
+  cl <- makeCluster(detectCores())
+  args <- c("females", 1000, 2100, 40)  # Parameters for non-HPC setup
+}
 registerDoParallel(cl)
-args <- commandArgs(TRUE)
+args <- ifelse(hpc == 1, commandArgs(TRUE), args)
 
-## For Personal Computer and Open On Demand Interface, Run this section of code and NOT the one above
-# Set up model to run in parallel
-# n.cores = Sys.getenv("SLURM_CPUS_PER_TASK")
-# cl <- makeCluster(detectCores())
-# registerDoParallel(cl)
-# args <- c("females",10000,2100, 40) # whichgender, n.i, max(cohorts), number of calib starting points
