@@ -17,5 +17,5 @@ if (hpc == 1) { ## For HPC runs - Run this section of code, and NOT the one belo
   args <- c("females", 1000, 2100, 40)  # Parameters for non-HPC setup
 }
 registerDoParallel(cl)
-args <- ifelse(hpc == 1, commandArgs(TRUE), args)
+args <- `if`(hpc == 1, commandArgs(TRUE), args)
 
