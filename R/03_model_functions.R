@@ -511,11 +511,12 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
   attr(prev_cs, "class") <- attr(prev_cs, "call") <-  attr(prev_fs, "class") <- attr(prev_fs, "call") <- NULL
   prev_cs <- prev_cs[as.character(age_range), as.character(year_range)]
   prev_fs <- prev_fs[as.character(age_range), as.character(year_range)]
-  SAD <- colSums(pop * (prev_cs * (deathrates_cs - deathrates_ns) + prev_fs * (deathrates_fs - deathrates_ns)))
+  SAD <- colSums(pop[,as.character(year_range)] * (prev_cs * (deathrates_cs[,as.character(year_range)] - deathrates_ns[,as.character(year_range)]) + 
+                          prev_fs * (deathrates_fs[,as.character(year_range)] - deathrates_ns[,as.character(year_range)])))
   
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer
-  return(list(model_res = model_res, cuw=cuw, n.X=n.X, n.lifeyears, SAD=SAD, init = p.NC, cess = p.CF))
+  return(list(model_res = model_res, cuw=cuw, n.X=n.X, n.lifeyears=n.lifeyears, SAD=SAD, init = p.NC, cess = p.CF))
 }
 
 ############################################################################################
