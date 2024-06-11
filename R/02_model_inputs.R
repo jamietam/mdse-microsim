@@ -4,7 +4,7 @@ whichgender <- args[1]
 load(paste0(mainDir,"data/dep_precomputed_inputs_",whichgender,".RData")) 
 load(paste0(mainDir,"data/smk_precomputed_inputs_",whichgender,".RData")) #lst_smktargets
 load(paste0(mainDir,"data/cuw_inputs_",whichgender,".RData"))
-load(paste0(mainDir,"data/mort_data_",whichgender,".RData")) # for SAD calculation
+load(paste0(mainDir,"data/pop_",whichgender,".RData")) # Read in Census population for SAD calculation
 
 cohorts <- 1900:as.numeric(args[3])           # Change from 2016 to 2022 or 2100
 calib_startyear <-2005
