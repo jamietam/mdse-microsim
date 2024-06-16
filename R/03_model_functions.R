@@ -133,7 +133,7 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
 }       
 
 ## COSTS FUNCTION ----------------------------------------------------
-costs <- function(M_t,t) { # gets the costs for each person based on health state M and age t
+costs <- function(M_t,t) { # gets the health care costs for each person based on health state M and age t
     
     m.c_t <- matrix(data = 0, nrow = n.i, ncol = 1)  
   
@@ -151,6 +151,24 @@ costs <- function(M_t,t) { # gets the costs for each person based on health stat
   return(m.c_t) 
 }      
 
+## CONSUMER EXPENDITURES ----------------------------------------------------
+costs_nonhealth <- function(M_t,t) { # gets the health care costs for each person based on health state M and age t
+  
+  m.c_t <- matrix(data = 0, nrow = n.i, ncol = 1)  
+  
+  m.c_t[M_t =="NH"] <- c.nonhealth[t] 
+  m.c_t[M_t =="CH"] <- c.nonhealth[t]
+  m.c_t[M_t =="FH"] <- c.nonhealth[t]
+  m.c_t[M_t =="ND"] <- c.nonhealth[t]
+  m.c_t[M_t =="CD"] <- c.nonhealth[t]
+  m.c_t[M_t =="FD"] <- c.nonhealth[t]
+  m.c_t[M_t =="NR"] <- c.nonhealth[t]
+  m.c_t[M_t =="CR"] <- c.nonhealth[t]
+  m.c_t[M_t =="FR"] <- c.nonhealth[t]
+  m.c_t[M_t =="X"] <- 0
+  
+  return(m.c_t) 
+}      
 ## UTILITIES FUNCTION ----------------------------------------------------
 utils <- function(M_t,t) { # gets the utilities for each person based on health state M and age t
   
@@ -205,27 +223,48 @@ get_prevs <- function(state,m_cohortbyyear,minyear,maxyear){ # Get counts/preval
 }
 
 get_prevs1 <- function(state,m_cohortbyyear,minyear,maxyear){ # Get counts/prevalence of individuals in a health state by age group and year
-  agerownames<-c(18:99)
-  agegroupstart <- c(18:99)
-  agegroupend <- c(18:99)
+  age1 <- c(0:99)
   m.m_prevs <- NULL 
-  for (age in 1:length(agegroupstart)){
+  for (a in 1:length(age1)){
     for (year in minyear:maxyear){
-      cohortmin = year-agegroupend[age]
+      cohortmin = year-age1[a]
       if(cohortmin<1900) {next}
-      cohortmax = year-agegroupstart[age]
+      cohortmax = year-age1[a]
       select = m_cohortbyyear[(n.i*(cohortmin-1900)+1):(n.i*(cohortmax-1900)+n.i),paste(year)] # birth cohort 1905 begins in row 26, and birth cohort 1912 ends in row 65
       alive <- sum(select!="X",na.rm=TRUE)
       dead <- sum(select=="X",na.rm=TRUE) 
       counts <- sum(str_count(select,state),na.rm=TRUE)
-      prev <- sum(str_count(select,state),na.rm=TRUE)/sum(select!="X",na.rm=TRUE)
-      m.m_prevs<-rbind(m.m_prevs,c(agerownames[age],year, prev,counts,alive,dead))
+      if(sum(select!="X",na.rm=TRUE)==0){
+        prev==0  
+      } else {
+        prev <- sum(str_count(select,state),na.rm=TRUE)/sum(select!="X",na.rm=TRUE)
+      }
+      m.m_prevs<-rbind(m.m_prevs,c(age1[a],year, prev,counts,alive,dead))
     }
   }
   colnames(m.m_prevs)<-c("age","year", "prev","counts","alive","dead")
   return(m.m_prevs) 
 }
 
+get_Fprevs1 <- function(ysq,m.F_cy,minyear,maxyear){ # Get counts/prevalence of individuals in a health state by age group and year
+  age1 <- c(0:99)
+  m.F_prevs <- NULL 
+  for (a in 1:length(age1)){
+    for (year in minyear:maxyear){
+      cohortmin = year-age1[a]
+      if(cohortmin<1900) {next}
+      cohortmax = year-age1[a]
+      select = m.F_cy[(n.i*(cohortmin-1900)+1):(n.i*(cohortmax-1900)+n.i),paste(year)] # birth cohort 1905 begins in row 26, and birth cohort 1912 ends in row 65
+      counts <- sum(select==ysq,na.rm=TRUE)
+      denom <- sum(select!=0 ,na.rm=TRUE) 
+      prev <- counts/denom
+      m.F_prevs<-rbind(m.F_prevs,c(age1[a],year, prev,counts,denom))
+    }
+  }
+  colnames(m.F_prevs)<-c("age","year", "prev","counts","denom")
+  m.F_prevs[m.F_prevs=="NaN"] <- 0
+  return(m.F_prevs) 
+}
 get_subgroup_prevs <- function(state,denom, m_cohortbyyear,minyear,maxyear){ # Get counts/prevalence of individuals in a health state by age group and year
   agerownames<-c(18.99,18.25, 26.34, 35.49, 50.64, 65.99)
   agegroupstart <- c(18, 18,26,35,50,65)
@@ -250,6 +289,11 @@ get_subgroup_prevs <- function(state,denom, m_cohortbyyear,minyear,maxyear){ # G
 
 ## CALIBRATION FUNCTIONS ---------------------------------------------------
 
+# Function to handle the repetitive task of looking up calib_inputs by parameter name
+get_value <- function(param_name) {
+  ifelse(calib_inputs[param_name, "calib"] == 1, v.params[param_name], calib_inputs[param_name, "value"])
+}
+
 # Write goodness-of-fit function to pass to calibration algorithm
 f_gof <- function(v.params){
   
@@ -270,11 +314,6 @@ f_gof <- function(v.params){
   cat(GOF_overall)
   # return GOF
   return(GOF_overall)
-}
-
-## Function to handle the repetitive task of looking up calib_inputs by parameter name
-get_value <- function(param_name) {
-  ifelse(calib_inputs[param_name, "calib"] == 1, v.params[param_name], calib_inputs[param_name, "value"])
 }
 
 main_calib = function(v.params) { # v.params: run model for parameter calibration; no policy effects
@@ -377,6 +416,14 @@ apply_policy <- function(rr.init, rr.cess, policyyear, v.affected_ages) {
   v.policy <- list(initeff = initeff, cesseff = cesseff)
   return(v.policy)
 }
+
+# Function to extract and format prevalence data
+extract_prevalence <- function(model_res, state) {
+  prev <- xtabs(prev ~ age + year, data = model_res[[state]])
+  attr(prev, "class") <- attr(prev, "call") <- NULL
+  prev[as.character(age_range), as.character(year_range)]
+}
+
 main = function(v.params, v.policy) { # v.params: run model for parameter calibration; v.policy: policy effects
   
   t_init <- Sys.time() # Start timer
@@ -450,73 +497,103 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
       m.M[i, (firstX[i]+1):101]<-NA
     }
   }
-  
+
   # Calculate costs, utilities, and productivity at each person's age
-  m.C <- m.U <- m.W <- matrix(nrow = n.i*length(cohorts), ncol = n.t + 1, 
+  m.C <- m.U <- m.W <- m.B <- m.F <- matrix(nrow = n.i*length(cohorts), ncol = n.t + 1, 
                               dimnames = list(paste(rep(cohorts,each=n.i), 1:n.i, sep = "."), # each individual, year of birth
                                               paste(0:n.t, sep = " ")))  
   for (t in 1:n.t) {
     m.C[, t] <- costs(m.M[, t],t)
     m.U[, t] <- utils(m.M[, t],t)
     m.W[, t] <- prods(m.M[, t],t)
+    m.B[, t] <- costs_nonhealth(m.M[, t],t) # all non-healthcare consumer expenditures
   }
   
+  # Create new matrix to keep track of years since quitting among former smoking persons
+  for (r in 1:nrow(m.F)){
+    m.F[r,] <- cumsum(str_count(m.M[r,],"F"))
+  }
+  m.F[m.F>40] <- 40 # maxes out at 40 years since quitting
+
   # Convert matrix from cohort-age to cohort-calendaryear (cy)
-  m.M_cy <- m.C_cy <- m.U_cy <- m.W_cy <- matrix(nrow = n.i*length(cohorts), ncol = (length(cohorts)+100))
+  m.M_cy <- m.C_cy <- m.U_cy <- m.W_cy <- m.B_cy <- m.F_cy <- matrix(nrow = n.i*length(cohorts), 
+                                                           ncol = (length(cohorts)+100), 
+                                                           dimnames = list(NULL,c(min(cohorts):(max(cohorts)+100))))
+
   for (b in 1:length(cohorts)){
     m.M_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.M[(n.i*(b-1)+1):(n.i*b),]
     m.C_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.C[(n.i*(b-1)+1):(n.i*b),]
     m.U_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.U[(n.i*(b-1)+1):(n.i*b),]
     m.W_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.W[(n.i*(b-1)+1):(n.i*b),]
+    m.B_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.B[(n.i*(b-1)+1):(n.i*b),]
+    m.F_cy[(n.i*(b-1)+1):(n.i*b),b:(100+b)] <- m.F[(n.i*(b-1)+1):(n.i*b),]
   }
-  colnames(m.M_cy) <- colnames(m.C_cy) <- colnames(m.U_cy) <- colnames(m.W_cy) <- c(min(cohorts):(max(cohorts)+100))
-  
+
   # Get mortality counts by year
-  n.X = apply(m.M_cy,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
+  # n.X = apply(m.M_cy,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
   # Get total person life-years by year
   n.lifeyears = apply(m.M_cy,2,function(x) sum(x!="X",na.rm=TRUE)) 
   
   # Output prevalence results as a list
+  # by age group
   model_res <- lapply(c("N","C","F","D"), get_prevs, m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
   model_res <- c(model_res, lapply(c("ND","CD","FD"), get_subgroup_prevs, denom="D",m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
-  model_res1 <- lapply(c("C","F"), get_prevs1, m_cohortbyyear=m.M_cy, minyear=policyyear, maxyear=max(cohorts)) # get prevs by single year of age
-  
   names(model_res) <- c("N","C","F","D","ND","CD","FD")
   for (l in 1:length(model_res)){
     model_res[[l]] <- model_res[[l]][order(model_res[[l]][,"age"],decreasing=FALSE),] # re-order the age groups from 18.25, 18.99, 26.34, etc
   }
-  names(model_res1) <- c("C","F")
+  # by single year
+  model_res1 <- lapply(c("C","F"), get_prevs1, m_cohortbyyear=m.M_cy, minyear=policyyear, maxyear=max(cohorts)) # get prevs by single year of age
+  model_res1 <- c(model_res1, lapply(c(1:40), get_Fprevs1, 
+                                     m.F_cy=m.F_cy, minyear=policyyear, 
+                                     maxyear=max(cohorts))) # get prevs by single year of age
+  names(model_res1) <- c("C","F",paste0("q",str_pad(1:40,2,pad="0"))) # track former prevalence by years since quitting
   for (l in 1:length(model_res1)){
     model_res1[[l]] <- model_res1[[l]][order(model_res1[[l]][,"age"],decreasing=FALSE),] # re-order the age groups from 18.25, 18.99, 26.34, etc
   }
   
   # Calculate costs, utilities, and productivity for each health state by age in the population
-  total_cuw <- rbind(colSums(m.C_cy,na.rm=TRUE),colSums(m.U_cy,na.rm=TRUE),colSums(m.W_cy,na.rm=TRUE))
-  rownames(total_cuw)<-c("total costs","total QALYs","total productivity")
-  colnames(total_cuw) <-colnames(m.C_cy) <- colnames(m.U_cy) <- colnames(m.W_cy) <- c(min(cohorts):(max(cohorts)+100))
+  total_cuw <- rbind(colSums(m.C_cy,na.rm=TRUE),colSums(m.U_cy,na.rm=TRUE),colSums(m.W_cy,na.rm=TRUE),colSums(m.B_cy,na.rm=TRUE))
+  rownames(total_cuw)<-c("total costs","total QALYs","total productivity","total consumer exp")
+  colnames(total_cuw) <-colnames(m.C_cy) <- colnames(m.U_cy) <- colnames(m.W_cy) <- colnames(m.B_cy) <- c(min(cohorts):(max(cohorts)+100))
   
   # Assume 2024 is the starting year for discounting purposes, calculate discount weight based on the discount rate d.c
   v.d = c(rep(1,policyyear-1900), c(1 / (1 + d.c) ^ (0:(ncol(m.C_cy)-(policyyear-1899))))) # vector of discount weights
   
+  # Specify years of interest
+  year_range <- policyyear:max(cohorts)
+  
   # Total discounted costs, QALYs, and productivity
   d_total_cuw <- total_cuw %*% diag(v.d) # multiple each row of the cuw matrix by the discounting vector
   colnames(d_total_cuw) <-colnames(total_cuw)
-  cuw <- t(d_total_cuw)
+  cuw <- t(d_total_cuw[,as.character(year_range)])
   
-  # Calculate smoking-attributable mortality 2022-2100
-  age_range <- 18:99
-  year_range <- policyyear:max(cohorts)
-  prev_cs <- xtabs(prev ~ age + year, data = model_res1$C)
-  prev_fs <- xtabs(prev ~ age + year, data = model_res1$F)
-  attr(prev_cs, "class") <- attr(prev_cs, "call") <-  attr(prev_fs, "class") <- attr(prev_fs, "call") <- NULL
-  prev_cs <- prev_cs[as.character(age_range), as.character(year_range)]
-  prev_fs <- prev_fs[as.character(age_range), as.character(year_range)]
-  SAD <- colSums(pop[,as.character(year_range)] * (prev_cs * (deathrates_cs[,as.character(year_range)] - deathrates_ns[,as.character(year_range)]) + 
-                          prev_fs * (deathrates_fs[,as.character(year_range)] - deathrates_ns[,as.character(year_range)])))
+  # Calculate smoking-attributable mortality from policyyear to 2100
+  age_range <- 0:99
+  
+  prev_cs <- extract_prevalence(model_res1, "C") # Extract prevalence data for current smokers and former smokers
+  prev_fs <- extract_prevalence(model_res1, "F") # Average FX, not by years since quit
+  
+  # Extract prevalence data for former smoker years since quit
+  prev_fs_list <- lapply(paste0("q", sprintf("%02d", 1:40)), function(state) extract_prevalence(model_res1, state))
+  
+  # Calculate smoking-attributable deaths for current smokers
+  SADcs <- colSums(pop[, as.character(year_range)] * 
+                     (prev_cs * (p.CX_cy[age_range + 1, year_range - 1899] - p.NX_cy[age_range + 1, year_range - 1899])))
+  
+  # Calculate smoking-attributable deaths for former smokers
+  # SADfs <- colSums(pop[,as.character(year_range)] *
+  #                    (prev_fs * (p.FX_cy[age_range+1,year_range-1899] - p.NX_cy[age_range+1,year_range-1899])))
+  SADfs.ysq <- colSums(pop[, as.character(year_range)] * prev_fs *
+                         Reduce(`+`, lapply(1:40, function(i) prev_fs_list[[i]] * 
+                                              (a_p.FX.ysq_cy[, , i][age_range + 1, year_range - 1899] - p.NX_cy[age_range + 1, year_range - 1899]))))
+  
+  # Total smoking-attributable deaths
+  SAD <- SADfs.ysq + SADcs
   
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer
-  return(list(model_res = model_res, cuw=cuw, n.X=n.X, n.lifeyears=n.lifeyears, SAD=SAD, init = p.NC, cess = p.CF))
+  return(list(model_res = model_res, cuw=cuw, n.X = n.X, n.lifeyears=n.lifeyears, SAD=SAD, init = p.NC, cess = p.CF))
 }
 
 ############################################################################################
