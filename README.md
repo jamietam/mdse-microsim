@@ -16,7 +16,7 @@
 ## Policy simulation: 
 **06_analysis.R**
 1. Set the main working directory as 'mainDir'.
-2. Set the 'policyyear' to apply changes to smoking initiation and cessation probabilities.
+2. Set the 'policyyear' to apply changes to smoking initiation and cessation probabilities beginning in that year.
 3. Name the different policy scenarios in the 'scenarios' vector.
 4. Set the policy's effects on initiation and cessation (1.0 = no change, 1.2 = 20% increase, 0.8 = 20% decrease) and the age group affected by the policy (0:99 = all ages are affected, 18:25 = young adults ages 18-25 are affected).
 5. Run the script to simulate each policy scenario. Results will be stored in the 'outputs' directory.
