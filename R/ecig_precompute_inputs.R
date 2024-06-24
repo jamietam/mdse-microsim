@@ -155,42 +155,42 @@ for (var in vars) {
 
 
 
-##generate matrix
-##vector of health name states
-v.en <- c("NHO","NDO","NRO","NHQ","NDQ","NRQ","FHQ","FDQ","FRQ","FHO","FDO","FRO","NHV","NDV","NRV","FHV","FDV","FRV","CHO","CDO","CRO","CHQ","CDQ","CRQ","CHV","CDV","CRV")
-
-##initiate matrix
-e.p_t <- matrix(data = 0, nrow = length(v.en), ncol = length(v.en)) 
-rownames(e.p_t) <-  v.en
-colnames(e.p_t) <- v.en
-
-##create list of probability matrices
-prob_matrices <- list(p.NO.NO, p.NO.CO, p.NO.CV, p.NO.NV, p.NV.NV, p.NV.CQ, p.NV.CV, p.NV.NQ, p.FV.CQ, p.FV.FV, p.FV.CV,p.FV.FQ,p.NQ.CQ,p.NQ.CV,p.NQ.NQ,p.NQ.NV,p.FO.CO,p.FO.CV,p.FO.FO,p.FO.FV,p.FQ.CQ,p.FQ.CV,p.FQ.FQ,p.FQ.FV,p.CO.CO,p.CO.CV,p.CO.FO,p.CO.FV,p.CQ.CQ,p.CQ.CV,p.CQ.FQ,p.CQ.FV,p.CV.CQ,p.CV.CV,p.CV.FQ,p.CV.FV)
-
-##assign name to each matrice in list
-names(prob_matrices) <- c("p.NO.NO", "p.NO.CO", "p.NO.CV", "p.NO.NV", "p.NV.NV", "p.NV.CQ", "p.NV.CV", "p.NV.NQ", "p.FV.CQ", "p.FV.FV", "p.FV.CV","p.FV.FQ","p.NQ.CQ","p.NQ.CV","p.NQ.NQ","p.NQ.NV","p.FO.CO","p.FO.CV","p.FO.FO","p.FO.FV","p.FQ.CQ","p.FQ.CV","p.FQ.FQ","p.FQ.FV","p.CO.CO","p.CO.CV","p.CO.FO","p.CO.FV","p.CQ.CQ","p.CQ.CV","p.CQ.FQ","p.CQ.FV","p.CV.CQ","p.CV.CV","p.CV.FQ","p.CV.FV")
-
-
-
-##fill empty matrix with transition probabilities
-fill_pmatrix <- function(age, birth_year){
-  
-  ##take in values as numbers
-  bc <- as.numeric(birth_year)
-  t <- as.numeric(age)
-  
-  int <- 1
-  ##fill in values into new matrix
-  for (matrix_name in names(prob_matrices)){
-    row_name <- substr(matrix_name,3,4)
-    col_name <- substr(matrix_name,6,7)
-    row_index <- match(row_name, v.en)
-    col_index <- match(col_name, v.en)
-    e.p_t[row_index,col_index] <- prob_matrices[[int]][t,bc]
-    int <- int + 1
-  }
-  return(e.p_t)
-}
-
-##first number is age (1=age18-24,2=age25-34,3=age35-90), second number is birth cohort(1=2017-19,2=2019-21)
-fill_pmatrix(1,2)
+# ##generate matrix
+# ##vector of health name states
+# v.en <- c("NHO","NDO","NRO","NHQ","NDQ","NRQ","FHQ","FDQ","FRQ","FHO","FDO","FRO","NHV","NDV","NRV","FHV","FDV","FRV","CHO","CDO","CRO","CHQ","CDQ","CRQ","CHV","CDV","CRV")
+# 
+# ##initiate matrix
+# e.p_t <- matrix(data = 0, nrow = length(v.en), ncol = length(v.en)) 
+# rownames(e.p_t) <-  v.en
+# colnames(e.p_t) <- v.en
+# 
+# ##create list of probability matrices
+# prob_matrices <- list(p.NO.NO, p.NO.CO, p.NO.CV, p.NO.NV, p.NV.NV, p.NV.CQ, p.NV.CV, p.NV.NQ, p.FV.CQ, p.FV.FV, p.FV.CV,p.FV.FQ,p.NQ.CQ,p.NQ.CV,p.NQ.NQ,p.NQ.NV,p.FO.CO,p.FO.CV,p.FO.FO,p.FO.FV,p.FQ.CQ,p.FQ.CV,p.FQ.FQ,p.FQ.FV,p.CO.CO,p.CO.CV,p.CO.FO,p.CO.FV,p.CQ.CQ,p.CQ.CV,p.CQ.FQ,p.CQ.FV,p.CV.CQ,p.CV.CV,p.CV.FQ,p.CV.FV)
+# 
+# ##assign name to each matrice in list
+# names(prob_matrices) <- c("p.NO.NO", "p.NO.CO", "p.NO.CV", "p.NO.NV", "p.NV.NV", "p.NV.CQ", "p.NV.CV", "p.NV.NQ", "p.FV.CQ", "p.FV.FV", "p.FV.CV","p.FV.FQ","p.NQ.CQ","p.NQ.CV","p.NQ.NQ","p.NQ.NV","p.FO.CO","p.FO.CV","p.FO.FO","p.FO.FV","p.FQ.CQ","p.FQ.CV","p.FQ.FQ","p.FQ.FV","p.CO.CO","p.CO.CV","p.CO.FO","p.CO.FV","p.CQ.CQ","p.CQ.CV","p.CQ.FQ","p.CQ.FV","p.CV.CQ","p.CV.CV","p.CV.FQ","p.CV.FV")
+# 
+# 
+# 
+# ##fill empty matrix with transition probabilities
+# fill_pmatrix <- function(age, birth_year){
+#   
+#   ##take in values as numbers
+#   bc <- as.numeric(birth_year)
+#   t <- as.numeric(age)
+#   
+#   int <- 1
+#   ##fill in values into new matrix
+#   for (matrix_name in names(prob_matrices)){
+#     row_name <- substr(matrix_name,3,4)
+#     col_name <- substr(matrix_name,6,7)
+#     row_index <- match(row_name, v.en)
+#     col_index <- match(col_name, v.en)
+#     e.p_t[row_index,col_index] <- prob_matrices[[int]][t,bc]
+#     int <- int + 1
+#   }
+#   return(e.p_t)
+# }
+# 
+# ##first number is age (1=age18-24,2=age25-34,3=age35-90), second number is birth cohort(1=2017-19,2=2019-21)
+# fill_pmatrix(1,2)
