@@ -11,6 +11,7 @@ calib_startyear <-2005
 n.i   <- as.numeric(args[2])                   # number of simulated individuals per run (cohort) - eventually want to run 10,000
 n.t   <- 100                    # time horizon per person, number of years
 v.n   <- c( "NH","CH","FH","ND","CD","FD","NR","CR","FR","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), "Happy" (H), Depressed (D), "Recovered" (R), Dead (X)
+#v.n <- c("NOH","COH","FOH","NOD","COD","FOD","NOR","COR","FOR","NVH","CVH","FVH","NVD","CVD","FVD","NVR","CVR","FVR","NQH","CQH","FQH","NQD","CQD","FQD","NQR","CQR","FQR", "X")
 n.s   <- length(v.n)            # the number of health states
 v.M_1 <- rep("NH", n.i)         # everyone begins in the Never smoker Never MD state
 
