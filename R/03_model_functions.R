@@ -290,7 +290,7 @@ get_subgroup_prevs <- function(state,denom, m_cohortbyyear,minyear,maxyear){ # G
 ## CALIBRATION FUNCTIONS ---------------------------------------------------
 
 # Function to handle the repetitive task of looking up calib_inputs by parameter name
-get_value <- function(param_name) {
+get_value <- function(param_name, v.params) {
   ifelse(calib_inputs[param_name, "calib"] == 1, v.params[param_name], calib_inputs[param_name, "value"])
 }
 
@@ -322,7 +322,7 @@ main_calib = function(v.params) { # v.params: run model for parameter calibratio
   
   # Loop over parameter names and assign values dynamically
   for (param in rownames(calib_inputs)) {
-    assign(param, get_value(param))
+    assign(param, get_value(param,v.params))
   }
   
   yearinc_p.HD <- round(yearinc_p.HD)
@@ -418,7 +418,7 @@ apply_policy <- function(rr.init, rr.cess, policyyear, v.affected_ages) {
 }
 
 # Function to extract and format prevalence data
-extract_prevalence <- function(model_res, state) {
+extract_prevalence <- function(model_res, state,age_range, year_range) {
   prev <- xtabs(prev ~ age + year, data = model_res[[state]])
   attr(prev, "class") <- attr(prev, "call") <- NULL
   prev[as.character(age_range), as.character(year_range)]
@@ -430,7 +430,7 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
   
   # Loop over parameter names and assign values dynamically
   for (param in rownames(calib_inputs)) {
-    assign(param, get_value(param))
+    assign(param, get_value(param, v.params))
   }
   
   yearinc_p.HD <- round(yearinc_p.HD)
@@ -530,7 +530,7 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
   }
 
   # Get mortality counts by year
-  # n.X = apply(m.M_cy,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
+  n.X = apply(m.M_cy,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
   # Get total person life-years by year
   n.lifeyears = apply(m.M_cy,2,function(x) sum(x!="X",na.rm=TRUE)) 
   
@@ -571,21 +571,21 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
   # Calculate smoking-attributable mortality from policyyear to 2100
   age_range <- 0:99
   
-  prev_cs <- extract_prevalence(model_res1, "C") # Extract prevalence data for current smokers and former smokers
-  prev_fs <- extract_prevalence(model_res1, "F") # Average FX, not by years since quit
+  m.prev_cs <- extract_prevalence(model_res1, "C", age_range, year_range) # Extract prevalence data for current smokers and former smokers
+  m.prev_fs <- extract_prevalence(model_res1, "F", age_range, year_range) # Average FX, not by years since quit
   
   # Extract prevalence data for former smoker years since quit
-  prev_fs_list <- lapply(paste0("q", sprintf("%02d", 1:40)), function(state) extract_prevalence(model_res1, state))
+  l.prev_fs.ysq <- lapply(paste0("q", sprintf("%02d", 1:40)), function(state) extract_prevalence(model_res1, state, age_range, year_range))
   
   # Calculate smoking-attributable deaths for current smokers
   SADcs <- colSums(pop[, as.character(year_range)] * 
-                     (prev_cs * (p.CX_cy[age_range + 1, year_range - 1899] - p.NX_cy[age_range + 1, year_range - 1899])))
+                     (m.prev_cs * (p.CX_cy[age_range + 1, year_range - 1899] - p.NX_cy[age_range + 1, year_range - 1899])))
   
   # Calculate smoking-attributable deaths for former smokers
   # SADfs <- colSums(pop[,as.character(year_range)] *
   #                    (prev_fs * (p.FX_cy[age_range+1,year_range-1899] - p.NX_cy[age_range+1,year_range-1899])))
-  SADfs.ysq <- colSums(pop[, as.character(year_range)] * prev_fs *
-                         Reduce(`+`, lapply(1:40, function(i) prev_fs_list[[i]] * 
+  SADfs.ysq <- colSums(pop[, as.character(year_range)] * m.prev_fs *
+                         Reduce(`+`, lapply(1:40, function(i) l.prev_fs.ysq[[i]] * 
                                               (a_p.FX.ysq_cy[, , i][age_range + 1, year_range - 1899] - p.NX_cy[age_range + 1, year_range - 1899]))))
   
   # Total smoking-attributable deaths
@@ -593,7 +593,7 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
   
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer
-  return(list(model_res = model_res, cuw=cuw, n.X = n.X, n.lifeyears=n.lifeyears, SAD=SAD, init = p.NC, cess = p.CF))
+  return(list(model_res = model_res, cuw=cuw, n.X = n.X, n.lifeyears=n.lifeyears, SAD=SAD, init = p.NC, cess = p.CF, m.prev_cs=m.prev_cs,m.prev_fs = m.prev_fs))
 }
 
 ############################################################################################

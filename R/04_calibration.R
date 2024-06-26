@@ -2,8 +2,8 @@
 rm(list = ls()) 
 
 ## RUN CALIBRATION
-# mainDir = "/Users/jt936/Dropbox/GitHub/mds-microsim/"
-mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" # Set working directory
+mainDir = "/Users/jt936/Dropbox/GitHub/mds-microsim/"
+# mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" # Set working directory
 hpc = 1
 source(paste0(mainDir,"R/01_environment.R"), echo=FALSE)
 source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE)
@@ -19,18 +19,19 @@ ub <- calib_inputs[calib_inputs[,"calib"]==1,][,"upper"]  # upper bound
 v.target_names <- names(lst_calibtargets) # number of calibration targets
 n.target <- length(v.target_names)
 
-#  Select multiple random starting values with Latin Hypercube Sampling ###
+#  Select multiple random starting values with Latin Hypercube Sampling 
 set.seed(32788)
-X <- randomLHS(n.init,length(v.params)) # LHS to cover parameter space evenly
 
 v.params_init <- matrix(nrow=n.init,ncol=n.param)
+v.params_init[1,] <- v.params # replace first initial set with v.params to ensure initial best fit must be improved
+
+X <- randomLHS((n.init-1),length(v.params)) # LHS to cover parameter space evenly
 
 for (i in 1:n.param){
-  v.params_init[,i] <- qunif(X[,i],min=lb[i],max=ub[i])
+  v.params_init[2:n.init,i] <- qunif(X[,i],min=lb[i],max=ub[i])
 }
 colnames(v.params_init) <- names(v.params)
 
-# v.params_init[1,] <- v.params # replace first initial set with v.params
 
 # Record start time of calibration
 t_init <- Sys.time()
