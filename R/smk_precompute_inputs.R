@@ -1,17 +1,16 @@
 rm(list = ls())  # remove any variables in R's memory
-# setwd(file.path("C:/Users/JT936/Dropbox/GitHub/mds-microsim/data"))
-setwd(file.path("/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/"))
+setwd(file.path("/Users/jt936/Dropbox/GitHub/mds-microsim/"))
+# setwd(file.path("/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/"))
 
-whichgender <- "males"
+whichgender <- "females"
 
-# Precompute all smoking and mortality probabilities by birth cohort
+# Precompute all smoking and mortality probabilities by birth cohort, and by calendar year (cy)
 load(paste0("data/smk_inputs_",whichgender,".RData")) # Load all smoking and mortality inputs as matrices
 cohorts=1900:2100
 
-precompute_diag <- function(statdata, cohorts, finval) { 
+precompute_diag <- function(statdata, cohorts, finval) {    # transition probabilities (per cycle) by birth cohort
   precomp = matrix(nrow=100, ncol=201)
   for (bc in cohorts) {
-    ## Transition probabilities (per cycle) by birth cohort
     bc_i = bc - 1899
     precomp[1:min(100,202-bc_i),bc_i] <- diag(statdata[,bc_i:201])
     precomp[100,bc_i] <- finval
@@ -22,43 +21,41 @@ smk_init <- precompute_diag(smk_init_cisnet,cohorts[-length(cohorts)],0) # proba
 smk_cess <- precompute_diag(smk_cess_cisnet,cohorts[-length(cohorts)],0) # probability to become Former smoker when Current smoker
 p.NX <- precompute_diag(death_ns,cohorts[-length(cohorts)],1) # probability to die when Never smoker
 p.CX <- precompute_diag(death_cs,cohorts[-length(cohorts)],1) # probability to die when Current smoker
-# p.FX <- precompute_diag(death_fs,cohorts[-length(cohorts)],1) # probability to die when Former smoker
 
 # Fill in missing values with last available value for that age
 for(i in 1:nrow(p.CX)){
-  p.NX[i,which(is.na(p.NX[i,])):201]<-p.CX[i,(min(which(is.na(p.NX[i,])))-1)]
+  p.NX[i,which(is.na(p.NX[i,])):201]<-p.NX[i,(min(which(is.na(p.NX[i,])))-1)]
   p.CX[i,which(is.na(p.CX[i,])):201]<-p.CX[i,(min(which(is.na(p.CX[i,])))-1)]
-  # p.FX[i,which(is.na(p.FX[i,])):201]<-p.CX[i,(min(which(is.na(p.FX[i,])))-1)]
-  
+
   smk_init[i,which(is.na(smk_init[i,])):201]<-smk_init[i,(min(which(is.na(smk_init[i,])))-1)]
   smk_cess[i,which(is.na(smk_cess[i,])):201]<-smk_cess[i,(min(which(is.na(smk_cess[i,])))-1)]
 }
 
-# # Create array for 40 years since quitting
-# p.FX.ysq = vector("list", 40)
-# for (j in 1:40){
-#   p.FX.ysq[[j]] = matrix(, nrow = 100, ncol = 201)
-# }
-# # Get former smoker relative risk of mortality compared to current smoker - See Thun (2013) & Tam (2021) Graphic Health Warnings Supplement
-# if (whichgender=="females"){
-#   rr.FX.CX <- pmin(1,0.8613*exp(-0.023*(1:40)))
-# }
-# if (whichgender=="males"){
-#   rr.FX.CX <- pmin(1,1.0313*exp(-0.024*(1:40)))
-# }
-# for (j in 1:40){
-#   for (age in 1:100){
-#     for (bc in 1:201){
-#       p.FX.ysq[[j]][age,bc]=pmax(rr.FX.CX[j]*p.CX[age,bc],p.NX[age,bc]) 
-#     }
-#   }
-# }
+# Create mortality array for 1-40 years since quitting
+a_p.FX.ysq <- a_p.FX.ysq_cy <- array(NA, dim = c(100, 201, 40))
 
-# Format mortality by years since quit as an array instead of a list because it runs faster
-a_p.FX.ysq <- array(NA, dim = c(100,201,40))
-for (i in 1: 40){
-  a_p.FX.ysq[,,i] <-  p.FX.ysq[[i]]
+# Get former smoker relative risk of mortality compared to current smoker - See Thun (2013) & Tam (2021) Graphic Health Warnings Supplement
+rr.FX.CX <- if (whichgender == "females") {
+  pmin(1, 0.8613 * exp(-0.023 * (1:40)))
+} else {
+  pmin(1, 1.0313 * exp(-0.024 * (1:40)))
 }
 
+# Fill the array with computed p.FX values for cohorts and calendar years
+p.NX_cy <- death_ns
+p.CX_cy <- death_cs
+
+for (j in 1:40) { # years since quitting
+  for (age in 1:100) { # ages 0-99
+    for (i in 1:201) { # birth cohort or calendar year
+      a_p.FX.ysq[age, i, j] <- pmax(rr.FX.CX[j] * p.CX[age, i], p.NX[age, i]) # by birth cohort
+      a_p.FX.ysq_cy[age, i, j] <- pmax(rr.FX.CX[j] * p.CX_cy[age, i], p.NX_cy[age, i]) # by calendar year
+    }
+  }
+}
+
+
 rm(smk_cess_cisnet,smk_init_cisnet,death_cs,death_fs,death_ns)
-save(p.NX,p.CX,a_p.FX.ysq,smk_init,smk_cess,file=paste0("data/smk_precomputed_inputs_",whichgender,".RData"))
+
+save(p.NX,p.CX,a_p.FX.ysq,smk_init,smk_cess,
+     p.NX_cy,p.CX_cy,a_p.FX.ysq_cy, file=paste0("data/smk_precomputed_inputs_",whichgender,".RData"))

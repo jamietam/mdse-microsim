@@ -1,6 +1,6 @@
 # Create a basic model diagram representing the different health states and transitions between them
 library(diagram)
-m_P_diag <- matrix(0, nrow = n_s, ncol = n_s, dimnames = list(v_n, v_n))
+m_P_diag <- matrix(0, nrow = n.s, ncol = n.s, dimnames = list(v.n, v.n))
 m_P_diag["NH", "CH" ] = "" 
 m_P_diag["NH", "ND" ] = ""
 m_P_diag["NH", "X" ] = ""
