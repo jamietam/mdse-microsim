@@ -55,6 +55,8 @@ p.RD[66:99] <- select_param("p.RD_65_99")
 s.HD_12.17 <- select_param("s.HD_12.17")
 s.HD_18.25 <- select_param("s.HD_18.25")
 s.HD_26.34 <- select_param("s.HD_26.34")
+
+yearinc_p.HD <- select_param("yearinc_p.HD")
 for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
   bc1 = bc-1899
   for (age in 0:34){ # increase applies to youth and young adults ages 0-25
@@ -261,7 +263,7 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
 df.calib <- merge(as.data.frame(v.params),as.data.frame(calib_inputs),by="row.names",all.x=TRUE,all.y=TRUE,sort=FALSE)
 colnames(df.calib)[1:3] <- c("parameters", "est","initial")
 
-pdf(file = paste0(mainDir,"output/", whichgender,"_mds_calib_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I:%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
+pdf(file = paste0(mainDir,"output/", whichgender,"_mds_calib_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
 plot.new()
 text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
 text(.5, 1.0, "Calibration fit values", font=2, cex=1.5)
