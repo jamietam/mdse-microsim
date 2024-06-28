@@ -5,19 +5,22 @@ load(paste0(mainDir,"data/dep_precomputed_inputs_",whichgender,".RData"))
 load(paste0(mainDir,"data/smk_precomputed_inputs_",whichgender,".RData")) #lst_smktargets
 load(paste0(mainDir,"data/cuw_inputs_",whichgender,".RData"))
 load(paste0(mainDir,"data/pop_",whichgender,".RData")) # Read in Census population for SAD calculation
+load(paste0(mainDir,"data/ecig_precomputed_inputs",whichgender,".RData"))
+
 
 cohorts <- 1900:as.numeric(args[3])           # Change from 2016 to 2022 or 2100
 calib_startyear <-2005
 n.i   <- as.numeric(args[2])                   # number of simulated individuals per run (cohort) - eventually want to run 10,000
 n.t   <- 100                    # time horizon per person, number of years
-v.n   <- c( "NH","CH","FH","ND","CD","FD","NR","CR","FR","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), "Happy" (H), Depressed (D), "Recovered" (R), Dead (X)
-#v.n <- c("NOH","COH","FOH","NOD","COD","FOD","NOR","COR","FOR","NVH","CVH","FVH","NVD","CVD","FVD","NVR","CVR","FVR","NQH","CQH","FQH","NQD","CQD","FQD","NQR","CQR","FQR", "X")
+#v.n   <- c( "NH","CH","FH","ND","CD","FD","NR","CR","FR","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), "Happy" (H), Depressed (D), "Recovered" (R), Dead (X)
+v.n <- c("NOH","COH","FOH","NOD","COD","FOD","NOR","COR","FOR","NVH","CVH","FVH","NVD","CVD","FVD","NVR","CVR","FVR","NQH","CQH","FQH","NQD","CQD","FQD","NQR","CQR","FQR", "X")
 n.s   <- length(v.n)            # the number of health states
-v.M_1 <- rep("NH", n.i)         # everyone begins in the Never smoker Never MD state
+v.M_1 <- rep("NOH", n.i)         # everyone begins in the Never smoker Never MD state
 
 d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by 3%
 
 # CALIBRATION TARGETS
+##add vaping calib targets
 load(paste0(mainDir,"data/smk_calib_targets_",whichgender,".RData")) #lst_smktargets
 load(paste0(mainDir,"data/dep_calib_targets_",whichgender,".RData")) #lst_deptargets
 load(paste0(mainDir,"data/smkdep_calib_targets_",whichgender,".RData")) #lst_smkdeptargets
