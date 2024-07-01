@@ -168,7 +168,7 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["FQH", M_t == "FVH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FVH"]])*(p.FV.FQ[t,yr])
   m.p_t["CQH", M_t == "FVH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FVH"]])*(p.FV.CQ[t,yr])
   m.p_t["CVH", M_t == "FVH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FVH"]])*(p.FV.CV[t,yr])
-  m.p_t["FVD", M_t == "FVH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FVH"]])*(p.FV.FV[t,yr])
+  m.p_t["FVD", M_t == "FVH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FVH"]])*(p.HD[t,bc1])
   m.p_t["X", M_t == "FVH"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FVH"]]
   
   ##from NHQ state
@@ -176,7 +176,7 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["CQH", M_t == "NQH"] <- (1-p.NX[t,bc1])*(p.NQ.CQ[t,yr])
   m.p_t["CVH", M_t == "NQH"] <- (1-p.NX[t,bc1])*(p.NQ.CV[t,yr])
   m.p_t["NVH", M_t == "NQH"] <- (1-p.NX[t,bc1])*(p.NQ.NV[t,yr])
-  m.p_t["NQD", M_t == "NQH"] <- (1-p.NX[t,bc1])*(p.NQ.ND[t,yr])
+  m.p_t["NQD", M_t == "NQH"] <- (1-p.NX[t,bc1])*(p.HD[t,bc1])
   m.p_t["X", M_t == "NQH"] <- p.NX[t,bc1]
   
   ##from CHQ state
@@ -244,7 +244,7 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FVD"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FVD"]]
   
   ##from NDQ state
-  m.p_t["NQD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(1-p.NQ.NV[t,yr]-p.NV.CV[t,yr]-p.NV.CQ[t,yr]-p.DR[t])
+  m.p_t["NQD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(1-p.NQ.NV[t,yr]-p.NQ.CV[t,yr]-p.NQ.CQ[t,yr]-p.DR[t])
   m.p_t["NVD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(p.NQ.NV[t,yr])
   m.p_t["CVD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(p.NQ.CV[t,yr])
   m.p_t["CQD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(p.NQ.CQ[t,yr])
@@ -344,11 +344,15 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   
  
   # print birth cohort and age for debugging problematic transition probabilities
-  print(paste0("bc: ", bc, ", age: ",t, " year: ", yr, " M_t: ", M_t))
+  
   check_transition_probability(m.p_t,verbose=FALSE)
   if(any(colSums(m.p_t))!=1){
     print(m.p_t)
+    #print(paste0("bc: ", bc, ", age: ",t, " year: ", yr, " M_t: ", M_t))
   }
+  print(m.p_t)
+  print(paste0("bc: ", bc, ", age: ",t, " year: ", yr, " M_t: ", M_t))
+  print(colSums(m.p_t))
   check_sum_of_transition_array(t(m.p_t), n_rows=n.i, n_cycles= n.t, verbose = TRUE)
   
   return(t(m.p_t)) 
@@ -462,7 +466,7 @@ get_subgroup_prevs <- function(state,denom, m_cohortbyyear,minyear,maxyear){ # G
       alive <- sum(str_count(select,denom),na.rm=TRUE)
       counts <- sum(str_count(select,state),na.rm=TRUE)
       dead <- sum(select=="X",na.rm=TRUE) 
-      prev <- sum(str_count(select,state),na.rm=TRUE)/sum(str_count(select,denom),na.rm=TRUE)
+      prev <- counts/alive
       m.m_prevs<-rbind(m.m_prevs,c(agerownames[age],year, prev,counts,alive,dead))
     }
   }
@@ -559,11 +563,20 @@ main_calib = function(v.params) { # v.params: run model for parameter calibratio
            'n.i','n.t','v.n','n.s','v.M_1',
            'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
            'rr.DX','p.HD', 'p.DR', 'p.RD',
-           'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD')) %dopar% {
+           'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD',
+           'p.NO.NO', 'p.NO.CO', 'p.NO.CV', 'p.NO.NV', 
+           'p.NV.NV', 'p.NV.CQ', 'p.NV.CV', 'p.NV.NQ', 
+           'p.FV.CQ', 'p.FV.FV', 'p.FV.CV', 'p.FV.FQ',
+           'p.NQ.CQ', 'p.NQ.CV', 'p.NQ.NQ', 'p.NQ.NV', 
+           'p.FO.CO', 'p.FO.CV', 'p.FO.FO', 'p.FO.FV',
+           'p.FQ.CQ', 'p.FQ.CV', 'p.FQ.FQ', 'p.FQ.FV', 
+           'p.CO.CO', 'p.CO.CV', 'p.CO.FO', 'p.CO.FV',
+           'p.CQ.CQ', 'p.CQ.CV', 'p.CQ.FQ', 'p.CQ.FV',
+           'p.CV.CQ', 'p.CV.CV', 'p.CV.FQ', 'p.CV.FV')) %dopar% {
              mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
  }
   # run in serial for debugging:
-   m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
+ #m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
   
   # Convert matrix from cohort-age to cohort-calendaryear (cy)
   m.M_cy <- matrix(nrow = n.i*length(cohorts), ncol = (length(cohorts)+100))
@@ -573,10 +586,10 @@ main_calib = function(v.params) { # v.params: run model for parameter calibratio
   colnames(m.M_cy) <- c(min(cohorts):(max(cohorts)+100))
   
   # Output prevalence results as a list
-  model_res <- lapply(c("N","C","F","D"), get_prevs, m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
+  model_res <- lapply(c("N", "C","F", "D", "NO", "CO", "FO", "O", "NV", "CV", "FV", "V", "NQ", "CQ", "FQ", "Q"), get_prevs, m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
   model_res <- c(model_res, lapply(c("ND","CD","FD"), get_subgroup_prevs, denom="D",m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
 
-  names(model_res) <- c("N","C","F","D","ND","CD","FD")
+  names(model_res) <- c("N", "C","F", "D", "NO", "CO", "FO", "O", "NV", "CV", "FV", "V", "NQ", "CQ", "FQ", "Q", "ND","CD","FD")
   for (l in 1:length(model_res)){
     model_res[[l]] <- model_res[[l]][order(model_res[[l]][,"age"],decreasing=FALSE),] # re-order the age groups from 18.25, 18.99, 26.34, etc
   }
@@ -659,11 +672,20 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
                            'n.i','n.t','v.n','n.s','v.M_1',
                            'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
                            'rr.DX','p.HD', 'p.DR', 'p.RD',
-                           'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD')) %dopar% {
+                           'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD',
+                           'p.NO.NO', 'p.NO.CO', 'p.NO.CV', 'p.NO.NV', 
+                           'p.NV.NV', 'p.NV.CQ', 'p.NV.CV', 'p.NV.NQ', 
+                           'p.FV.CQ', 'p.FV.FV', 'p.FV.CV', 'p.FV.FQ',
+                           'p.NQ.CQ', 'p.NQ.CV', 'p.NQ.NQ', 'p.NQ.NV', 
+                           'p.FO.CO', 'p.FO.CV', 'p.FO.FO', 'p.FO.FV',
+                           'p.FQ.CQ', 'p.FQ.CV', 'p.FQ.FQ', 'p.FQ.FV', 
+                           'p.CO.CO', 'p.CO.CV', 'p.CO.FO', 'p.CO.FV',
+                           'p.CQ.CQ', 'p.CQ.CV', 'p.CQ.FQ', 'p.CQ.FV',
+                           'p.CV.CQ', 'p.CV.CV', 'p.CV.FQ', 'p.CV.FV')) %dopar% {
                              mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
                            }
   # run in serial for debugging:
-  # m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
+  #m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
   
   # Count each death only once by removing repeated 'X' values
   firstX = apply(m.M,1,function(x) min(which(x=="X"))) # find first cell where each individual dies by iterating across each person (row = 1)

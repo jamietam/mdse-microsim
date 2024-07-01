@@ -261,7 +261,7 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
 df.calib <- merge(as.data.frame(v.params),as.data.frame(calib_inputs),by="row.names",all.x=TRUE,all.y=TRUE,sort=FALSE)
 colnames(df.calib)[1:3] <- c("parameters", "est","initial")
 
-pdf(file = paste0(mainDir,"output/", whichgender,"_mds_calib_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I:%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
+pdf(file = paste0(mainDir,"output/", whichgender,"_mds_calib_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
 plot.new()
 text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
 text(.5, 1.0, "Calibration fit values", font=2, cex=1.5)
@@ -279,3 +279,4 @@ grid_arrange_shared_legend(list(D_age, D_total),2,"MDE")
 grid_arrange_shared_legend(list(ns_ageD, cs_ageD, fs_ageD),3,"Smoking distribution among people with depression")
 grid_arrange_shared_legend(list(ncf_totalD, Xprobs_age),2,"NCF")
 dev.off()
+
