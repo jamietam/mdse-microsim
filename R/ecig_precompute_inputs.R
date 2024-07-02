@@ -91,28 +91,28 @@ expandmatrix <- function(pmatrix){
   ##fill with pmatrix
   for(r in 1:nrow(expmatrix)){
     for(c in 1:ncol(expmatrix)){
-      ##if individual is age18-24 and adult2017-19
-      if(r>=18 & r<=24 & c >= (2017-1899) & c <= (2021-1899)){
+      ##if individual is age18-24 and adult2017-19 (from 1900-2019 for model)
+      if(r>=18 & r<=24 & c >= (1900-1899) & c <= (2019-1899)){
         expmatrix[r,c] <- pmatrix[1,1]
       }
-      ##if individual is age18-24 and adult2019-21
-      else if(r>=18 & r<=24 & c > 120){
+      ##if individual is age18-24 and adult2019-21 (from 2019-2100 for model)
+      else if(r>=18 & r<=24 & c > (2019-1899)){
         expmatrix[r,c] <- pmatrix[1,2]
       }
       ##if individual is age25-34 and adult2017-19
-      else if(r>24 & r<=34 & c >= 118 & c <= 120){
+      else if(r>24 & r<=34 & c >= (1900-1899) & c <= (2019-1899)){
         expmatrix[r,c] <- pmatrix[2,1]
       }
       ##if individual is age25-34 and adult2019-21
-      else if(r>24 & r<=34 & c > 120){
+      else if(r>24 & r<=34 & c > (2019-1899)){
         expmatrix[r,c] <- pmatrix[2,2]
       }
       ##if individual is age35-90 and adult2017-19
-      else if(r>34 & r<=90 & c >= 118 & c <= 120){
+      else if(r>34 & r<=90 & c >= (1900-1899) & c <= (2019-1899)){
         expmatrix[r,c] <- pmatrix[3,1]
       }
       ##if individual is age35-90 and adult2019-21
-      else if(r>34 & r<=90 & c > 120){
+      else if(r>34 & r<=90 & c > (2019-1899)){
         expmatrix[r,c] <- pmatrix[3,2]
       }
     }

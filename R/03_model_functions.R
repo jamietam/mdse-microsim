@@ -124,16 +124,16 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   # m.p_t["X" , M_t == "FR"] <- a_p.FX.ysq[t, bc1, v.ysq[M_t=="FR"]]	
   # 
   #from NHO state
-  m.p_t["NOH", M_t == "NOH"] <- (1-p.NX[t,bc1])*(1-p.NO.CO[t,yr]-p.NO.CV[t,yr]-p.NO.NV[t,yr]-p.HD[t,bc1])
-  m.p_t["COH", M_t == "NOH"] <- (1-p.NX[t,bc1])*(p.NO.CO[t,yr])
+  m.p_t["NOH", M_t == "NOH"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.NO.CV[t,yr]-p.NO.NV[t,yr]-p.HD[t,bc1])
+  m.p_t["COH", M_t == "NOH"] <- (1-p.NX[t,bc1])*(p.NC[t,bc1])
   m.p_t["CVH", M_t == "NOH"] <- (1-p.NX[t,bc1])*(p.NO.CV[t,yr])
   m.p_t["NVH", M_t == "NOH"] <- (1-p.NX[t,bc1])*(p.NO.NV[t,yr])
   m.p_t["NOD", M_t == "NOH"] <- (1-p.NX[t,bc1])*(p.HD[t,bc1])
   m.p_t["X", M_t == "NOH"] <- p.NX[t,bc1]
   
   #from CHO state
-  m.p_t["COH", M_t == "COH"] <- (1-p.CX[t,bc1])*(1-p.CO.FO[t,yr]-p.CO.FV[t,yr]-p.CO.CV[t,yr]-p.HD[t,bc1])
-  m.p_t["FOH", M_t == "COH"] <- (1-p.CX[t,bc1])*(p.CO.FO[t,yr])
+  m.p_t["COH", M_t == "COH"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CO.FV[t,yr]-p.CO.CV[t,yr]-p.HD[t,bc1])
+  m.p_t["FOH", M_t == "COH"] <- (1-p.CX[t,bc1])*(p.CF[t,bc1])
   m.p_t["FVH", M_t == "COH"] <- (1-p.CX[t,bc1])*(p.CO.FV[t,yr])
   m.p_t["CVH", M_t == "COH"] <- (1-p.CX[t,bc1])*(p.CO.CV[t,yr])
   m.p_t["COD", M_t == "COH"] <- (1-p.CX[t,bc1])*(p.HD[t,bc1])
@@ -196,16 +196,16 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FQH"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQH"]]
   
   ##from NDO state
-  m.p_t["NOD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(1-p.NO.CO[t,yr]-p.NO.CV[t,yr]-p.NO.NV[t,yr]-p.DR[t])
-  m.p_t["COD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(p.NO.CO[t,yr])
+  m.p_t["NOD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.NO.CV[t,yr]-p.NO.NV[t,yr]-p.DR[t])
+  m.p_t["COD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(p.NC[t,bc1])
   m.p_t["CVD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(p.NO.CV[t,yr])
   m.p_t["NVD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(p.NO.NV[t,yr])
   m.p_t["NOR", M_t == "NOD"] <- (1-p.NX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "NOD"] <- p.NX[t,bc1]
   
   ##from CDO state
-  m.p_t["COD", M_t == "COD"] <- (1-p.CX[t,bc1])*(1-p.CO.FO[t,yr]-p.CO.FV[t,yr]-p.CO.CV[t,yr]-p.DR[t])
-  m.p_t["FOD", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.CO.FO[t,yr])
+  m.p_t["COD", M_t == "COD"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CO.FV[t,yr]-p.CO.CV[t,yr]-p.DR[t])
+  m.p_t["FOD", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.CF[t,bc1])
   m.p_t["FVD", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.CO.FV[t,yr])
   m.p_t["CVD", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.CO.CV[t,yr])
   m.p_t["COR", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.DR[t])
@@ -268,16 +268,16 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FQD"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQD"]]
   
   ##from NRO state
-  m.p_t["NOR", M_t == "NOR"] <- (1-p.NX[t,bc1])*(1-p.NO.CO[t,yr]-p.NO.CV[t,yr]-p.NO.NV[t,yr]-p.RD[t])
-  m.p_t["COR", M_t == "NOR"] <- (1-p.NX[t,bc1])*(p.NO.CO[t,yr])
+  m.p_t["NOR", M_t == "NOR"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.NO.CV[t,yr]-p.NO.NV[t,yr]-p.RD[t])
+  m.p_t["COR", M_t == "NOR"] <- (1-p.NX[t,bc1])*(p.NC[t,bc1])
   m.p_t["CVR", M_t == "NOR"] <- (1-p.NX[t,bc1])*(p.NO.CV[t,yr])
   m.p_t["NVR", M_t == "NOR"] <- (1-p.NX[t,bc1])*(p.NO.NV[t,yr])
   m.p_t["NOD", M_t == "NOR"] <- (1-p.NX[t,bc1])*(p.RD[t])
   m.p_t["X", M_t == "NOR"] <- p.NX[t,bc1]
   
   ##from CRO state
-  m.p_t["COR", M_t == "COR"] <- (1-p.CX[t,bc1])*(1-p.CO.FO[t,yr]-p.CO.FV[t,yr]-p.CO.CV[t,yr]-p.RD[t])
-  m.p_t["FOR", M_t == "COR"] <- (1-p.CX[t,bc1])*(p.CO.FO[t,yr])
+  m.p_t["COR", M_t == "COR"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CO.FV[t,yr]-p.CO.CV[t,yr]-p.RD[t])
+  m.p_t["FOR", M_t == "COR"] <- (1-p.CX[t,bc1])*(p.CF[t,bc1])
   m.p_t["FVR", M_t == "COR"] <- (1-p.CX[t,bc1])*(p.CO.FV[t,yr])
   m.p_t["CVR", M_t == "COR"] <- (1-p.CX[t,bc1])*(p.CO.CV[t,yr])
   m.p_t["COD", M_t == "COR"] <- (1-p.CX[t,bc1])*(p.RD[t])
@@ -345,15 +345,15 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
  
   # print birth cohort and age for debugging problematic transition probabilities
   
-  check_transition_probability(m.p_t,verbose=FALSE)
-  if(any(colSums(m.p_t))!=1){
-    print(m.p_t)
-    #print(paste0("bc: ", bc, ", age: ",t, " year: ", yr, " M_t: ", M_t))
-  }
-  print(m.p_t)
-  print(paste0("bc: ", bc, ", age: ",t, " year: ", yr, " M_t: ", M_t))
-  print(colSums(m.p_t))
-  check_sum_of_transition_array(t(m.p_t), n_rows=n.i, n_cycles= n.t, verbose = TRUE)
+  # check_transition_probability(m.p_t,verbose=FALSE)
+  # if(any(colSums(m.p_t))!=1){
+  #   print(m.p_t)
+  #   #print(paste0("bc: ", bc, ", age: ",t, " year: ", yr, " M_t: ", M_t))
+  # }
+  # print(m.p_t)
+  # print(paste0("bc: ", bc, ", age: ",t, " year: ", yr, " M_t: ", M_t))
+  # print(colSums(m.p_t))
+  # check_sum_of_transition_array(t(m.p_t), n_rows=n.i, n_cycles= n.t, verbose = TRUE)
   
   return(t(m.p_t)) 
 }       
@@ -474,6 +474,7 @@ get_subgroup_prevs <- function(state,denom, m_cohortbyyear,minyear,maxyear){ # G
   return(m.m_prevs) 
 }
 
+
 ## CALIBRATION FUNCTIONS ---------------------------------------------------
 
 # Write goodness-of-fit function to pass to calibration algorithm
@@ -587,9 +588,10 @@ main_calib = function(v.params) { # v.params: run model for parameter calibratio
   
   # Output prevalence results as a list
   model_res <- lapply(c("N", "C","F", "D", "NO", "CO", "FO", "O", "NV", "CV", "FV", "V", "NQ", "CQ", "FQ", "Q"), get_prevs, m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
-  model_res <- c(model_res, lapply(c("ND","CD","FD"), get_subgroup_prevs, denom="D",m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
-
-  names(model_res) <- c("N", "C","F", "D", "NO", "CO", "FO", "O", "NV", "CV", "FV", "V", "NQ", "CQ", "FQ", "Q", "ND","CD","FD")
+  model_res <- c(model_res, lapply(c("N.D","C.D","F.D"), get_subgroup_prevs, denom="D",m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
+  model_res <- c(model_res, lapply(c("OD","VD","QD"), get_subgroup_prevs, denom="D",m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts)))
+  
+  names(model_res) <- c("N", "C","F", "D", "NO", "CO", "FO", "O", "NV", "CV", "FV", "V", "NQ", "CQ", "FQ", "Q", "ND","CD","FD","OD","VD","QD")
   for (l in 1:length(model_res)){
     model_res[[l]] <- model_res[[l]][order(model_res[[l]][,"age"],decreasing=FALSE),] # re-order the age groups from 18.25, 18.99, 26.34, etc
   }

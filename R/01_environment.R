@@ -7,7 +7,6 @@ packages <- c('stringr','lbfgsb3c','splines','foreach',
 # install.packages(packages)
 # devtools::install_github("DARTH-git/darthtools")
 lapply(c(packages, 'darthtools'), library, character.only=TRUE)
-
 # Determine number of cores and cluster setup based on HPC or personal computer
 n.cores <- Sys.getenv("SLURM_CPUS_PER_TASK")
 if (hpc == 1) { ## For HPC runs - Run this section of code, and NOT the one below
