@@ -93,19 +93,19 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X" , M_t =="FH"] <-	a_p.FX.ysq[t, bc1, v.ysq[M_t=="FH"]] 
   
   # Depressed
-  m.p_t["ND", M_t == "ND"] <- (1-rr.DX[t]*p.NX[t,bc1])*(1-rr.ND.CD*p.NC[t,bc1]-p.DR[t])
-  m.p_t["CD", M_t == "ND"] <- (1-rr.DX[t]*p.NX[t,bc1])*rr.ND.CD*p.NC[t,bc1]
-  m.p_t["NR", M_t == "ND"] <- (1-rr.DX[t]*p.NX[t,bc1])*p.DR[t]
-  m.p_t["X" , M_t == "ND"] <- rr.DX[t]*p.NX[t,bc1]
+  m.p_t["ND", M_t == "ND"] <- (1-p.NX[t,bc1])*(1-rr.ND.CD*p.NC[t,bc1]-p.DR[t])
+  m.p_t["CD", M_t == "ND"] <- (1-p.NX[t,bc1])*rr.ND.CD*p.NC[t,bc1]
+  m.p_t["NR", M_t == "ND"] <- (1-p.NX[t,bc1])*p.DR[t]
+  m.p_t["X" , M_t == "ND"] <- p.NX[t,bc1]
   
-  m.p_t["CD", M_t == "CD"] <- (1-rr.DX[t]*p.CX[t,bc1])*(1-rr.CD.FD*p.CF[t,bc1]-p.DR[t])
-  m.p_t["FD", M_t == "CD"] <-  (1-rr.DX[t]*p.CX[t,bc1])*rr.CD.FD*p.CF[t,bc1]
-  m.p_t["CR", M_t == "CD"] <-  (1-rr.DX[t]*p.CX[t,bc1])*p.DR[t]
-  m.p_t["X" , M_t == "CD"] <-  rr.DX[t]*p.CX[t,bc1]	
+  m.p_t["CD", M_t == "CD"] <- (1-p.CX[t,bc1])*(1-rr.CD.FD*p.CF[t,bc1]-p.DR[t])
+  m.p_t["FD", M_t == "CD"] <-  (1-p.CX[t,bc1])*rr.CD.FD*p.CF[t,bc1]
+  m.p_t["CR", M_t == "CD"] <-  (1-p.CX[t,bc1])*p.DR[t]
+  m.p_t["X" , M_t == "CD"] <-  p.CX[t,bc1]	
   
-  m.p_t["FD", M_t == "FD"] <- (1-rr.DX[t]*a_p.FX.ysq[t, bc1, v.ysq[M_t=="FD"]])*(1-p.DR[t])
-  m.p_t["FR", M_t == "FD"] <- (1-rr.DX[t]*a_p.FX.ysq[t, bc1, v.ysq[M_t=="FD"]])*p.DR[t]
-  m.p_t["X" , M_t == "FD"] <- rr.DX[t]*a_p.FX.ysq[t, bc1, v.ysq[M_t=="FD"]]
+  m.p_t["FD", M_t == "FD"] <- (1-a_p.FX.ysq[t, bc1, v.ysq[M_t=="FD"]])*(1-p.DR[t])
+  m.p_t["FR", M_t == "FD"] <- (1-a_p.FX.ysq[t, bc1, v.ysq[M_t=="FD"]])*p.DR[t]
+  m.p_t["X" , M_t == "FD"] <- a_p.FX.ysq[t, bc1, v.ysq[M_t=="FD"]]
   
   # Recovered
   m.p_t["ND", M_t == "NR"] <- (1-p.NX[t,bc1])*p.RD[t]
@@ -340,14 +340,12 @@ main_calib <- function(v.params) { # v.params: run model for parameter calibrati
   ## Cessation - No cessation before 18
   p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
   
-  rr.DX = c(rep(1,18),rep(rr.DX_18.25,8),rep(rr.DX_26.34,9),rep(rr.DX_35.49,15),rep(rr.DX_50.64,15),rep(rr.DX_65.99,34),1)
-  
   # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
   m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
                  .export=c('mds_microsim','probs','get_prevs_combined',
                            'n.i','n.t','v.n','n.s','v.M_1',
                            'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
-                           'rr.DX','p.HD', 'p.DR', 'p.RD',
+                           'p.HD', 'p.DR', 'p.RD',
                            'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD')) %dopar% {
                              mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
                            }
@@ -446,14 +444,13 @@ main <- function(v.params, v.policy) { # v.params: run model for parameter calib
   
   p.NC = unname(v.policy[["initeff"]])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
   p.CF = unname(v.policy[["cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
-  rr.DX = c(rep(1,18),rep(rr.DX_18.25,8),rep(rr.DX_26.34,9),rep(rr.DX_35.49,15),rep(rr.DX_50.64,15),rep(rr.DX_65.99,34),1)
-  
+
   # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
   m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
                  .export=c('mds_microsim','probs','get_prevs_combined',
                            'n.i','n.t','v.n','n.s','v.M_1',
                            'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
-                           'rr.DX','p.HD', 'p.DR', 'p.RD',
+                           'p.HD', 'p.DR', 'p.RD',
                            'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD')) %dopar% {
                              mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
                            }
