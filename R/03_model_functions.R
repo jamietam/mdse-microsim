@@ -309,16 +309,6 @@ main_calib <- function(v.params) { # v.params: run model for parameter calibrati
   p.DR[51:65] <- p.DR_50_64
   p.DR[66:99] <- p.DR_65_99
   
-  # Recurrence
-  p.RD = NULL
-  p.RD[1:12] <- p.RD[100] <- 0 # final value = 0 because mortality prob = 1
-  p.RD[13:18] <- p.RD_12.17
-  p.RD[19:26] <- p.RD_18.25
-  p.RD[27:35] <- p.RD_26.34
-  p.RD[36:50] <- p.RD_35.49
-  p.RD[51:65] <- p.RD_50_64
-  p.RD[66:99] <- p.RD_65_99
-  
   ## Incidence
   for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
     bc1 = bc-1899
@@ -415,16 +405,6 @@ main <- function(v.params, v.policy) { # v.params: run model for parameter calib
   p.DR[51:65] <- p.DR_50_64
   p.DR[66:99] <- p.DR_65_99
   
-  # Recurrence
-  p.RD = NULL
-  p.RD[1:12] <- p.RD[100] <- 0 # final value = 0 because mortality prob = 1
-  p.RD[13:18] <- p.RD_12.17
-  p.RD[19:26] <- p.RD_18.25
-  p.RD[27:35] <- p.RD_26.34
-  p.RD[36:50] <- p.RD_35.49
-  p.RD[51:65] <- p.RD_50_64
-  p.RD[66:99] <- p.RD_65_99
-  
   ## Incidence
   for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
     bc1 = bc-1899
@@ -440,7 +420,6 @@ main <- function(v.params, v.policy) { # v.params: run model for parameter calib
       }
     }
   }
-  
   
   p.NC = unname(v.policy[["initeff"]])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
   p.CF = unname(v.policy[["cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))

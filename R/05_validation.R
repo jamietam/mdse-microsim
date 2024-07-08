@@ -6,8 +6,9 @@
 model_res<-main_calib(v.params)
 
 v.GOF <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
-for (r in 1:length(lst_calibtargets)){ # sum of squared differences
-  gof<- sum((lst_calibtargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
+
+for (r in 1:length(lst_calibtargets)){ # sum of squared differences - removes model years after 2022 (where we don't have NSDUH data for calibration)
+  gof<- sum((lst_calibtargets[[r]][,"prev"] - subset(model_res[[r]],model_res[[r]][,2]<=min(max(cohorts),2022))[,"prev"])^2) # prevalence by age group
   v.GOF[r] <-gof 
 }
 names(v.GOF) <- paste0(names(lst_calibtargets),".fit_value")
@@ -42,15 +43,6 @@ p.DR[36:50] <- select_param("p.DR_35.49")
 p.DR[51:65] <- select_param("p.DR_50_64")
 p.DR[66:99] <- select_param("p.DR_65_99")
 
-# Recurrence
-p.RD <- rep(0,100)
-p.RD[13:18] <- select_param("p.RD_12.17")
-p.RD[19:26] <- select_param("p.RD_18.25")
-p.RD[27:35] <- select_param("p.RD_26.34")
-p.RD[36:50] <- select_param("p.RD_35.49")
-p.RD[51:65] <- select_param("p.RD_50_64")
-p.RD[66:99] <- select_param("p.RD_65_99")
-
 # Incidence
 s.HD_12.17 <- select_param("s.HD_12.17")
 s.HD_18.25 <- select_param("s.HD_18.25")
@@ -72,14 +64,6 @@ for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort forma
   }
 }
 yearinc_p.HD <- round(select_param("yearinc_p.HD"))
-
-# Mortality
-rr.DX <- rep(1, 100)
-rr.DX[19:26] <- select_param("rr.DX_18.25")
-rr.DX[27:35] <- select_param("rr.DX_26.34")
-rr.DX[36:50] <- select_param("rr.DX_35.49")
-rr.DX[51:65] <- select_param("rr.DX_50.64")
-rr.DX[66:99] <- select_param("rr.DX_65.99")
 
 # Interaction effects
 rr.ND.CD <- select_param("rr.ND.CD")
@@ -240,7 +224,7 @@ names(Xprobs) <- c("prob","status","age")
 Xprobs$prob <- as.numeric(Xprobs$prob)
 Xprobs$age <- as.numeric(Xprobs$age)
 Xprobs_age <- ggplot(data=Xprobs) +  geom_line( aes(x=age, y=prob, color=status)) + 
-  geom_line(aes(x=age,y=prob*rr.DX,color=status),linetype=2)+
+  geom_line(aes(x=age,y=prob,color=status),linetype=2)+
   scale_color_manual(values=c('red', 'blue', 'springgreen3'))+
   scale_y_continuous(name="Annual mortality by smoking status (rr.DX)", limits=c(0,1), breaks=seq(0,1,0.1)) +
   scale_x_continuous(name="Age", limits=c(0,99), breaks=seq(0,99,10)) +
