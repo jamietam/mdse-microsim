@@ -1,5 +1,5 @@
 # Set directory where data will be saved
-mainDir <- "/Users/JT936/Dropbox/Analysis/NSDUH"
+mainDir <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/"
 setwd(file.path(mainDir))
 
 library(dplyr)
@@ -49,18 +49,17 @@ library(plyr)
 # nsduh20$vestr <- nsduh20$VESTRQ1Q4_C
 # nsduh20$ANALWC1 <- nsduh20$ANALWTQ1Q4_C
 # nsduh20<- nsduh20 %>% select(starts_with(c("cig","AD","CAT","year","ve","ANALWC","ajam","ir","ahlt","yod","yol")),contains(c("vap", "preg","K6","SPD","smi","ami","mde","race","edu")))
-
-load("/Users/jt936/Dropbox/Analysis/NSDUH/nsduhvars_2002-2020.rda")
+load("~/GitHub/mds-microsim/data/nsduh2005-2022clean.Rda")
 
 # Add NSDUH 2021
-load("/Users/jt936/Dropbox/Analysis/NSDUH/NSDUH_2021.RData")
+#load("~/GitHub/mds-microsim/data/NSDUH_2021.RData")
 nsduh21 <- PUF2021_121323
 nsduh21$year <- 2021
 nsduh21$vestr <- nsduh21$VESTR_C
 nsduh21$ANALWC1 <- nsduh21$ANALWT2_C
-nsduh21<- nsduh21 %>% select(starts_with(c("cig","AD","CAT","year","ve","ANALWC","ajam","ir","ahlt","yod","yol")),contains(c("vap", "preg","K6","SPD","smi","ami","mde","race","edu")))
+nsduh21 <- nsduh21 %>% select(starts_with(c("cig","AD","CAT","year","ve","ANALWC","ajam","ir","ahlt","yod","yol")),contains(c("vap", "preg","K6","SPD","smi","ami","mde","race","edu")))
 
-load("/Users/jt936/Dropbox/Analysis/NSDUH/NSDUH_2022.RData")
+#load("~/GitHub/mds-microsim/data/NSDUH_2022.Rdata")
 nsduh22 <- NSDUH_2022
 nsduh22$year <- 2022
 nsduh22$vestr <- nsduh22$VESTR_C
@@ -68,20 +67,25 @@ nsduh22$ANALWC1 <- nsduh22$ANALWT2_C
 nsduh22$vapnicevr <- nsduh22$nicvapever 
 nsduh22$vapnicrec <- nsduh22$nicvaprec  
 nsduh22$vapnicflag <- nsduh22$nicvapflag 
-nsduh22$vapnicmon <- nsduh22$nicvapmon 
+nsduh22$vapnicmon <- nsduh22$nicvapmon
 nsduh22$vapnicyr <- nsduh22$nicvapyr
-nsduh22<- nsduh22 %>% select(starts_with(c("cig","AD","CAT","year","ve","ANALWC","ajam","ir","ahlt","yod","yol")),contains(c("vap", "preg","K6","SPD","smi","ami","mde","race","edu")))
+
+nsduh22$nicvap30n <- nsduh22$NICVAP30N
+nsduh22$nicvap30n[nsduh22$nicvap30n>30] <- NA
+nsduh22<- nsduh22 %>% select(starts_with(c("cig","AD","CAT","year","ve","ANALWC","ajam","ir","ahlt","yod","yol","nic")),contains(c("vap", "preg","K6","SPD","smi","ami","mde","race","edu")))
 
 nsduh0222 <- rbind.fill(nsduh21, nsduh22)
+##line below does not compile
 nsduh0222 <- rbind.fill(nsduh0220, nsduh0222)
 # save(nsduh0222, file="nsduhvars_2002-2022.rda")
 # load("nsduhvars_2002-2022.rda")
 
 nsduh0522<-subset(nsduh0222,year>=2005&CATAG6>1)
 nsduh0522<-nsduh0522[c("year", "CATAG6","irsex","amdelt","amdeyr", "vestr","verep","ANALWC1","cigyr","CIG100LF","amdetxrx","ahltmde","cigmon","ircigrc",
-"vapnicevr","vapnicrec","vapanyrec","vapanyevr","vapanyflag","vapanyyr","vapanymon","vapnicflag","vapnicyr","vapnicmon")] # Keep only the variables needed
+"vapnicevr","vapnicrec","vapanyrec","vapanyevr","vapanyflag","vapanyyr","vapanymon","vapnicflag","vapnicyr","vapnicmon", "nicvap30n")] # Keep only the variables needed
 
-save(nsduh0522, file="nsduhvars_2005-2022.rda")
+#save(nsduh0522, file="nsduhvars_2005-2022.rda")
+#load("~/GitHub/mds-microsim/data/nsduhvars_2005-2022.rda")
 
 ## ECIG USE - Vaping nicotine or tobacco
 nsduh0522$nevervap[nsduh0522$vapnicevr==2 | nsduh0522$vapnicevr==91] <-1
@@ -99,6 +103,24 @@ nsduh0522$formervap[nsduh0522$evervap==0] <- 0
 nsduh0522$currentvap[nsduh0522$evervap==1 & nsduh0522$vapnicrec==1] <- 1 
 nsduh0522$currentvap[nsduh0522$formervap==1] <- 0 
 nsduh0522$currentvap[nsduh0522$evervap==0] <- 0
+
+# vaped nicotine/ecig 5+ days
+nsduh0522$vap5[nsduh0522$evervap==1 & nsduh0522$vapnicrec==1 & nsduh0522$nicvap30n>=5] <- 1 
+nsduh0522$vap5[nsduh0522$evervap==1 & nsduh0522$vapnicrec==1 & nsduh0522$nicvap30n<5] <- 0
+nsduh0522$vap5[nsduh0522$formervap==1] <- 0 
+nsduh0522$vap5[nsduh0522$evervap==0] <- 0
+
+#vaped nicotine/ecig 7+ days
+nsduh0522$vap7[nsduh0522$evervap==1 & nsduh0522$vapnicrec==1 & nsduh0522$nicvap30n>=7] <- 1 
+nsduh0522$vap7[nsduh0522$evervap==1 & nsduh0522$vapnicrec==1 & nsduh0522$nicvap30n<7] <- 0
+nsduh0522$vap7[nsduh0522$formervap==1] <- 0 
+nsduh0522$vap7[nsduh0522$evervap==0] <- 0
+
+#vaped nicotine/ecig 10+ days
+nsduh0522$vap10[nsduh0522$evervap==1 & nsduh0522$vapnicrec==1 & nsduh0522$nicvap30n>=10] <- 1 
+nsduh0522$vap10[nsduh0522$evervap==1 & nsduh0522$vapnicrec==1 & nsduh0522$nicvap30n<10] <- 0
+nsduh0522$vap10[nsduh0522$formervap==1] <- 0 
+nsduh0522$vap10[nsduh0522$evervap==0] <- 0
 
 # cigmon = cigarette smoked within the past 30 days
 
@@ -241,6 +263,11 @@ mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("neither",totalpop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("exclvap",totalpop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("exclcig",totalpop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("currentvap",totalpop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("nevervap",totalpop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("formervap",totalpop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("vap5",totalpop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("vap7",totalpop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("vap10",totalpop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("dual",totalpop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("cigmon",totalpop)))
 
@@ -249,6 +276,11 @@ mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("neither",deppop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("exclvap",deppop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("exclcig",deppop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("currentvap",deppop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("nevervap",deppop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("formervap",deppop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("vap5",deppop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("vap7",deppop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("vap10",deppop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("dual",deppop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("cigmon",deppop)))
 
@@ -257,6 +289,11 @@ mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("neither",nevdeppop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("exclvap",nevdeppop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("exclcig",nevdeppop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("currentvap",nevdeppop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("nevervap",nevdeppop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("formervap",nevdeppop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("vap5",nevdeppop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("vap7",nevdeppop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("vap10",nevdeppop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",get2020prevs("dual",nevdeppop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("cigmon",nevdeppop)))
 mdseprevsB <- rbind(mdseprevsB, cbind("both", getprevsbyage("dep",totalpop)))
@@ -273,11 +310,17 @@ gender <- c("Men", "Women")
 for (x in 1:2){# irsex: 1 = males, 2 = females
   totalpop <- subset(nsduh0522, nsduh0522$irsex==x)
   
+  formervapers <- subset(nsduh0522, nsduh0522$formervap==1)
+  nevervapers <- subset(nsduh0522, nsduh0522$nevervap==1)
   currentvapers <- subset(nsduh0522, nsduh0522$currentvap==1)
   dualusers <- subset(nsduh0522, nsduh0522$dual==1)
   exclvapers <- subset(nsduh0522, nsduh0522$exclvap==1)
-  exclsmks<- subset(nsduh0522, nsduh0522$exclcig==1)
+  exclsmks <- subset(nsduh0522, nsduh0522$exclcig==1)
   neitherpop <- subset(nsduh0522, nsduh0522$neitherpop==1)
+  
+  vap5 <- subset(nsduh0522, nsduh0522$vap5==1)
+  vap7 <- subset(nsduh0522, nsduh0522$vap7==1)
+  vap10 <- subset(nsduh0522, nsduh0522$vap10==1)
    
   currentsmks <- subset(nsduh0522, nsduh0522$currentsmk==1 & nsduh0522$irsex==x) # PREVALENCE ESTIMATES ARE LOWER COMPARED TO depsmkprevs_by_year. NEED TO CHECK DATA.
   formersmks <- subset(nsduh0522, nsduh0522$formersmk==1 & nsduh0522$irsex==x)
@@ -287,6 +330,28 @@ for (x in 1:2){# irsex: 1 = males, 2 = females
   fdeppop <- subset(nsduh0522, nsduh0522$fdep==1 & nsduh0522$irsex==x)
   nevdeppop <- subset(nsduh0522, nsduh0522$nevdep==1 & nsduh0522$irsex==x)
   everdeppop <- subset(nsduh0522, nsduh0522$everdep==1 & nsduh0522$irsex==x)
+  
+  ##call getprevsbyage for the vap states under totalpop,deppop,and nevdeppop
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("nevervap",totalpop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("currentvap",totalpop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("formervap",totalpop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("nevervap",deppop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("currentvap",deppop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("formervap",deppop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("nevervap",nevdeppop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("currentvap",nevdeppop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("formervap",nevdeppop)))
+  
+  ##call getprevsbyage for the <30days vap states under totalpop, depop, and nevdeppop
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("vap5",totalpop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("vap7",totalpop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("vap10",totalpop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("vap5",deppop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("vap7",deppop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("vap10",deppop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("vap5",nevdeppop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("vap7",nevdeppop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("vap10",nevdeppop)))
   
   mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("cigmon",totalpop)))
   mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("cigmon",deppop)))
@@ -336,18 +401,33 @@ for (x in 1:2){# irsex: 1 = males, 2 = females
   mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("exclvap",totalpop)))
   mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("exclcig",totalpop)))
   mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("currentvap",totalpop)))
+  mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("nevervap",totalpop)))
+  mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("formervap",totalpop)))
+  mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("vap5",totalpop)))
+  mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("vap7",totalpop)))
+  mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("vap10",totalpop)))
   mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("dual",totalpop)))
   
   mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("neither",deppop)))
   mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("exclvap",deppop)))
   mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("exclcig",deppop)))
   mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("currentvap",deppop)))
+  mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("nevervap",deppop)))
+  mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("formervap",deppop)))
+  mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("vap5",deppop)))
+  mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("vap7",deppop)))
+  mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("vap10",deppop)))
   mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("dual",deppop)))
   
   mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("neither",nevdeppop)))
   mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("exclvap",nevdeppop)))
   mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("exclcig",nevdeppop)))
   mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("currentvap",nevdeppop)))
+  mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("nevervap",nevdeppop)))
+  mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("formervap",nevdeppop)))
+  mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("vap5",nevdeppop)))
+  mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("vap7",nevdeppop)))
+  mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("vap10",nevdeppop)))
   mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("dual",nevdeppop)))
   mdseprevs<-rbind(mdseprevs,cbind(gender[x],get2020prevs("cigmon",nevdeppop)))
   
@@ -528,3 +608,4 @@ tobaccostat<-ggplot(data=subset(bardata,gender=="both")) +
 jpeg(filename = paste0("tobstatbyMDE","_" ,date, ".jpg"),width=6, height=6, units ="in", res=1000)
 tobaccostat
 dev.off()       
+

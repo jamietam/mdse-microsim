@@ -1,5 +1,5 @@
 # Create list of calibration targets
-mainDir <- "/Users/jt936/Dropbox/GitHub/mds-microsim/data/"
+mainDir <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/"
 setwd(file.path(mainDir))
 
 load("mdseprevs0522.rda")
@@ -29,3 +29,21 @@ lst_deptargets$R <- as.matrix(subset(mdseprevs, sex==whichgender & status=="fdep
 lst_deptargets$E <- as.matrix(subset(mdseprevs, sex==whichgender & status=="everdep" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
 
 save(lst_deptargets,file=paste0("dep_calib_targets_",whichgender,".RData"))
+
+# vap_microsim targets
+lst_vaptargets <- vector(mode = "list")
+lst_vaptargets$O <- as.matrix(subset(mdseprevs, sex==whichgender & status=="nevervap" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+lst_vaptargets$V <- as.matrix(subset(mdseprevs, sex==whichgender & status=="currentvap" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+lst_vaptargets$Q <- as.matrix(subset(mdseprevs, sex==whichgender & status=="formervap" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+
+# vaping targets for those who vaped past 5+,7+,10+ days 
+lst_cvaptargets <- vector(mode = "list")
+lst_cvaptargets$vap5 <- as.matrix(subset(mdseprevs, sex==whichgender & status=="vap5" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+lst_cvaptargets$vap7 <- as.matrix(subset(mdseprevs, sex==whichgender & status=="vap7" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+lst_cvaptargets$vap10 <- as.matrix(subset(mdseprevs, sex==whichgender & status=="vap10" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+
+#save into mds-microsim/data
+directory <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/data/"
+save(lst_vaptargets,file=paste0(directory, "vap_calib_targets_",whichgender,".RData"))
+save(lst_cvaptargets,file=paste0(directory, "cvap_calib_targets_",whichgender,".RData"))
+

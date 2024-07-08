@@ -150,19 +150,25 @@ ncf_total <- ggplot() +
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 # E-cigarette distribution
-nv_age <- ggplot() + geom_line(data = subset(modelprev, status=="O" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
+nv_age <- ggplot() +
+  geom_pointrange(data= subset(calibtargets,status=="O"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
+  geom_line(data = subset(modelprev, status=="O" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
   labs(title=paste0("Never vapers - ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
   
-cv_age <- ggplot() + geom_line(data = subset(modelprev, status=="V" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
+cv_age <- ggplot() + geom_pointrange(data= subset(calibtargets,status=="vap5"&age!=18.99), shape = 8, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
+  geom_pointrange(data= subset(calibtargets,status=="V"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
+  geom_line(data = subset(modelprev, status=="V" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
   labs(title=paste0("Current vapers - ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
   
-fv_age <- ggplot() + geom_line(data = subset(modelprev, status=="Q" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
+##this graph doesn't rlly make sense
+fv_age <- ggplot() + geom_pointrange(data= subset(calibtargets,status=="Q"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
+  geom_line(data = subset(modelprev, status=="Q" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
   labs(title=paste0("Former vapers - ",whichgender))+
