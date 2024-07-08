@@ -59,7 +59,7 @@ nsduh21$vestr <- nsduh21$VESTR_C
 nsduh21$ANALWC1 <- nsduh21$ANALWT2_C
 nsduh21 <- nsduh21 %>% select(starts_with(c("cig","AD","CAT","year","ve","ANALWC","ajam","ir","ahlt","yod","yol")),contains(c("vap", "preg","K6","SPD","smi","ami","mde","race","edu")))
 
-#load("~/GitHub/mds-microsim/data/NSDUH_2022.Rdata")
+load("~/GitHub/mds-microsim/data/NSDUH_2022.Rdata")
 nsduh22 <- NSDUH_2022
 nsduh22$year <- 2022
 nsduh22$vestr <- nsduh22$VESTR_C
