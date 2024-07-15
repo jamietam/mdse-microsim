@@ -9,6 +9,11 @@ load("C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/dat
 load("C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/data/brfss2017vars.Rda")
 load("C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/data/brfss2016vars.Rda")
 
+#load in og data sets (brfss2018,brfss2017,brfss2016)
+load("~/GitHub/mds-microsim/R/LLCP2018.Rda")
+load("~/GitHub/mds-microsim/R/LLCP2017.Rda")
+load("~/GitHub/mds-microsim/R/LLCP2016.Rda")
+
 ##function to process states
 process_brfss <- function(brfssvars, ogdataset) {
   # Add smoking variable
@@ -30,9 +35,6 @@ process_brfss <- function(brfssvars, ogdataset) {
     brfssvars$PHQ2 <- brfssvars$ADPLEAS1 - 1 + brfssvars$ADDOWN1 -1 #subset when phq2 >=3
     #deppop <- rbind(deppop, subset(brfssvars$ADDOWN1 > 1 & brfssvars$ADDOWN1 < 5))
   }
-  
-  # Total population
-  totalpop <- brfssvars
   
   # Vaping and smoking status
   brfssvars$O[brfssvars$ECIGARET== 2] <- 1
@@ -96,13 +98,19 @@ process_brfss <- function(brfssvars, ogdataset) {
   brfssvars$FQ[(brfssvars$X_RFSMOK3 == 1 & (brfssvars$X_SMOKER3 < 3 | brfssvars$X_SMOKER3 == 4)) & ((brfssvars$X_CURECIG == 2 & brfssvars$ECIGNOW < 3) | brfssvars$ECIGARET == 2)] <- 0
   brfssvars$FQ[brfssvars$X_RFSMOK3 == 9 | brfssvars$X_SMOKER3 == 9 | brfssvars$ECIGNOW > 3 | brfssvars$ECIGARET>2] <- NA
   
+  #new column for age groups to match nsduh
+  brfssvars$X_AGEG5YR <- ogdataset$X_AGEG5YR  ##input age by 5 yr increment variable into new dataframe
+  brfssvars$age[brfssvars$X_AGEG5YR == 1] <- 1
+  brfssvars$age[brfssvars$X_AGEG5YR >= 2 & brfssvars$X_AGEG5YR <= 3] <- 2
+  brfssvars$age[brfssvars$X_AGEG5YR >= 4 & brfssvars$X_AGEG5YR <= 6] <- 3
+  brfssvars$age[brfssvars$X_AGEG5YR >= 7 & brfssvars$X_AGEG5YR <= 9] <- 4
+  brfssvars$age[brfssvars$X_AGEG5YR >= 10 & brfssvars$X_AGEG5YR <= 13] <- 5
+  
+  #total population
+  totalpop <- brfssvars
+  
   return(list(totalpop = totalpop, brfssvars = brfssvars))
 }
-
-#load in og data sets (brfss2018,brfss2017,brfss2016)
-load("~/GitHub/mds-microsim/R/LLCP2018.Rda")
-load("~/GitHub/mds-microsim/R/LLCP2017.Rda")
-load("~/GitHub/mds-microsim/R/LLCP2016.Rda")
 
 #process states and extract data for each year
 brfss18 <- brfss2018vars
@@ -150,8 +158,6 @@ totalpop18$states <- get_states(brfss18)
 totalpop17$states <- get_states(brfss17)
 totalpop16$states <- get_states(brfss16)
 
-##FIX THIS
-
 #generate prevalences
 options(survey.lonely.psu = "adjust")
 design16total <- svydesign(id=~1, strata = ~X_STSTR, weights = ~X_LLCPWT, data = totalpop16)
@@ -176,40 +182,45 @@ svyciprop(~X_CURECIG==2, design=design17total, method="mean",level=0.95,na.rm=TR
 svyciprop(~X_CURECIG==2, design=design16total, method="mean",level=0.95,na.rm=TRUE)
 
 
-##prevalences for every state
+##run prevalences for every state
 depstat = c("dep","nodep")
 gender = c("males","females")
 statenames <- c("NO", "NE", "NQ", "CO", "CE", "CQ", "FO", "FE", "FQ")
 singstatenames <- c("N","C","F","O","E","Q")
-#tobcatlabel = c("neither","exclcig","exclvap","dual")
+agegroupnames <- c(18.24,25.34,35.49,50.64,65.99)
 years = c(2016,2016,2016,2017,2017,2017,2018,2018,2018,2018)
 subgroup <- c("totalpop", "mhdays","addepev","totalpop","mhdays","addepev","totalpop","mhdays","addepev","phq2")
 svys = list(design16total,design16mh,design16addep,design17total,design17mh,design17addep,design18total,design18mh,design18addep,design18phq)
 brfss_smkecigdep <- NULL
+##takes a long time to run
 for (d in c(1:10)){ # for each survey year
   thissvydesign=svys[[d]]
   year = years[d]
   for (i in c(1:9)){ # tobacco+ecig use category
-    for (s in c(1:2)){ # gender status 
-        prop.ci = svyciprop(~states==i, design=subset(thissvydesign, SEX==s), method="mean",level=0.95,na.rm=TRUE) 
-        newrow <- cbind(years[d], gender[s], depstat[s], statenames[i],subgroup[d], round(prop.ci[1]*100,2), round(SE(prop.ci)*100,2), round(attr(prop.ci, "ci")[1]*100,2), round(attr(prop.ci, "ci")[2]*100,2))
+    for(a in c(1:5)){ # by age group (5 categories)
+      for (s in c(1:2)){ # gender status 
+        prop.ci = svyciprop(~states==i, design=subset(thissvydesign, SEX==s & age==a), method="mean",level=0.95,na.rm=TRUE) 
+        newrow <- cbind(years[d],gender[s],agegroupnames[a],depstat[s],statenames[i],subgroup[d],round(prop.ci[1]*100,2),round(SE(prop.ci)*100,2),round(attr(prop.ci, "ci")[1]*100,2),round(attr(prop.ci, "ci")[2]*100,2))
         brfss_smkecigdep <- rbind(brfss_smkecigdep,newrow) # append table with new row of data
-    } 
-    prop.ci2 = svyciprop(~states==i, design=thissvydesign, method="mean",level=0.95,na.rm=TRUE)
-    newrow2 <- cbind(years[d],"both", depstat[s], statenames[i], subgroup[d], round(prop.ci2[1]*100,2),round(SE(prop.ci2)*100,2), round(attr(prop.ci2, "ci")[1]*100,2), round(attr(prop.ci2, "ci")[2]*100,2))
+      } 
+    prop.ci2 = svyciprop(~states==i, design=subset(thissvydesign, age==a), method="mean",level=0.95,na.rm=TRUE)
+    newrow2 <- cbind(years[d],"both",agegroupnames[a],depstat[s],statenames[i],subgroup[d],round(prop.ci2[1]*100,2),round(SE(prop.ci2)*100,2),round(attr(prop.ci2, "ci")[1]*100,2),round(attr(prop.ci2, "ci")[2]*100,2))
     brfss_smkecigdep <- rbind(brfss_smkecigdep,newrow2) # append table with new row of data
+    }
   }
   for(j in c(1:6)){ # single state ecig use categories
-    for (s in c(1:2)){ # gender status
-      prop.ci = svyciprop(~singlestates==j, design=subset(thissvydesign, SEX==s), method="mean",level=0.95,na.rm=TRUE) 
-      newrow <- cbind(years[d], gender[s], depstat[s], singstatenames[j],subgroup[d], round(prop.ci[1]*100,2), round(SE(prop.ci)*100,2), round(attr(prop.ci, "ci")[1]*100,2), round(attr(prop.ci, "ci")[2]*100,2))
-      brfss_smkecigdep <- rbind(brfss_smkecigdep,newrow) # append table with new row of data
-    } 
-    prop.ci2 = svyciprop(~singlestates==j, design=thissvydesign, method="mean",level=0.95,na.rm=TRUE)
-    newrow2 <- cbind(years[d],"both", depstat[s], singstatenames[j], subgroup[d], round(prop.ci2[1]*100,2),round(SE(prop.ci2)*100,2), round(attr(prop.ci2, "ci")[1]*100,2), round(attr(prop.ci2, "ci")[2]*100,2))
-    brfss_smkecigdep <- rbind(brfss_smkecigdep,newrow2) # append table with new row of data
+    for(a in c(1:5)){ # by age group
+      for (s in c(1:2)){ # gender status
+        prop.ci = svyciprop(~singlestates==j, design=subset(thissvydesign, SEX==s & age==a), method="mean",level=0.95,na.rm=TRUE) 
+        newrow <- cbind(years[d],gender[s],agegroupnames[a],depstat[s],singstatenames[j],subgroup[d], round(prop.ci[1]*100,2), round(SE(prop.ci)*100,2), round(attr(prop.ci, "ci")[1]*100,2), round(attr(prop.ci, "ci")[2]*100,2))
+        brfss_smkecigdep <- rbind(brfss_smkecigdep,newrow) # append table with new row of data
+      } 
+      prop.ci2 = svyciprop(~singlestates==j, design=thissvydesign, method="mean",level=0.95,na.rm=TRUE)
+      newrow2 <- cbind(years[d],"both",agegroupnames[a],depstat[s], singstatenames[j], subgroup[d], round(prop.ci2[1]*100,2),round(SE(prop.ci2)*100,2), round(attr(prop.ci2, "ci")[1]*100,2), round(attr(prop.ci2, "ci")[2]*100,2))
+      brfss_smkecigdep <- rbind(brfss_smkecigdep,newrow2) # append table with new row of data
+    }
   }
 }
-colnames(brfss_smkecigdep) <- c("year","gender","depstatus","states","subgroup", "prev","stderr","lowCIprev","highCIprev")
+colnames(brfss_smkecigdep) <- c("year","gender","age","depstatus","states","subgroup", "prev","stderr","lowCIprev","highCIprev")
 save(brfss_smkecigdep, file="brfss1618.rda")
 load("brfss1618.rda")
