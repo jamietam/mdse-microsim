@@ -44,45 +44,57 @@ process_brfss <- function(brfssvars, ogdataset) {
   brfssvars$E[brfssvars$ECIGNOW > 3] <- NA
   
   brfssvars$Q[brfssvars$X_CURECIG == 1 & brfssvars$ECIGNOW == 3 & brfssvars$ECIGARET == 1] <- 1
-  brfssvars$Q[brfssvars$X_CURECIG == 2 & brfssvars$ECIGNOW < 3] <- 0
+  brfssvars$Q[(brfssvars$X_CURECIG == 2 & brfssvars$ECIGNOW < 3) | brfssvars$ECIGARET == 2] <- 0
   brfssvars$Q[brfssvars$ECIGNOW > 3 | brfssvars$ECIGARET > 2] <- NA
   
   brfssvars$N[brfssvars$X_RFSMOK3 == 1 & brfssvars$X_SMOKER3 == 4] <- 1
   brfssvars$N[brfssvars$X_RFSMOK3 == 2 & brfssvars$X_SMOKER3 < 3] <- 0
   brfssvars$N[brfssvars$SMOKDAY2 < 3] <- 0
+  brfssvars$N[brfssvars$X_RFSMOK3 == 9 | brfssvars$X_SMOKER3 == 9 | brfssvars$SMOKDAY2 == 9] <- NA
   
   brfssvars$C[brfssvars$X_RFSMOK3 == 2 & brfssvars$X_SMOKER3 < 2] <- 1
   brfssvars$C[brfssvars$X_RFSMOK3 == 1 & (brfssvars$X_SMOKER3 == 3 | brfssvars$X_SMOKER3 == 4)] <- 0
+  brfssvars$C[brfssvars$X_RFSMOK3 == 9 | brfssvars$X_SMOKER3 == 9] <- NA
   
   brfssvars$F[brfssvars$X_RFSMOK3 == 1 & brfssvars$X_SMOKER3 == 3] <- 1
   brfssvars$F[brfssvars$X_RFSMOK3 == 1 & (brfssvars$X_SMOKER3 < 3 | brfssvars$X_SMOKER3 == 4)] <- 0
+  brfssvars$F[brfssvars$X_RFSMOK3 == 9 | brfssvars$X_SMOKER3 == 9] <- NA
   
   brfssvars$NO[(brfssvars$X_RFSMOK3 == 1 & brfssvars$X_SMOKER3 == 4) & (brfssvars$ECIGARET== 2)] <- 1
   brfssvars$NO[(brfssvars$X_RFSMOK3 == 2 & brfssvars$X_SMOKER3 < 3) & (brfssvars$ECIGARET== 1)] <- 0
+  brfssvars$NO[brfssvars$X_RFSMOK3 == 9 | brfssvars$X_SMOKER3 == 9 | brfssvars$ECIGARET>2] <- NA
   
-  brfssvars$NE[(brfssvars$X_RFSMOK3 == 1 & brfssvars$X_SMOKER3 == 4) & ((brfssvars$X_CURECIG == 2 & (brfssvars$ECIGNOW == 1 | brfssvars$ECIGNOW == 2)) & brfssvars$ECIGARET == 1)] <- 1
-  brfssvars$NE[(brfssvars$X_RFSMOK3 == 2 & brfssvars$X_SMOKER3 < 3) & ((brfssvars$X_CURECIG == 2 & brfssvars$ECIGNOW < 3) | brfssvars$ECIGARET == 1)] <- 0
+  brfssvars$NE[(brfssvars$X_RFSMOK3 == 1 & brfssvars$X_SMOKER3 == 4) & (brfssvars$X_CURECIG == 2 & brfssvars$ECIGNOW <= 2)] <- 1
+  brfssvars$NE[(brfssvars$X_RFSMOK3 == 2 & brfssvars$X_SMOKER3 < 3) & (brfssvars$X_CURECIG == 1 & brfssvars$ECIGNOW == 3)] <- 0
+  brfssvars$NE[(brfssvars$X_RFSMOK3 == 9 | brfssvars$X_SMOKER3 == 9 | brfssvars$ECIGNOW > 3)] <- NA
   
   brfssvars$NQ[(brfssvars$X_RFSMOK3 == 1 & brfssvars$X_SMOKER3 == 4) & (brfssvars$X_CURECIG == 1 & brfssvars$ECIGNOW == 3 & brfssvars$ECIGARET == 1)] <- 1
-  brfssvars$NQ[(brfssvars$X_RFSMOK3 == 2 & brfssvars$X_SMOKER3 < 3) & (brfssvars$X_CURECIG == 2 & brfssvars$ECIGNOW < 3)] <- 0
+  brfssvars$NQ[(brfssvars$X_RFSMOK3 == 2 & brfssvars$X_SMOKER3 < 3) & ((brfssvars$X_CURECIG == 2 & brfssvars$ECIGNOW < 3) | brfssvars$ECIGARET == 2)] <- 0
+  brfssvars$NQ[brfssvars$X_RFSMOK3 == 9 | brfssvars$X_SMOKER3 == 9 | brfssvars$ECIGNOW > 3 | brfssvars$ECIGARET>2] <- NA
   
   brfssvars$CO[(brfssvars$X_RFSMOK3 == 2 & brfssvars$X_SMOKER3 < 2) & (brfssvars$ECIGARET== 2)] <- 1
   brfssvars$CO[(brfssvars$X_RFSMOK3 == 1 & (brfssvars$X_SMOKER3 == 3 | brfssvars$X_SMOKER3 == 4)) & (brfssvars$ECIGARET == 1)] <- 0
+  brfssvars$CO[brfssvars$X_RFSMOK3 == 9 | brfssvars$X_SMOKER3 == 9 | brfssvars$ECIGARET>2] <- NA
   
-  brfssvars$CE[(brfssvars$X_RFSMOK3 == 2 & brfssvars$X_SMOKER3 < 2) & ((brfssvars$X_CURECIG == 2 & (brfssvars$ECIGNOW == 1 | brfssvars$ECIGNOW == 2)) & brfssvars$ECIGARET == 1)] <- 1
+  brfssvars$CE[(brfssvars$X_RFSMOK3 == 2 & brfssvars$X_SMOKER3 < 2) & (brfssvars$X_CURECIG == 2 & brfssvars$ECIGNOW <= 2)] <- 1
   brfssvars$CE[(brfssvars$X_RFSMOK3 == 1 & (brfssvars$X_SMOKER3 == 3 | brfssvars$X_SMOKER3 == 4)) & (brfssvars$X_CURECIG == 1 & brfssvars$ECIGNOW == 3)] <- 0
+  brfssvars$CE[(brfssvars$X_RFSMOK3 == 9 | brfssvars$X_SMOKER3 == 9 | brfssvars$ECIGNOW > 3)] <- NA
   
   brfssvars$CQ[(brfssvars$X_RFSMOK3 == 2 & brfssvars$X_SMOKER3 < 2) & (brfssvars$X_CURECIG == 1 & brfssvars$ECIGNOW == 3 & brfssvars$ECIGARET == 1)] <- 1
-  brfssvars$CQ[(brfssvars$X_RFSMOK3 == 1 & (brfssvars$X_SMOKER3 == 3 | brfssvars$X_SMOKER3 == 4)) & (brfssvars$X_CURECIG == 2 & brfssvars$ECIGNOW < 3)] <- 0
+  brfssvars$CQ[(brfssvars$X_RFSMOK3 == 1 & (brfssvars$X_SMOKER3 == 3 | brfssvars$X_SMOKER3 == 4)) & ((brfssvars$X_CURECIG == 2 & brfssvars$ECIGNOW < 3) | brfssvars$ECIGARET == 2)] <- 0
+  brfssvars$CQ[brfssvars$X_RFSMOK3 == 9 | brfssvars$X_SMOKER3 == 9 | brfssvars$ECIGNOW > 3 | brfssvars$ECIGARET>2] <- NA
   
   brfssvars$FO[(brfssvars$X_RFSMOK3 == 1 & brfssvars$X_SMOKER3 == 3) & (brfssvars$ECIGARET == 2)] <- 1
   brfssvars$FO[(brfssvars$X_RFSMOK3 == 1 & (brfssvars$X_SMOKER3 < 3 | brfssvars$X_SMOKER3 == 4)) & (brfssvars$ECIGARET == 1)] <- 0
+  brfssvars$FO[brfssvars$X_RFSMOK3 == 9 | brfssvars$X_SMOKER3 == 9 | brfssvars$ECIGARET>2] <- NA
   
-  brfssvars$FE[(brfssvars$X_RFSMOK3 == 1 & brfssvars$X_SMOKER3 == 3) & ((brfssvars$X_CURECIG == 2 & (brfssvars$ECIGNOW == 1 | brfssvars$ECIGNOW == 2)) & brfssvars$ECIGARET == 1)] <- 1
+  brfssvars$FE[(brfssvars$X_RFSMOK3 == 1 & brfssvars$X_SMOKER3 == 3) & (brfssvars$X_CURECIG == 2 & brfssvars$ECIGNOW <= 2)] <- 1
   brfssvars$FE[(brfssvars$X_RFSMOK3 == 1 & (brfssvars$X_SMOKER3 < 3 | brfssvars$X_SMOKER3 == 4)) & (brfssvars$X_CURECIG == 1 & brfssvars$ECIGNOW == 3)] <- 0
+  brfssvars$FE[(brfssvars$X_RFSMOK3 == 9 | brfssvars$X_SMOKER3 == 9 | brfssvars$ECIGNOW > 3)] <- NA
   
   brfssvars$FQ[(brfssvars$X_RFSMOK3 == 1 & brfssvars$X_SMOKER3 == 3) & (brfssvars$X_CURECIG == 1 & brfssvars$ECIGNOW == 3 & brfssvars$ECIGARET == 1)] <- 1
-  brfssvars$FQ[(brfssvars$X_RFSMOK3 == 1 & (brfssvars$X_SMOKER3 < 3 | brfssvars$X_SMOKER3 == 4)) & (brfssvars$X_CURECIG == 2 & brfssvars$ECIGNOW < 3)] <- 0
+  brfssvars$FQ[(brfssvars$X_RFSMOK3 == 1 & (brfssvars$X_SMOKER3 < 3 | brfssvars$X_SMOKER3 == 4)) & ((brfssvars$X_CURECIG == 2 & brfssvars$ECIGNOW < 3) | brfssvars$ECIGARET == 2)] <- 0
+  brfssvars$FQ[brfssvars$X_RFSMOK3 == 9 | brfssvars$X_SMOKER3 == 9 | brfssvars$ECIGNOW > 3 | brfssvars$ECIGARET>2] <- NA
   
   return(list(totalpop = totalpop, brfssvars = brfssvars))
 }
@@ -120,11 +132,11 @@ singlestates <- function(brfss){
   for(i in seq_along(states)){
     brfss$singlestates[brfss[[states[i]]] == 1] <- i
   }
-  return(brfss)
+  return(brfss$singlestates)
 }
-totalpop18 <- singlestates(brfss18)
-totalpop17 <- singlestates(brfss17)
-totalpop16 <- singlestates(brfss16)
+totalpop18$singlestates <- singlestates(brfss18)
+totalpop17$singlestates <- singlestates(brfss17)
+totalpop16$singlestates <- singlestates(brfss16)
 
 #create column of combined states (1:9 = NO:FQ)
 get_states <- function(brfss){
@@ -132,12 +144,13 @@ get_states <- function(brfss){
   for (i in seq_along(states)) {
     brfss$states[brfss[[states[i]]] == 1] <- i
   }
-  return(brfss)
+  return(brfss$states)
 }
-totalpop18 <- get_states(brfss18)
-totalpop17 <- get_states(brfss17)
-totalpop16 <- get_states(brfss16)
+totalpop18$states <- get_states(brfss18)
+totalpop17$states <- get_states(brfss17)
+totalpop16$states <- get_states(brfss16)
 
+##FIX THIS
 
 #generate prevalences
 options(survey.lonely.psu = "adjust")
@@ -153,18 +166,17 @@ design18addep <- subset(design18total, ADDEPEV2 == 1)
 design18phq <- subset(design18total, PHQ2 >= 3)
 
 #Smoking prevalences
-svyciprop(~X_RFSMOK3==2, design=design16, method="mean",level=0.95,na.rm=TRUE)
-svyciprop(~X_RFSMOK3==2, design=design17, method="mean",level=0.95,na.rm=TRUE)
-svyciprop(~X_RFSMOK3==2, design=design18, method="mean",level=0.95,na.rm=TRUE)
+svyciprop(~X_RFSMOK3==2, design=design16total, method="mean",level=0.95,na.rm=TRUE)
+svyciprop(~X_RFSMOK3==2, design=design17total, method="mean",level=0.95,na.rm=TRUE)
+svyciprop(~X_RFSMOK3==2, design=design18total, method="mean",level=0.95,na.rm=TRUE)
 
 #Vaping prevalences
-svyciprop(~X_CURECIG==2, design=design18, method="mean",level=0.95,na.rm=TRUE)
-svyciprop(~X_CURECIG==2, design=design17, method="mean",level=0.95,na.rm=TRUE)
-svyciprop(~X_CURECIG==2, design=design16, method="mean",level=0.95,na.rm=TRUE)
+svyciprop(~X_CURECIG==2, design=design18total, method="mean",level=0.95,na.rm=TRUE)
+svyciprop(~X_CURECIG==2, design=design17total, method="mean",level=0.95,na.rm=TRUE)
+svyciprop(~X_CURECIG==2, design=design16total, method="mean",level=0.95,na.rm=TRUE)
 
 
-##eventually generate prevalences for every state
-
+##prevalences for every state
 depstat = c("dep","nodep")
 gender = c("males","females")
 statenames <- c("NO", "NE", "NQ", "CO", "CE", "CQ", "FO", "FE", "FQ")
@@ -199,4 +211,5 @@ for (d in c(1:10)){ # for each survey year
   }
 }
 colnames(brfss_smkecigdep) <- c("year","gender","depstatus","states","subgroup", "prev","stderr","lowCIprev","highCIprev")
-
+save(brfss_smkecigdep, file="brfss1618.rda")
+load("brfss1618.rda")
