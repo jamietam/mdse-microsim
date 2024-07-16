@@ -1,8 +1,8 @@
 ## VALIDATION
 # Internal validation to compare model-predicted outputs evaluated at calibrated parameters vs the calibration targets
-
+library(ggplot2)
+library(ggnewscale)
 ## Run the model ---------------------------------------------------
-  
 model_res<-main_calib(v.params)
 
 v.GOF <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
@@ -115,6 +115,14 @@ p.CF_age <- ggplot(data=cessprobs) +  geom_line( aes(x=age, y=prob, linetype=inp
   scale_x_continuous(name="Age", limits=c(0,99), breaks=seq(0,99,10)) +
   labs(title="Cessation probabilities")
 
+#turn all numbers into numeric values
+calibtargets$survey_year <- as.numeric(calibtargets$survey_year)
+modelprev$year <- as.numeric(modelprev$year)
+cohorts <- as.numeric(cohorts)
+calibtargets$prev <- as.numeric(calibtargets$prev)
+calibtargets$prev_lowCI <- as.numeric(calibtargets$prev_lowCI)
+calibtargets$prev_highCI <- as.numeric(calibtargets$prev_highCI)
+
 #Smoking distribution
 ns_age <-ggplot() +
   geom_pointrange(data= subset(calibtargets,status=="N"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
@@ -158,14 +166,33 @@ nv_age <- ggplot() +
   labs(title=paste0("Never vapers - ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
   
-cv_age <- ggplot() + geom_pointrange(data= subset(calibtargets,status=="vap5"&age!=18.99), shape = 8, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
-  geom_pointrange(data= subset(calibtargets,status=="V"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="V" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
-  scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
-  labs(title=paste0("Current vapers - ",whichgender))+
-  theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
-  
+cv_age <- ggplot() +
+  # NSDUH Vaping 5+ Years
+  geom_pointrange(data= subset(calibtargets, status=="vap5" & age!=18.99), shape = 8, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NSDUH Vaping 5+ Years")) +
+  scale_color_manual(name = "NSDUH Vaping 5+ Days", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "NSDUH Vaping 5+ Days", values = c(8)) +
+  new_scale_color() +
+  # BRFSS
+  geom_pointrange(data= subset(calibtargets, status=="brfssE" & age!=18.99), shape = 1, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="BRFSS")) +
+  scale_color_manual(name = "BRFSS", values = c("cyan", "magenta", "yellow", "pink", "brown")) +
+  scale_shape_manual(name = "BRFSS", values = c(1)) +
+  new_scale_color() +
+  # NSDUH
+  geom_pointrange(data= subset(calibtargets, status=="V" & age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NSDUH")) +
+  geom_line(data = subset(modelprev, status=="V" & age!=18.99), aes(x=year, y= prev, colour=factor(age))) +
+  scale_color_manual(name = "NSDUH", values = c("black", "gray", "blue", "green", "red")) +
+  scale_shape_manual(name = "NSDUH", values = c(16)) +
+  # Axes and titles
+  scale_y_continuous(name="Prevalence (%)", limits=c(0, 1), breaks=seq(0, 1, 0.05)) +
+  scale_x_continuous(name="Year", limits=c(2005, max(cohorts)), breaks=seq(2005, max(cohorts), 1)) +
+  labs(title=paste0("Current vapers - ", whichgender)) +
+  theme(axis.text.x=element_text(angle=60, hjust=1)) +
+  # Custom guides for legends
+  guides(
+    colour = guide_legend(title.position = "top"),
+    shape = guide_legend(title.position = "top")
+  )
+
 ##this graph doesn't rlly make sense
 fv_age <- ggplot() + geom_pointrange(data= subset(calibtargets,status=="Q"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
   geom_line(data = subset(modelprev, status=="Q" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+

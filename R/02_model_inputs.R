@@ -25,8 +25,10 @@ load(paste0(mainDir,"data/smk_calib_targets_",whichgender,".RData")) #lst_smktar
 load(paste0(mainDir,"data/dep_calib_targets_",whichgender,".RData")) #lst_deptargets
 load(paste0(mainDir,"data/smkdep_calib_targets_",whichgender,".RData")) #lst_smkdeptargets
 load(paste0(mainDir,"data/vap_calib_targets_",whichgender,".RData")) #lst_vaptargets
+load(paste0(mainDir,"data/cvap_calib_targets_",whichgender,".RData")) #lst_vaptargets
+load(paste0(mainDir,"data/brfss_vap_calib_targets_",whichgender,".RData")) #brfss vaptargets
 
-lst_targets <- c(lst_smktargets,lst_deptargets[2],lst_smkdeptargets, lst_vaptargets, lst_cvaptargets)
+lst_targets <- c(lst_smktargets,lst_deptargets[2],lst_smkdeptargets, lst_vaptargets, lst_cvaptargets, b_vaptargets)
 lst_calibtargets <- lapply(lst_targets,function(x) x[x[,"survey_year"]<=max(cohorts) & x[,"survey_year"]>=calib_startyear,]) # keep survey years 2016-2020
 
 ## CALIBRATION PARAMETERS - Specify which parameters you want to calibrate (0 vs 1 in column 4), and provide upper and lower bounds for the search algorithm

@@ -181,6 +181,7 @@ svyciprop(~X_CURECIG==2, design=design18total, method="mean",level=0.95,na.rm=TR
 svyciprop(~X_CURECIG==2, design=design17total, method="mean",level=0.95,na.rm=TRUE)
 svyciprop(~X_CURECIG==2, design=design16total, method="mean",level=0.95,na.rm=TRUE)
 
+svyciprop(~states==2, design=design18total, method="mean", level=0.95,na.rm=TRUE)
 
 ##run prevalences for every state
 depstat = c("dep","nodep")
@@ -200,11 +201,11 @@ for (d in c(1:10)){ # for each survey year
     for(a in c(1:5)){ # by age group (5 categories)
       for (s in c(1:2)){ # gender status 
         prop.ci = svyciprop(~states==i, design=subset(thissvydesign, SEX==s & age==a), method="mean",level=0.95,na.rm=TRUE) 
-        newrow <- cbind(years[d],gender[s],agegroupnames[a],depstat[s],statenames[i],subgroup[d],round(prop.ci[1]*100,2),round(SE(prop.ci)*100,2),round(attr(prop.ci, "ci")[1]*100,2),round(attr(prop.ci, "ci")[2]*100,2))
+        newrow <- cbind(years[d],gender[s],agegroupnames[a],depstat[s],statenames[i],subgroup[d],round(prop.ci[1],2),round(SE(prop.ci),2),round(attr(prop.ci, "ci")[1],2),round(attr(prop.ci, "ci")[2],2))
         brfss_smkecigdep <- rbind(brfss_smkecigdep,newrow) # append table with new row of data
       } 
     prop.ci2 = svyciprop(~states==i, design=subset(thissvydesign, age==a), method="mean",level=0.95,na.rm=TRUE)
-    newrow2 <- cbind(years[d],"both",agegroupnames[a],depstat[s],statenames[i],subgroup[d],round(prop.ci2[1]*100,2),round(SE(prop.ci2)*100,2),round(attr(prop.ci2, "ci")[1]*100,2),round(attr(prop.ci2, "ci")[2]*100,2))
+    newrow2 <- cbind(years[d],"both",agegroupnames[a],depstat[s],statenames[i],subgroup[d],round(prop.ci2[1],2),round(SE(prop.ci2),2),round(attr(prop.ci2, "ci")[1],2),round(attr(prop.ci2, "ci")[2],2))
     brfss_smkecigdep <- rbind(brfss_smkecigdep,newrow2) # append table with new row of data
     }
   }
@@ -212,15 +213,17 @@ for (d in c(1:10)){ # for each survey year
     for(a in c(1:5)){ # by age group
       for (s in c(1:2)){ # gender status
         prop.ci = svyciprop(~singlestates==j, design=subset(thissvydesign, SEX==s & age==a), method="mean",level=0.95,na.rm=TRUE) 
-        newrow <- cbind(years[d],gender[s],agegroupnames[a],depstat[s],singstatenames[j],subgroup[d], round(prop.ci[1]*100,2), round(SE(prop.ci)*100,2), round(attr(prop.ci, "ci")[1]*100,2), round(attr(prop.ci, "ci")[2]*100,2))
+        newrow <- cbind(years[d],gender[s],agegroupnames[a],depstat[s],singstatenames[j],subgroup[d], round(prop.ci[1],2), round(SE(prop.ci),2), round(attr(prop.ci, "ci")[1],2), round(attr(prop.ci, "ci")[2],2))
         brfss_smkecigdep <- rbind(brfss_smkecigdep,newrow) # append table with new row of data
       } 
       prop.ci2 = svyciprop(~singlestates==j, design=thissvydesign, method="mean",level=0.95,na.rm=TRUE)
-      newrow2 <- cbind(years[d],"both",agegroupnames[a],depstat[s], singstatenames[j], subgroup[d], round(prop.ci2[1]*100,2),round(SE(prop.ci2)*100,2), round(attr(prop.ci2, "ci")[1]*100,2), round(attr(prop.ci2, "ci")[2]*100,2))
+      newrow2 <- cbind(years[d],"both",agegroupnames[a],depstat[s], singstatenames[j], subgroup[d], round(prop.ci2[1],2),round(SE(prop.ci2),2), round(attr(prop.ci2, "ci")[1],2), round(attr(prop.ci2, "ci")[2],2))
       brfss_smkecigdep <- rbind(brfss_smkecigdep,newrow2) # append table with new row of data
     }
   }
 }
 colnames(brfss_smkecigdep) <- c("year","gender","age","depstatus","states","subgroup", "prev","stderr","lowCIprev","highCIprev")
-save(brfss_smkecigdep, file="brfss1618.rda")
+directory <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/R/"
+save(brfss_smkecigdep,file=paste0(directory, "brfss1618.rda"))
 load("brfss1618.rda")
+
