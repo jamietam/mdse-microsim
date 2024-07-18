@@ -1,7 +1,7 @@
 ## Clean up the workspace and set main working directory
 rm(list = ls()) 
 
-mainDir = "/Users/jt936/Dropbox/GitHub/mds-microsim/"
+mainDir = "C:/Users/jt936/Dropbox/GitHub/mds-microsim/"
 # mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" # Set working directory
 hpc=0
 source(paste0(mainDir,"R/01_environment.R"), echo=FALSE) #
@@ -12,11 +12,12 @@ source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation
 
 # Define constants and helper functions
 policyyear <- 2024
-scenarios <- c("baseline", "policy_init", "policy_cess", "policy_rnc1", "policy_rnc2")
+scenarios <- c("baseline", "policy_rnc1", "policy_rnc2")
+# scenarios <- c("baseline", "policy_init", "policy_cess", "policy_rnc1", "policy_rnc2")
 params <- list(
   baseline = c(1.0, 1.0),
-  policy_init = c(0.8, 1.0),
-  policy_cess = c(1.0, 1.2),
+  # policy_init = c(0.8, 1.0),
+  # policy_cess = c(1.0, 1.2),
   policy_rnc1 = c(0.5, 6.0),
   policy_rnc2 = c(0.5, 3.95)
 )
@@ -82,11 +83,11 @@ combined_data <- lapply(names(results), function(name) {
     aCosts = cuw[paste0(policyyear:max(cohorts)), 1],
     aQALYs = cuw[paste0(policyyear:max(cohorts)), 2],
     aProd = cuw[paste0(policyyear:max(cohorts)), 3],
-    aNonhealth = cuw[paste0(policyyear:max(cohorts)), 3],
+    aNonhealth = cuw[paste0(policyyear:max(cohorts)), 4],
     cCosts = cumsum(cuw[paste0(policyyear:max(cohorts)), 1]),
     cQALYs = cumsum(cuw[paste0(policyyear:max(cohorts)), 2]),
     cProd = cumsum(cuw[paste0(policyyear:max(cohorts)), 3]),
-    cNonhealth = cumsum(cuw[paste0(policyyear:max(cohorts)), 3])
+    cNonhealth = cumsum(cuw[paste0(policyyear:max(cohorts)), 4])
   )
 }) %>%
   bind_rows()
@@ -99,7 +100,7 @@ combined_data <- combined_data %>%
 # Extract baseline values
 baseline_values <- combined_data %>%
   filter(scenario == "baseline") %>%
-  select(year, cX, aX, aLY, cLY, cSAD, aSAD,aCosts,cCosts,aQALYs,cQALYs,aProd,cProd) %>%
+  select(year, cX, aX, aLY, cLY, cSAD, aSAD,aCosts,cCosts,aQALYs,cQALYs,aProd,cProd,aNonhealth,cNonhealth) %>%
   rename(
     baseline_cX = cX, 
     baseline_aX = aX, 
@@ -135,7 +136,26 @@ combined_data <- combined_data %>%
   select(-baseline_cX, -baseline_aX, -baseline_aLY, -baseline_cLY, -baseline_cSAD, -baseline_aSAD, 
          -baseline_cCosts, -baseline_cQALYs, -baseline_cProd, -baseline_aCosts, -baseline_aQALYs, -baseline_aProd )  # Remove temporary baseline columns
 
-# tc_hat <- mean(results[["baseline"]]$cuw)
+# Calculate ICER
+cea_data <- lapply(names(results), function(name) {
+  policy <- results[[name]]
+  avg_healthcare_costs <- policy$avg_healthcare_costs
+  avg_societal_costs <- policy$avg_societal_costs
+  avg_QALYs <- policy$avg_QALYs
+  data.frame(scenario = name,avg_healthcare_costs,avg_societal_costs,avg_QALYs)
+}) %>%
+  bind_rows()
+
+df_cea_hc <- calculate_icers(cost    = cea_data$avg_healthcare_costs,
+                          effect     = cea_data$avg_QALYs,
+                          strategies = cea_data$scenario)
+
+df_cea_sc <- calculate_icers(cost    = cea_data$avg_societal_costs,
+                          effect     = cea_data$avg_QALYs,
+                          strategies = cea_data$scenario)
+plot(df_cea_hc)
+plot(df_cea_sc)
+
 # FIGURES -----------------------------------------------------------------
 
 # Define ggplot figures

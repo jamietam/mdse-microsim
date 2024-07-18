@@ -499,8 +499,9 @@ main <- function(v.params, v.policy) { # v.params: run model for parameter calib
   }
   
   # Calculate costs, utilities, and productivity for each health state by age in the population
-  total_cuw <- rbind(colSums(m.C_cy,na.rm=TRUE),colSums(m.U_cy,na.rm=TRUE),colSums(m.W_cy,na.rm=TRUE),colSums(m.B_cy,na.rm=TRUE))
-  rownames(total_cuw)<-c("total costs","total QALYs","total productivity","total consumer exp")
+  total_cuw <- rbind(colSums(m.C_cy,na.rm=TRUE),colSums(m.U_cy,na.rm=TRUE),colSums(m.W_cy,na.rm=TRUE),colSums(m.B_cy,na.rm=TRUE),
+                     colSums(m.C_cy,na.rm=TRUE)+colSums(m.B_cy,na.rm=TRUE)-colSums(m.W_cy,na.rm=TRUE)) # societal costs = healthcare costs + consumer expenditures (non-medical) -  productivity 
+  rownames(total_cuw)<-c("healthcare_costs","QALYs","productivity","consumer_exp","societal_costs")
   colnames(total_cuw) <-colnames(m.C_cy) <- colnames(m.U_cy) <- colnames(m.W_cy) <- colnames(m.B_cy) <- c(min(cohorts):(max(cohorts)+100))
   
   # Assume 2024 is the starting year for discounting purposes, calculate discount weight based on the discount rate d.c
@@ -514,11 +515,20 @@ main <- function(v.params, v.policy) { # v.params: run model for parameter calib
   colnames(d_total_cuw) <-colnames(total_cuw)
   cuw <- t(d_total_cuw[,as.character(year_range)])
   
+  # Get average discounted costs and effects to calculate cost-effectiveness ratio
+  avg_healthcare_costs <- mean(d_total_cuw["healthcare_costs",as.character(year_range)])
+  avg_QALYs <- mean(d_total_cuw["QALYs",as.character(year_range)])
+  avg_societal_costs <- mean(d_total_cuw["societal_costs",as.character(year_range)])
+  
   # Calculate smoking-attributable mortality from policyyear to 2100
   age_range <- 0:99
   
   m.prev_cs <- extract_prevalence(model_res1, "C", age_range, year_range) # Extract prevalence data for current smokers and former smokers
   m.prev_fs <- extract_prevalence(model_res1, "F", age_range, year_range) # Average FX, not by years since quit
+  
+  # m.prev_cs <- extract_prevalence(model_res1, "C", age_range, 1900:2100) # Extract prevalence data for current smokers and former smokers
+  # m.prev_fs <- extract_prevalence(model_res1, "F", age_range, 1900:2100) # Average FX, not by years since quit
+  # save(m.prev_cs,m.prev_fs,file=paste0("cs_fs_prevs_1900-2100",whichgender,".RData"))
   
   # Extract prevalence data for former smoker years since quit
   l.prev_fs.ysq <- lapply(paste0("q", sprintf("%02d", 1:40)), function(state) extract_prevalence(model_res1, state, age_range, year_range))
@@ -540,7 +550,8 @@ main <- function(v.params, v.policy) { # v.params: run model for parameter calib
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer
   
-  return(list(model_res = model_res, cuw=cuw, n.X = n.X, n.lifeyears=n.lifeyears, SAD=SAD, init = p.NC, cess = p.CF, m.prev_cs=m.prev_cs,m.prev_fs = m.prev_fs))
+  return(list(model_res = model_res, cuw=cuw, n.X = n.X, n.lifeyears=n.lifeyears, SAD=SAD, avg_healthcare_costs=avg_healthcare_costs, avg_QALYs=avg_QALYs, avg_societal_costs=avg_societal_costs,
+              init = p.NC, cess = p.CF, m.prev_cs=m.prev_cs,m.prev_fs = m.prev_fs))
 }
 
 ############################################################################################
