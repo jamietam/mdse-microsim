@@ -30,7 +30,7 @@ mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, 
     if (bc+t>2100){ # exit for loop if going past the year 2100
       break
     }
-    v.ysq <- ifelse((m.M[,t] =="FOH"|m.M[,t] =="FOD"|m.M[,t] =="FOR" | m.M[,t] =="FVH"|m.M[,t] =="FVD"|m.M[,t] =="FVR"|m.M[,t] =="FQH"|m.M[,t] =="FQD"|m.M[,t] =="FQR") ,v.ysq +1 , 0)
+    v.ysq <- ifelse(grepl("F", m.M[, t]), v.ysq + 1, 0)
     v.ysq <- ifelse(v.ysq>40 , 40, v.ysq) # Fix mortality after 40 years since quitting
     
     m.P <- probs(bc, t, v.ysq, m.M[, t])           # calculate the transition probabilities at cycle t 
@@ -75,54 +75,7 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   # give the state names to the rows
   rownames(m.p_t) <-  v.n                               
   
-  # update m.p_t with the probabilities conditional on survival  
-  # interaction effects: rr.ND.CD, rr.CH.CD, rr.CR.CD, rr.CD.FD)
-  
-  # # Happy
-  # m.p_t["NH", M_t == "NH"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.HD[t,bc1])
-  # m.p_t["CH", M_t == "NH"] <- (1-p.NX[t,bc1])*p.NC[t,bc1]
-  # m.p_t["ND", M_t == "NH"] <- (1-p.NX[t,bc1])*p.HD[t,bc1]
-  # m.p_t["X" , M_t == "NH"] <- p.NX[t,bc1]
-  # 
-  # m.p_t["CH", M_t == "CH"] <- (1-p.CX[t,bc1])*(1-rr.CH.CD*p.HD[t,bc1]-p.CF[t,bc1])
-  # m.p_t["FH", M_t == "CH"] <- (1-p.CX[t,bc1])*p.CF[t,bc1]
-  # m.p_t["CD", M_t == "CH"] <- (1-p.CX[t,bc1])*rr.CH.CD*p.HD[t,bc1]
-  # m.p_t["X" , M_t == "CH"] <- p.CX[t,bc1]	
-  # 
-  # m.p_t["FH", M_t == "FH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t=="FH"]])*(1 -p.HD[t,bc1])
-  # m.p_t["FD", M_t == "FH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t=="FH"]])*p.HD[t,bc1]
-  # m.p_t["X" , M_t =="FH"] <-	a_p.FX.ysq[t, bc1, v.ysq[M_t=="FH"]] 
-  # 
-  # # Depressed
-  # m.p_t["ND", M_t == "ND"] <- (1-rr.DX[t]*p.NX[t,bc1])*(1-rr.ND.CD*p.NC[t,bc1]-p.DR[t])
-  # m.p_t["CD", M_t == "ND"] <- (1-rr.DX[t]*p.NX[t,bc1])*rr.ND.CD*p.NC[t,bc1]
-  # m.p_t["NR", M_t == "ND"] <- (1-rr.DX[t]*p.NX[t,bc1])*p.DR[t]
-  # m.p_t["X" , M_t == "ND"] <- rr.DX[t]*p.NX[t,bc1]
-  # 
-  # m.p_t["CD", M_t == "CD"] <- (1-rr.DX[t]*p.CX[t,bc1])*(1-rr.CD.FD*p.CF[t,bc1]-p.DR[t])
-  # m.p_t["FD", M_t == "CD"] <-  (1-rr.DX[t]*p.CX[t,bc1])*rr.CD.FD*p.CF[t,bc1]
-  # m.p_t["CR", M_t == "CD"] <-  (1-rr.DX[t]*p.CX[t,bc1])*p.DR[t]
-  # m.p_t["X" , M_t == "CD"] <-  rr.DX[t]*p.CX[t,bc1]	
-  # 
-  # m.p_t["FD", M_t == "FD"] <- (1-rr.DX[t]*a_p.FX.ysq[t, bc1, v.ysq[M_t=="FD"]])*(1-p.DR[t])
-  # m.p_t["FR", M_t == "FD"] <- (1-rr.DX[t]*a_p.FX.ysq[t, bc1, v.ysq[M_t=="FD"]])*p.DR[t]
-  # m.p_t["X" , M_t == "FD"] <- rr.DX[t]*a_p.FX.ysq[t, bc1, v.ysq[M_t=="FD"]]
-  # 
-  # # Recovered
-  # m.p_t["ND", M_t == "NR"] <- (1-p.NX[t,bc1])*p.RD[t]
-  # m.p_t["NR", M_t == "NR"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.RD[t])
-  # m.p_t["CR", M_t == "NR"] <- (1-p.NX[t,bc1])*p.NC[t,bc1]
-  # m.p_t["X" , M_t == "NR"] <- p.NX[t,bc1]
-  # 
-  # m.p_t["CD", M_t == "CR"] <- (1-p.CX[t,bc1])*rr.CR.CD*p.RD[t]
-  # m.p_t["CR", M_t == "CR"] <- (1-p.CX[t,bc1])*(1-rr.CR.CD*p.RD[t]-p.CF[t,bc1])
-  # m.p_t["FR", M_t == "CR"] <- (1-p.CX[t,bc1])*p.CF[t,bc1]	
-  # m.p_t["X" , M_t == "CR"] <-   p.CX[t,bc1]  	
-  # 
-  # m.p_t["FD", M_t == "FR"] <- (1-a_p.FX.ysq[t, bc1, v.ysq[M_t=="FR"]])*p.RD[t]
-  # m.p_t["FR", M_t == "FR"] <- (1-a_p.FX.ysq[t, bc1, v.ysq[M_t=="FR"]])*(1-p.RD[t])
-  # m.p_t["X" , M_t == "FR"] <- a_p.FX.ysq[t, bc1, v.ysq[M_t=="FR"]]	
-  # 
+  ##transition probabilities calculations
   #from NHO state
   m.p_t["NOH", M_t == "NOH"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.NO.CV[t,yr]-p.NO.NV[t,yr]-p.HD[t,bc1])
   m.p_t["COH", M_t == "NOH"] <- (1-p.NX[t,bc1])*(p.NC[t,bc1])

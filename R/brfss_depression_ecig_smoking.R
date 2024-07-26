@@ -12,6 +12,7 @@ options(survey.lonely.psu = "adjust") # Set options for allowing a single observ
 # ECIGARET Haveyoueverusedane-cigaretteorotherelectronicvapingproduct,evenjustonetime,inyourentirelife? 1=yes, 2= no
 # ECIGNOW Doyounowusee-cigarettesorotherelectronic"vaping"productseveryday (1),somedays (2) ,ornotatall (3)?
 # X_CURECIG Adultswhoarecurrente-cigaretteusers 1 = No, 2= Yes
+
 # SMOKER3 Four-levelsmokerstatus:Everydaysmoker,Somedaysmoker,Formersmoker,Non-smoker
 # RFSMOK3 Adultswhoarecurrentsmokers  1 = No, 2 = Yes
 
@@ -59,9 +60,9 @@ brfss2018$currentvap[brfss2018$ECIGNOW==3] <- 0 # not currently using e-cigs
 # save(brfss2017vars,file="brfss2017vars.Rda")
 # save(brfss2018vars,file="brfss2018vars.Rda")
 
-load("brfss2016vars.Rda")
-load("brfss2017vars.Rda")
-load("brfss2018vars.Rda")
+load("~/GitHub/mds-microsim/data/BRFSS2018vars.Rda")
+load("~/GitHub/mds-microsim/data/brfss2017vars.Rda")
+load("~/GitHub/mds-microsim/data/brfss2016vars.Rda")
 
 table(brfss2016vars$X_SMOKER3, brfss2016vars$X_ECIGSTS)
 table(brfss2017vars$X_SMOKER3, brfss2017vars$X_ECIGSTS)

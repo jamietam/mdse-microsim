@@ -2,7 +2,7 @@
 mainDir <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/"
 setwd(file.path(mainDir))
 
-load("mdseprevs0522.rda")
+load("~/GitHub/mds-microsim/data/mdseprevs0522.rda")
 
 # drop 18.99 age group
 mdseprevs <- subset(mdseprevs, age!=18.99)
@@ -15,9 +15,7 @@ lst_smktargets <- vector(mode = "list")
 lst_smktargets$N <- as.matrix(subset(mdseprevs, sex==whichgender & status=="neversmk" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
 lst_smktargets$C <- as.matrix(subset(mdseprevs, sex==whichgender & status=="currentsmk" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
 lst_smktargets$F <- as.matrix(subset(mdseprevs, sex==whichgender & status=="formersmk" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
-rownames(lst_smktargets$N) <- NULL
-rownames(lst_smktargets$C) <- NULL
-rownames(lst_smktargets$F) <- NULL
+
 
 save(lst_smktargets,file=paste0("smk_calib_targets_",whichgender,".RData"))
 

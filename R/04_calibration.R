@@ -65,3 +65,4 @@ v.params_init[1,] <- v.params # replace first initial set with v.params
 
 # Latin Hypercube Sampling Code: https://lhs.r-forge.r-project.org/lhs_questions.html
 # Fit by age group # gof <- sum((lst_targets[[r]][lst_targets[[r]][,"age"]<=27,][,"prev"] - model_res[[r]][model_res[[r]][,"age"]<=27,][,"prev"])^2) # only fit to ages groups 18.25, 18.99, 26.34
+
