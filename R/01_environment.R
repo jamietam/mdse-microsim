@@ -13,7 +13,7 @@ if (hpc == 1) { ## For HPC runs - Run this section of code, and NOT the one belo
   cl <- makeCluster(as.numeric(n.cores), type = "FORK")
 } else { ## For Personal Computer and Open On Demand Interface, Run this section of code and NOT the one above
   cl <- makeCluster(detectCores())
-  args <- c("females", 1000, 2022, 40)  # Parameters for non-HPC setup
+  args <- c("females", 1000, 2100, 40)  # Parameters for non-HPC setup
 }
 registerDoParallel(cl)
 args <- `if`(hpc == 1, commandArgs(TRUE), args)

@@ -85,16 +85,55 @@ rr.CH.CD <- select_param("rr.CH.CD")
 rr.CR.CD <- select_param("rr.CR.CD")
 rr.CD.FD <- select_param("rr.CD.FD")
 
+
 # Model prevalence
 modelprev <- do.call(rbind, lapply(names(model_res), function(status) {
   cbind(data.frame(model_res[[status]]), status = status)
 }))
+
+##sum prevalences to create the states for exclvap, exclsmk, and neither
+# Ensure 'prev' column is numeric
+modelprev$prev[modelprev$prev == ""] <- NA
+modelprev$prev <- as.numeric(as.character(modelprev$prev))
+
+# Extract column names from modelprev
+column_names <- names(modelprev)
+
+# Loop through years and ages
+for(y in c(2005:2100)) { # loop through years
+  for(a in c(18.25, 26.34, 35.49, 50.64, 65.99, 18.99)) { # loop through ages
+    # neither
+    neither <- sum(subset(modelprev, year == y & age == a & (status == "NO" | status == "NQ" | status == "FO" | status == "FQ"))[,"prev"], na.rm = TRUE)
+    new_row_neither <- data.frame(age = a, year = y, prev = neither, counts = NA, alive = NA, dead = NA, status = "neither", stringsAsFactors = FALSE)
+    names(new_row_neither) <- column_names
+    modelprev <- rbind(modelprev, new_row_neither)
+    
+    # exclvap
+    exclvap <- sum(subset(modelprev, year == y & age == a & (status == "NE" | status == "FE"))[,"prev"], na.rm = TRUE)
+    new_row_exclvap <- data.frame(age = a, year = y, prev = exclvap, counts = NA, alive = NA, dead = NA, status = "exclvap", stringsAsFactors = FALSE)
+    names(new_row_exclvap) <- column_names
+    modelprev <- rbind(modelprev, new_row_exclvap)
+    
+    # exclsmk
+    exclsmk <- sum(subset(modelprev, year == y & age == a & (status == "CO" | status == "CQ"))[,"prev"], na.rm = TRUE)
+    new_row_exclsmk <- data.frame(age = a, year = y, prev = exclsmk, counts = NA, alive = NA, dead = NA, status = "exclsmk", stringsAsFactors = FALSE)
+    names(new_row_exclsmk) <- column_names
+    modelprev <- rbind(modelprev, new_row_exclsmk)
+  }
+}
 
 # Calibration targets
 calibtargets <- do.call(rbind, lapply(names(lst_targets), function(status) {
   cbind(data.frame(lst_targets[[status]]), status = status)
 }))
 
+#turn all numbers into numeric values
+calibtargets$survey_year <- as.numeric(calibtargets$survey_year)
+modelprev$year <- as.numeric(modelprev$year)
+cohorts <- as.numeric(cohorts)
+calibtargets$prev <- as.numeric(calibtargets$prev)
+calibtargets$prev_lowCI <- as.numeric(calibtargets$prev_lowCI)
+calibtargets$prev_highCI <- as.numeric(calibtargets$prev_highCI)
 ## Data visualization ------------------------------------------------------
 
 # Figures for initiation and cessation for smoking
@@ -115,13 +154,6 @@ p.CF_age <- ggplot(data=cessprobs) +  geom_line( aes(x=age, y=prob, linetype=inp
   scale_x_continuous(name="Age", limits=c(0,99), breaks=seq(0,99,10)) +
   labs(title="Cessation probabilities")
 
-#turn all numbers into numeric values
-calibtargets$survey_year <- as.numeric(calibtargets$survey_year)
-modelprev$year <- as.numeric(modelprev$year)
-cohorts <- as.numeric(cohorts)
-calibtargets$prev <- as.numeric(calibtargets$prev)
-calibtargets$prev_lowCI <- as.numeric(calibtargets$prev_lowCI)
-calibtargets$prev_highCI <- as.numeric(calibtargets$prev_highCI)
 
 #Smoking distribution
 ns_age <-ggplot() +
@@ -157,56 +189,208 @@ ncf_total <- ggplot() +
   labs(title=paste0("Smoking distribution - ",whichgender," ages 18-99"))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
-# E-cigarette distribution
+#Vaping Distributions
+
 nv_age <- ggplot() +
-  geom_pointrange(data= subset(calibtargets,status=="O"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="O" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
-  scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
-  labs(title=paste0("Never vapers - ",whichgender))+
-  theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
-  
-cv_age <- ggplot() +
+  # NHIS 
+  geom_pointrange(data= subset(calibtargets, status=="nhisO" & age!=18.99 & (survey_year == 2022|survey_year == 2019)), shape = 3, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NHIS")) +
+  scale_color_manual(name = "NHIS", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "NHIS", values = c(8)) +
+  new_scale_color() +
+  # BRFSS
+  geom_pointrange(data= subset(calibtargets, status=="brfssO" & age!=18.99), shape = 1, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="BRFSS")) +
+  scale_color_manual(name = "BRFSS", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "BRFSS", values = c(1)) +
+  new_scale_color() +
+  # NSDUH
+  geom_pointrange(data= subset(calibtargets, status=="O" & age!=18.99 & survey_year >= 2020), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NSDUH"), show.legend=FALSE) +
+  geom_line(data = subset(modelprev, status=="O" & age!=18.99), aes(x=year, y= prev, colour=factor(age))) +
+  scale_color_manual(name = "NSDUH", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "NSDUH", values = c(16)) +
+  # Axes and titles
+  scale_y_continuous(name="Prevalence (%)", limits=c(0, 1), breaks=seq(0, 1, 0.05)) +
+  scale_x_continuous(name="Year", limits=c(2005, max(cohorts)), breaks=seq(2005, max(cohorts), 1)) +
+  labs(title=paste0("Never vapers - ", whichgender)) +
+  theme(axis.text.x=element_text(angle=60, hjust=1)) 
+
+ce_age <- ggplot() +
+  # NHIS 
+  geom_pointrange(data= subset(calibtargets, status=="nhisE" & age!=18.99 & survey_year == 2022), shape = 3, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NHIS")) +
+  scale_color_manual(name = "NHIS", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "NHIS", values = c(8)) +
+  new_scale_color() +
   # NSDUH Vaping 5+ Years
-  geom_pointrange(data= subset(calibtargets, status=="vap5" & age!=18.99), shape = 8, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NSDUH Vaping 5+ Years")) +
+  geom_pointrange(data= subset(calibtargets, status=="vap5" & age!=18.99 & survey_year == 2022), shape = 8, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NSDUH Vaping 5+ Years")) +
   scale_color_manual(name = "NSDUH Vaping 5+ Days", values = c("red", "blue", "green", "purple", "orange")) +
   scale_shape_manual(name = "NSDUH Vaping 5+ Days", values = c(8)) +
   new_scale_color() +
   # BRFSS
   geom_pointrange(data= subset(calibtargets, status=="brfssE" & age!=18.99), shape = 1, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="BRFSS")) +
-  scale_color_manual(name = "BRFSS", values = c("cyan", "magenta", "yellow", "pink", "brown")) +
+  scale_color_manual(name = "BRFSS", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "BRFSS", values = c(1)) +
+  new_scale_color() +
+  # model line
+  geom_pointrange(data= subset(calibtargets, status=="E" & age!=18.99 & survey_year >= 2020), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NSDUH"), show.legend=FALSE) +
+  scale_color_manual(name = "NSDUH Past 30 Days", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "NSDUH Past 30 days", values = c(16)) +
+  geom_line(data = subset(modelprev, status=="E" & age!=18.99), aes(x=year, y= prev, colour=factor(age))) +
+  scale_color_manual(name = "Age Groups", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "Age Groups", values = c(16)) +
+  # Axes and titles
+  scale_y_continuous(name="Prevalence (%)", limits=c(0, 0.15), breaks=seq(0, 1, 0.05)) +
+  scale_x_continuous(name="Year", limits=c(2005, max(cohorts)), breaks=seq(2005, max(cohorts), 1)) +
+  labs(title=paste0("Current vapers - ", whichgender)) +
+  theme(axis.text.x=element_text(angle=60, hjust=1)) 
+
+
+#for presentation purposes, without calibration targets
+cv_age <- ggplot() +
+  geom_line(data = subset(modelprev, status=="E" & age!=18.99), aes(x=year, y= prev, colour=factor(age))) +
+  scale_color_manual(name = "Age Groups", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "Age Groups", values = c(16)) +
+  # Axes and titles
+  scale_y_continuous(name="Prevalence (%)", limits=c(0, 0.15), breaks=seq(0, 1, 0.05)) +
+  scale_x_continuous(name="Year", limits=c(2005, max(cohorts)), breaks=seq(2005, max(cohorts), 1)) +
+  labs(title=paste0("Current vapers - ", whichgender)) +
+  theme(axis.text.x=element_text(angle=60, hjust=1)) 
+
+##this graph doesn't rlly make sense
+# fv_age <- ggplot() + geom_pointrange(data= subset(calibtargets,status=="Q"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
+#   geom_line(data = subset(modelprev, status=="Q" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
+#   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
+#   scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+#   labs(title=paste0("Former vapers - ",whichgender))+
+#   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
+
+fv_age <- ggplot() +
+  # NHIS 
+  geom_pointrange(data= subset(calibtargets, status=="nhisQ" & age!=18.99 & survey_year == 2022), shape = 3, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NHIS")) +
+  scale_color_manual(name = "NHIS", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "NHIS", values = c(8)) +
+  new_scale_color() +
+  # BRFSS
+  geom_pointrange(data= subset(calibtargets, status=="brfssQ" & age!=18.99), shape = 1, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="BRFSS")) +
+  scale_color_manual(name = "BRFSS", values = c("red", "blue", "green", "purple", "orange")) +
   scale_shape_manual(name = "BRFSS", values = c(1)) +
   new_scale_color() +
   # NSDUH
-  geom_pointrange(data= subset(calibtargets, status=="V" & age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NSDUH")) +
-  geom_line(data = subset(modelprev, status=="V" & age!=18.99), aes(x=year, y= prev, colour=factor(age))) +
-  scale_color_manual(name = "NSDUH", values = c("black", "gray", "blue", "green", "red")) +
+  geom_pointrange(data= subset(calibtargets, status=="Q" & age!=18.99 & survey_year >= 2020), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NSDUH"), show.legend=FALSE) +
+  scale_color_manual(name = "NSDUH", values = c("red", "blue", "green", "purple", "orange")) +
   scale_shape_manual(name = "NSDUH", values = c(16)) +
+  geom_line(data = subset(modelprev, status=="Q" & age!=18.99), aes(x=year, y= prev, colour=factor(age))) +
   # Axes and titles
   scale_y_continuous(name="Prevalence (%)", limits=c(0, 1), breaks=seq(0, 1, 0.05)) +
   scale_x_continuous(name="Year", limits=c(2005, max(cohorts)), breaks=seq(2005, max(cohorts), 1)) +
-  labs(title=paste0("Current vapers - ", whichgender)) +
-  theme(axis.text.x=element_text(angle=60, hjust=1)) +
-  # Custom guides for legends
-  guides(
-    colour = guide_legend(title.position = "top"),
-    shape = guide_legend(title.position = "top")
-  )
-
-##this graph doesn't rlly make sense
-fv_age <- ggplot() + geom_pointrange(data= subset(calibtargets,status=="Q"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="Q" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
-  scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
-  labs(title=paste0("Former vapers - ",whichgender))+
-  theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
+  labs(title=paste0("Former vapers - ", whichgender)) +
+  theme(axis.text.x=element_text(angle=60, hjust=1)) 
 
 v_total <- ggplot() +
-  geom_line(data = subset(modelprev, age==18.99 & (status=="O" | status=="V" | status=="Q") ),  aes(x=year, y= prev,color=status))+
+  geom_line(data = subset(modelprev, age==18.99 & (status=="O" | status=="E" | status=="Q") ),  aes(x=year, y= prev,color=status))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
   labs(title=paste0("Vaping distribution - ",whichgender," ages 18-99"))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
+
+
+#exclusive vaping
+excl_vap <- ggplot() +
+  #NSDUH
+  geom_pointrange(data= subset(calibtargets, status=="nsduhexclvap" & age!=18.99), shape = 4, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NSDUH")) +
+  scale_color_manual(name = "NSDUH", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "NSDUH", values = c(1)) +
+  new_scale_color() +
+  #NHIS
+  geom_pointrange(data= subset(calibtargets, status=="n_exclvap" & age!=18.99), shape = 5, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NHIS")) +
+  scale_color_manual(name = "NHIS", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "NHIS", values = c(1)) +
+  new_scale_color() +
+  #BRFSS
+  geom_pointrange(data= subset(calibtargets, status=="b_exclvap" & age!=18.99), shape = 1, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="BRFSS")) +
+  scale_color_manual(name = "BRFSS", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "BRFSS", values = c(1)) +
+  new_scale_color() +
+  #model line
+  geom_line(data = subset(modelprev, age!=18.99 & (status=="exclvap")),  aes(x=year, y= prev,color=factor(age)))+
+  scale_color_manual(name = "Age Group", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_y_continuous(name="Prevalence (%)",limits=c(0,0.2),breaks=seq(0,1,0.05)) +
+  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  labs(title=paste0("Exclusive Vaping distribution - ",whichgender," ages 18-99"))+
+  theme(axis.text.x=element_text(angle=60, hjust=1))
+
+#exclusive smoking
+excl_smk <- ggplot() +
+  #NSDUH
+  geom_pointrange(data= subset(calibtargets, status=="nsduhexclcig" & age!=18.99), shape = 4, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NSDUH")) +
+  scale_color_manual(name = "NSDUH", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "NSDUH", values = c(1)) +
+  new_scale_color() +
+  #NHIS
+  geom_pointrange(data= subset(calibtargets, status=="n_exclsmk" & age!=18.99), shape = 5, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NHIS")) +
+  scale_color_manual(name = "NHIS", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "NHIS", values = c(1)) +
+  new_scale_color() +
+  #BRFSS
+  geom_pointrange(data= subset(calibtargets, status=="b_exclsmk" & age!=18.99), shape = 1, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="BRFSS")) +
+  scale_color_manual(name = "BRFSS", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "BRFSS", values = c(1)) +
+  new_scale_color() +
+  #model line
+  geom_line(data = subset(modelprev, age!=18.99 & (status=="exclsmk") ),  aes(x=year, y= prev,color=factor(age)))+
+  scale_color_manual(name = "Age Group", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
+  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  labs(title=paste0("Exclusive Smoking distribution - ",whichgender," ages 18-99"))+
+  theme(axis.text.x=element_text(angle=60, hjust=1))
+
+#dual
+dual_vapsmk <- ggplot() +
+  #NSDUH
+  geom_pointrange(data= subset(calibtargets, status=="nsduhdual" & age!=18.99), shape = 4, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NSDUH")) +
+  scale_color_manual(name = "NSDUH", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "NSDUH", values = c(1)) +
+  new_scale_color() +
+  #NHIS
+  geom_pointrange(data= subset(calibtargets, status=="n_dual" & age!=18.99), shape = 5, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NHIS")) +
+  scale_color_manual(name = "NHIS", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "NHIS", values = c(1)) +
+  new_scale_color() +
+  #BRFSS
+  geom_pointrange(data= subset(calibtargets, status=="b_dual" & age!=18.99), shape = 1, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="BRFSS")) +
+  scale_color_manual(name = "BRFSS", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "BRFSS", values = c(1)) +
+  new_scale_color() +
+  #model line
+  geom_line(data = subset(modelprev, age!=18.99 & (status=="CE") ),  aes(x=year, y= prev,color=factor(age)))+
+  scale_color_manual(name = "Age Group", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
+  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  labs(title=paste0("Dual Vaping and Smoking distribution - ",whichgender," ages 18-99"))+
+  theme(axis.text.x=element_text(angle=60, hjust=1))
+
+#neither
+neither_vapsmk <- ggplot() +
+  #NSDUH
+  geom_pointrange(data= subset(calibtargets, status=="nsduhneither" & age!=18.99), shape = 4, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NSDUH")) +
+  scale_color_manual(name = "NSDUH", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "NSDUH", values = c(1)) +
+  new_scale_color() +
+  #NHIS
+  geom_pointrange(data= subset(calibtargets, status=="n_neither" & age!=18.99), shape = 5, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="NHIS")) +
+  scale_color_manual(name = "NHIS", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "NHIS", values = c(1)) +
+  new_scale_color() +
+  #BRFSS
+  geom_pointrange(data= subset(calibtargets, status=="b_neither" & age!=18.99), shape = 1, aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="BRFSS")) +
+  scale_color_manual(name = "BRFSS", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_shape_manual(name = "BRFSS", values = c(1)) +
+  new_scale_color() +
+  #model line
+  geom_line(data = subset(modelprev, age!=18.99 & (status=="neither") ),  aes(x=year, y= prev,color=factor(age)))+
+  scale_color_manual(name = "Age Group", values = c("red", "blue", "green", "purple", "orange")) +
+  scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
+  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  labs(title=paste0("Neither Vaping and Smoking distribution - ",whichgender," ages 18-99"))+
+  theme(axis.text.x=element_text(angle=60, hjust=1))
 
 # Figure for incidence inputs
 p.HD_age <- ggplot() + geom_line(aes(x=0:99,y=p.HD[,(2020-1900)],col="bc 2020")) +
@@ -298,7 +482,7 @@ nv_ageD <- ggplot() +
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 cv_ageD <- ggplot() +
-  geom_line(data = subset(modelprev, status=="VD" & age!=18.99), aes(x=year, y= prev, colour=factor(age)))+
+  geom_line(data = subset(modelprev, status=="ED" & age!=18.99), aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
   labs(title=paste0("Current vapers - deppop, ",whichgender))+
@@ -312,7 +496,7 @@ fv_ageD <- ggplot() +
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 v_totalD <- ggplot() +
-  geom_line(data = subset(modelprev, age==18.99 & (status=="OD" | status=="VD" | status=="QD")),  aes(x=year, y= prev,color=status))+
+  geom_line(data = subset(modelprev, age==18.99 & (status=="OD" | status=="ED" | status=="QD")),  aes(x=year, y= prev,color=status))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
   scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
   labs(title=paste0("Vaping distribution - ",whichgender," ages 18-99"))+
@@ -366,6 +550,6 @@ grid_arrange_shared_legend(list(D_age, D_total),2,"MDE")
 grid_arrange_shared_legend(list(ns_ageD, cs_ageD, fs_ageD),3,"Smoking distribution among people with depression")
 grid_arrange_shared_legend(list(ncf_totalD, Xprobs_age),2,"NCF Smoking")
 grid_arrange_shared_legend(list(nv_ageD, cv_ageD, fv_ageD),3,"Vaping distribution among people with depression")
-grid_arrange_shared_legend(list(v_totalD),3,"OVQ Vaping")
+grid_arrange_shared_legend(list(v_totalD),3,"OEQ Vaping")
 dev.off()
 

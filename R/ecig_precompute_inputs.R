@@ -1,9 +1,4 @@
-##note: I am assuming that for the following transition states, smoking and ecig can be reused even after quit
-#but for happy/depressed, when one recovers they don't become depressed again
-
-#incorporate mortality data here as well
-
-##never established use --> never established use
+##never established use --> never established use (don't need this)
 p.NO.NO <- matrix(c(0.95, 0.918, 0.964, 0.988, 
                     0.968, 0.957, 0.993, 0.96, 
                     0.975, 0.978, 0.988, 0.992, 
@@ -13,14 +8,13 @@ p.NO.NO <- matrix(c(0.95, 0.918, 0.964, 0.988,
                                   c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
 
 ##never established use --> ENDS only
-p.NO.NV <- matrix(c(0.01, 0.01, 0.018, 0.018, 
+p.NO.NE <- matrix(c(0.01, 0.01, 0.018, 0.018, 
                      0.003, 0.002, 0.002, 0.002, 
                      0.001, 0.001, 0, 0, 
                      0.001, 0, 0, 0), 
                    nrow = 4, ncol = 4, byrow = TRUE, 
                    dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                    c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-#p.NOH.NVD <- p.NOD.NVD <- p.NOD.NVR <- p.NOR.NVR <- p.NOH.NVH <- matrix(c(.018,.018, .002, .002, 0, 0), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
 ##never established use --> cig only
 p.NO.CO <- matrix(c(0.017, 0.014, 0.006, 0.004, 
                     0.012, 0.008, 0.005, 0.002, 
@@ -29,29 +23,25 @@ p.NO.CO <- matrix(c(0.017, 0.014, 0.006, 0.004,
                   nrow = 4, ncol = 4, byrow = TRUE, 
                   dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                   c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-#p.NOR.COR <- p.NOD.COR <- p.NOD.COD <- p.NOH.COD <- p.NOH.COH <- matrix(c(.006, .004, .005, .002, .002, .001), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
 ##never established use --> dual
-p.NO.CV <- matrix(c(0.002, 0.002, 0.001, 0.001, 
+p.NO.CE <- matrix(c(0.002, 0.002, 0.001, 0.001, 
                     0, 0.001, 0, 0, 
                     0, 0, 0, 0, 
                     0, 0, 0, 0), 
                   nrow = 4, ncol = 4, byrow = TRUE, 
                   dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                   c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-#p.NOR.CVR <- p.NOD.CVR <- p.NOD.CVD <- p.NOH.CVD <- p.NOH.CVH <- matrix(c(.001, .001, 0, 0, 0, 0), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
 
 ##ENDS only --> ENDS only
-p.FV.FV <- p.NV.NV <- matrix(c(0.456, 0.453, 0.73, 0.737, 
+p.FE.FE <- p.NE.NE <- matrix(c(0.456, 0.453, 0.73, 0.737, 
                     0.591, 0.597, 0.756, 0.677, 
                     0.584, 0.552, 0.827, 0.821, 
                     0.74, 0.783, 0.827, 0.821), 
                   nrow = 4, ncol = 4, byrow = TRUE, 
                   dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                   c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-#p.NVD.NVR <- p.NVH.NVD <- p.NVR.NVR <- p.NVD.NVD <- p.NVH.NVH <- matrix(c(.73,.737,.756,.677,.827,.821), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
-#p.FVD.FVR <- p.FVH.FVD <- p.FVR.FVR <- p.FVD.FVD <- p.FVH.FVH <- p.NVH.NVH
 ##ENDS only --> cig only
-p.NV.CQ <- p.FV.CQ <- matrix(c(0.109, 0.106, 0.017, 0.015, 
+p.NE.CQ <- p.FE.CQ <- matrix(c(0.109, 0.106, 0.017, 0.015, 
                                0.078, 0.075, 0.02, 0.017, 
                                0.074, 0.082, 0.011, 0.011, 
                                0.043, 0.032, 0.011, 0.011), 
@@ -59,29 +49,22 @@ p.NV.CQ <- p.FV.CQ <- matrix(c(0.109, 0.106, 0.017, 0.015,
                              dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                              c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
 
-#p.NVD.CQR <- p.NVH.CQD <- p.NVR.CQR <- p.NVD.CQD <- p.NVH.CQH <- matrix(c(.017,.015,.02,.017,.011,.011), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
-#p.FVD.CQR <- p.FVH.CQD <- p.FVR.CQR <- p.FVD.CQD <- p.FVH.CQH <- p.NVH.CQH
 ##ENDS only --> dual
-p.NV.CV <- p.FV.CV <- matrix(c(0.122, 0.112, 0.06, 0.045, 
+p.NE.CE <- p.FE.CE <- matrix(c(0.122, 0.112, 0.06, 0.045, 
                     0.131, 0.135, 0.087, 0.062, 
                     0.155, 0.159, 0.049, 0.038, 
                     0.105, 0.084, 0.049, 0.038), 
                   nrow = 4, ncol = 4, byrow = TRUE, 
                   dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                   c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-#p.NVD.CVR <- p.NVH.CVD <- p.NVR.CVR <- p.NVD.CVD <- p.NVH.CVH <- matrix(c(.06,.045,.087,.062,.049,.038), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
-#p.FVD.CVR <- p.FVH.CVD <- p.FVR.CVR <- p.FVD.CVD <- p.FVH.CVH <- p.NVH.CVH
 ##ENDS only --> non-current
-p.NV.NQ <- p.FV.FQ <- matrix(c(0.313, 0.329, 0.193, 0.204, 
+p.NE.NQ <- p.FE.FQ <- matrix(c(0.313, 0.329, 0.193, 0.204, 
                                0.199, 0.194, 0.137, 0.244, 
                                0.187, 0.206, 0.113, 0.129, 
                                0.111, 0.101, 0.113, 0.129), 
                              nrow = 4, ncol = 4, byrow = TRUE, 
                              dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                              c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-
-#p.NVD.NQR <- p.NVH.NQD <- p.NVR.NQR <- p.NVD.NQD <- p.NVH.NQH <- matrix(c(.193,.204,.137,.244,.113,.129), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
-#p.FVD.FQR <- p.FVH.FQD <- p.FVR.FQR <- p.FVD.FQD <- p.FVH.FQH <- p.NVH.NQH
 
 ##non-current --> non-current
 p.NQ.NQ <- p.FO.FO <- p.FQ.FQ <- matrix(c(0.713, 0.733, 0.789, 0.841, 
@@ -92,10 +75,6 @@ p.NQ.NQ <- p.FO.FO <- p.FQ.FQ <- matrix(c(0.713, 0.733, 0.789, 0.841,
                                         dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                                         c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
 
-
-#p.NQD.NQR <- p.NQH.NQD <- p.NQR.NQR <- p.NQD.NQD <- p.NQH.NQH <- matrix(c(.789,.841,.904,.928,.979,.979), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
-#p.FOD.FOR <- p.FOH.FOD <- p.FOR.FOR <- p.FOD.FOD <- p.FOH.FOH <- p.NQH.NQH
-#p.FQD.FQR <- p.FQH.FQD <- p.FQR.FQR <- p.FQD.FQD <- p.FQH.FQH <- p.NQH.NQH
 ##non-current --> cig-only
 p.NQ.CQ <- p.FO.CO <- p.FQ.CQ <- matrix(c(0.224, 0.194, 0.083, 0.06, 
                                                      0.132, 0.136, 0.074, 0.04, 
@@ -104,22 +83,18 @@ p.NQ.CQ <- p.FO.CO <- p.FQ.CQ <- matrix(c(0.224, 0.194, 0.083, 0.06,
                                                    nrow = 4, ncol = 4, byrow = TRUE, 
                                                    dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                                                    c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-#p.NQD.CQR <- p.NQH.CQD <- p.NQR.CQR <- p.NQD.CQD <- p.NQH.CQH <- matrix(c(.083,.06,.074,.04,.016,.017), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
-#p.FOD.COR <- p.FOH.COD <- p.FOR.COR <- p.FOD.COD <- p.FOH.COH <- p.NQH.CQH
-#p.FQD.CQR <- p.FQH.CQD <- p.FQR.CQR <- p.FQD.CQD <- p.FQH.CQH <- p.NQH.CQH
+
 ##non-current --> ENDS only
-p.NQ.NV <- p.FO.FV <- p.FQ.FV <- matrix(c(0.046, 0.057, 0.118, 0.09, 
+p.NQ.NE <- p.FO.FE <- p.FQ.FE <- matrix(c(0.046, 0.057, 0.118, 0.09, 
                                           0.018, 0.017, 0.019, 0.029, 
                                           0.009, 0.008, 0.004, 0.003, 
                                           0.002, 0.002, 0.004, 0.003), 
                                         nrow = 4, ncol = 4, byrow = TRUE, 
                                         dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                                         c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-#p.NQD.NVR <- p.NQH.NVD <- p.NQR.NVR <- p.NQD.NVD <- p.NQH.NVH <- matrix(c(.118,.09,.019,.029,.004,.003), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
-#p.FOD.FVR <- p.FOH.FVD <- p.FOR.FVR <- p.FOD.FVD <- p.FOH.FVH <- p.NQH.NVH
-#p.FQD.FVR <- p.FQH.FVD <- p.FQR.FVR <- p.FQD.FVD <- p.FQH.FVH <- p.NQH.NVH
+
 ##non-current --> dual
-p.NQ.CV <- p.FO.CV <- p.FQ.CV <- matrix(c(0.018, 0.017, 0.0111, 0.01, 
+p.NQ.CE <- p.FO.CE <- p.FQ.CE <- matrix(c(0.018, 0.017, 0.0111, 0.01, 
                                           0.007, 0.007, 0.003, 0.003, 
                                           0.002, 0.002, 0, 0, 
                                           0, 0, 0, 0), 
@@ -127,9 +102,6 @@ p.NQ.CV <- p.FO.CV <- p.FQ.CV <- matrix(c(0.018, 0.017, 0.0111, 0.01,
                                         dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                                         c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
 
-#p.NQD.CVR <- p.NQH.CVD <- p.NQR.CVR <- p.NQD.CVD <- p.NQH.CVH <- matrix(c(.011,.01,.003,.003,0,0), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
-#p.FOD.CVR <- p.FOH.CVD <- p.FOR.CVR <- p.FOD.CVD <- p.FOH.CVH <- p.NQH.CVH
-#p.FQD.CVR <- p.FQH.CVD <- p.FQR.CVR <- p.FQD.CVD <- p.FQH.CVH <- p.NQH.CVH
 
 ##cig-only--> cig-only
 p.CO.CO <- p.CQ.CQ <- matrix(c(0.777, 0.776, 0.766, 0.698, 
@@ -139,18 +111,16 @@ p.CO.CO <- p.CQ.CQ <- matrix(c(0.777, 0.776, 0.766, 0.698,
                              nrow = 4, ncol = 4, byrow = TRUE, 
                              dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                              c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-#p.COD.COR <- p.COH.COD <- p.COR.COR <- p.COD.COD <- p.COH.COH <- matrix(c(.766,.698,.852,.829,.906,.911), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
-#p.CQD.CQR <- p.CQH.CQD <- p.CQR.CQR <- p.CQD.CQD <- p.CQH.CQH <- p.COH.COH
+
 ##cig-only-->ENDS-only
-p.CO.FV <- p.CQ.FV <- matrix(c(0.018, 0.019, 0.032, 0.045, 
+p.CO.FE <- p.CQ.FE <- matrix(c(0.018, 0.019, 0.032, 0.045, 
                                           0.015, 0.013, 0.017, 0.012, 
                                           0.008, 0.006, 0.006, 0.003, 
                                           0.007, 0.006, 0.006, 0.003), 
                                         nrow = 4, ncol = 4, byrow = TRUE, 
                                         dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                                         c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-#p.COD.FVR <- p.COH.FVD <- p.COR.FVR <- p.COD.FVD <- p.COH.FVH <- matrix(c(.032,.045,.017,.012,.006,.003), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
-#p.CQD.FVR <- p.CQH.FVD <- p.CQR.FVR <- p.CQD.FVD <- p.CQH.FVH <- p.COH.FVH
+
 ##cig-only-->non-current
 p.CO.FO <- p.CQ.FQ <- matrix(c(0.013, 0.137, 0.1, 0.104, 
                                0.108, 0.116, 0.078, 0.09, 
@@ -159,58 +129,55 @@ p.CO.FO <- p.CQ.FQ <- matrix(c(0.013, 0.137, 0.1, 0.104,
                              nrow = 4, ncol = 4, byrow = TRUE, 
                              dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                              c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-#p.COD.FOR <- p.COH.FOD <- p.COR.FOR <- p.COD.FOD <- p.COH.FOH <- matrix(c(.1,.104,.078,.09,.063,.063), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
-#p.CQD.FQR <- p.CQH.FQD <- p.CQR.FQR <- p.CQD.FQD <- p.CQH.FQH <- p.COH.FOH
+
 ##cig-only-->dual
-p.CO.CV <- p.CQ.CV <- matrix(c(0.073, 0.069, 0.102, 0.153, 
+p.CO.CE <- p.CQ.CE <- matrix(c(0.073, 0.069, 0.102, 0.153, 
                                0.055, 0.051, 0.052, 0.068, 
                                0.039, 0.034, 0.025, 0.023, 
                                0.02, 0.015, 0.025, 0.023), 
                              nrow = 4, ncol = 4, byrow = TRUE, 
                              dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                              c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-#p.COD.CVR <- p.COH.CVD <- p.COR.CVR <- p.COD.CVD <- p.COH.CVH <- matrix(c(.102,.153,.052,.068,.025,.023), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
-#p.CQD.CVR <- p.CQH.CVD <- p.CQR.CVR <- p.CQD.CVD <- p.CQH.CVH <- p.COH.CVH
+
 
 ##dual-->dual
-p.CV.CV <- matrix(c(0.374, 0.342, 0.606, 0.486, 
+p.CE.CE <- matrix(c(0.374, 0.342, 0.606, 0.486, 
                     0.404, 0.422, 0.63, 0.536, 
                     0.43, 0.401, 0.657, 0.482, 
                     0.454, 0.475, 0.657, 0.482), 
                   nrow = 4, ncol = 4, byrow = TRUE, 
                   dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                   c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-#p.CVD.CVR <- p.CVH.CVD <- p.CVR.CVR <- p.CVD.CVD <- p.CVH.CVH <- matrix(c(.606,.486,.63,.536,.657,.482), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
+
 ##dual-->non-current
-p.CV.FQ <- matrix(c(0.083, 0.09, 0.038, 0.054, 
+p.CE.FQ <- matrix(c(0.083, 0.09, 0.038, 0.054, 
                     0.048, 0.049, 0.022, 0.047, 
                     0.034, 0.039, 0.013, 0.026, 
                     0.03, 0.026, 0.013, 0.026), 
                   nrow = 4, ncol = 4, byrow = TRUE, 
                   dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                   c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-#p.CVD.FQR <- p.CVH.FQD <- p.CVR.FQR <- p.CVD.FQD <- p.CVH.FQH <- matrix(c(.038,.054,.022,.047,.013,.026), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
+
 ##dual-->ENDS-only
-p.CV.FV <- matrix(c(0.13, 0.133, 0.203, 0.28, 
+p.CE.FE <- matrix(c(0.13, 0.133, 0.203, 0.28, 
                     0.091, 0.096, 0.118, 0.192, 
                     0.085, 0.098, 0.039, 0.168, 
                     0.077, 0.063, 0.039, 0.168), 
                   nrow = 4, ncol = 4, byrow = TRUE, 
                   dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                   c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-#p.CVD.FVR <- p.CVH.FVD <- p.CVR.FVR <- p.CVD.FVD <- p.CVH.FVH <- matrix(c(.203,.28,.118,.192,.039,.168), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
+
 ##dual-->cig-only
-p.CV.CQ <- matrix(c(0.413, 0.435, 0.152, 0.18, 
+p.CE.CQ <- matrix(c(0.413, 0.435, 0.152, 0.18, 
                     0.457, 0.433, 0.23, 0.225, 
                     0.451, 0.462, 0.291, 0.323, 
                     0.44, 0.435, 0.291, 0.323), 
                   nrow = 4, ncol = 4, byrow = TRUE, 
                   dimnames = list(c("age 18-24", "age 25-34", "age 35-54", "age 55-90"),
                                   c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
-#p.CVD.CQR <- p.CVH.CQD <- p.CVR.CQR <- p.CVD.CQD <- p.CVH.CQH <- matrix(c(.152,.18,.23,.225,.291,.323), nrow = 3, ncol = 2, byrow = TRUE, dimnames = list(c("age 18-24", "age 25-34", "age 35-90"),c("2017-19","2019-21")))
 
 
-##expand probability matrix to match age 1-100 and years 2017-2021
+##expand probability matrix to match age 1-100 and fills in for years 2013-2100
 expandmatrix <- function(pmatrix){
   ##create new expanded matrix 
   expmatrix <- matrix(0, nrow = 100, ncol = 201, byrow = TRUE, dimnames = list(1:100, 1900:2100))
@@ -279,54 +246,15 @@ expandmatrix <- function(pmatrix){
 }
 
 ##expand all the probability matrices
-vars <- c("p.NO.NO", "p.NO.CO", "p.NO.CV", "p.NO.NV", 
-          "p.NV.NV", "p.NV.CQ", "p.NV.CV", "p.NV.NQ", 
-          "p.FV.CQ", "p.FV.FV", "p.FV.CV", "p.FV.FQ",
-          "p.NQ.CQ", "p.NQ.CV", "p.NQ.NQ", "p.NQ.NV", 
-          "p.FO.CO", "p.FO.CV", "p.FO.FO", "p.FO.FV",
-          "p.FQ.CQ", "p.FQ.CV", "p.FQ.FQ", "p.FQ.FV", 
-          "p.CO.CO", "p.CO.CV", "p.CO.FO", "p.CO.FV",
-          "p.CQ.CQ", "p.CQ.CV", "p.CQ.FQ", "p.CQ.FV",
-          "p.CV.CQ", "p.CV.CV", "p.CV.FQ", "p.CV.FV")
-
-# vars<- c(
-#   "p.NOH.NOH", "p.NOD.NOD", "p.NOR.NOR", "p.NOH.NOD", "p.NOD.NOR",
-#   "p.NOH.NVD", "p.NOD.NVD", "p.NOD.NVR", "p.NOR.NVR", "p.NOH.NVH",
-#   "p.NOR.COR", "p.NOD.COR", "p.NOD.COD", "p.NOH.COD", "p.NOH.COH",
-#   "p.NOR.CVR", "p.NOD.CVR", "p.NOD.CVD", "p.NOH.CVD", "p.NOH.CVH",
-#   "p.NVD.NVR", "p.NVH.NVD", "p.NVR.NVR", "p.NVD.NVD", "p.NVH.NVH",
-#   "p.FVD.FVR", "p.FVH.FVD", "p.FVR.FVR", "p.FVD.FVD", "p.FVH.FVH",
-#   "p.NVD.CQR", "p.NVH.CQD", "p.NVR.CQR", "p.NVD.CQD", "p.NVH.CQH",
-#   "p.FVD.CQR", "p.FVH.CQD", "p.FVR.CQR", "p.FVD.CQD", "p.FVH.CQH",
-#   "p.NVD.CVR", "p.NVH.CVD", "p.NVR.CVR", "p.NVD.CVD", "p.NVH.CVH",
-#   "p.FVD.CVR", "p.FVH.CVD", "p.FVR.CVR", "p.FVD.CVD", "p.FVH.CVH",
-#   "p.NVD.NQR", "p.NVH.NQD", "p.NVR.NQR", "p.NVD.NQD", "p.NVH.NQH",
-#   "p.FVD.FQR", "p.FVH.FQD", "p.FVR.FQR", "p.FVD.FQD", "p.FVH.FQH",
-#   "p.NQD.NQR", "p.NQH.NQD", "p.NQR.NQR", "p.NQD.NQD", "p.NQH.NQH",
-#   "p.FOD.FOR", "p.FOH.FOD", "p.FOR.FOR", "p.FOD.FOD", "p.FOH.FOH",
-#   "p.FQD.FQR", "p.FQH.FQD", "p.FQR.FQR", "p.FQD.FQD", "p.FQH.FQH",
-#   "p.NQD.CQR", "p.NQH.CQD", "p.NQR.CQR", "p.NQD.CQD", "p.NQH.CQH",
-#   "p.FOD.COR", "p.FOH.COD", "p.FOR.COR", "p.FOD.COD", "p.FOH.COH",
-#   "p.FQD.CQR", "p.FQH.CQD", "p.FQR.CQR", "p.FQD.CQD", "p.FQH.CQH",
-#   "p.NQD.NVR", "p.NQH.NVD", "p.NQR.NVR", "p.NQD.NVD", "p.NQH.NVH",
-#   "p.FOD.FVR", "p.FOH.FVD", "p.FOR.FVR", "p.FOD.FVD", "p.FOH.FVH",
-#   "p.FQD.FVR", "p.FQH.FVD", "p.FQR.FVR", "p.FQD.FVD", "p.FQH.FVH",
-#   "p.NQD.CVR", "p.NQH.CVD", "p.NQR.CVR", "p.NQD.CVD", "p.NQH.CVH",
-#   "p.FOD.CVR", "p.FOH.CVD", "p.FOR.CVR", "p.FOD.CVD", "p.FOH.CVH",
-#   "p.FQD.CVR", "p.FQH.CVD", "p.FQR.CVR", "p.FQD.CVD", "p.FQH.CVH",
-#   "p.COD.COR", "p.COH.COD", "p.COR.COR", "p.COD.COD", "p.COH.COH",
-#   "p.CQD.CQR", "p.CQH.CQD", "p.CQR.CQR", "p.CQD.CQD", "p.CQH.CQH",
-#   "p.COD.FVR", "p.COH.FVD", "p.COR.FVR", "p.COD.FVD", "p.COH.FVH",
-#   "p.CQD.FVR", "p.CQH.FVD", "p.CQR.FVR", "p.CQD.FVD", "p.CQH.FVH",
-#   "p.COD.FOR", "p.COH.FOD", "p.COR.FOR", "p.COD.FOD", "p.COH.FOH",
-#   "p.CQD.FQR", "p.CQH.FQD", "p.CQR.FQR", "p.CQD.FQD", "p.CQH.FQH",
-#   "p.COD.CVR", "p.COH.CVD", "p.COR.CVR", "p.COD.CVD", "p.COH.CVH",
-#   "p.CQD.CVR", "p.CQH.CVD", "p.CQR.CVR", "p.CQD.CVD", "p.CQH.CVH",
-#   "p.CVD.CVR", "p.CVH.CVD", "p.CVR.CVR", "p.CVD.CVD", "p.CVH.CVH",
-#   "p.CVD.FQR", "p.CVH.FQD", "p.CVR.FQR", "p.CVD.FQD", "p.CVH.FQH",
-#   "p.CVD.FVR", "p.CVH.FVD", "p.CVR.FVR", "p.CVD.FVD", "p.CVH.FVH",
-#   "p.CVD.CQR", "p.CVH.CQD", "p.CVR.CQR", "p.CVD.CQD", "p.CVH.CQH"
-# )
+vars <- c("p.NO.NO", "p.NO.CO", "p.NO.CE", "p.NO.NE", 
+          "p.NE.NE", "p.NE.CQ", "p.NE.CE", "p.NE.NQ", 
+          "p.FE.CQ", "p.FE.FE", "p.FE.CE", "p.FE.FQ",
+          "p.NQ.CQ", "p.NQ.CE", "p.NQ.NQ", "p.NQ.NE", 
+          "p.FO.CO", "p.FO.CE", "p.FO.FO", "p.FO.FE",
+          "p.FQ.CQ", "p.FQ.CE", "p.FQ.FQ", "p.FQ.FE", 
+          "p.CO.CO", "p.CO.CE", "p.CO.FO", "p.CO.FE",
+          "p.CQ.CQ", "p.CQ.CE", "p.CQ.FQ", "p.CQ.FE",
+          "p.CE.CQ", "p.CE.CE", "p.CE.FQ", "p.CE.FE")
 # Loop through each variable and expand its matrix
 for (v in vars) {
   # Use get to retrieve the matrix
@@ -339,53 +267,14 @@ for (v in vars) {
   assign(v, expanded_matrix)
 }
 
+#save transition probability matrices
+save(p.NO.NO, p.NO.CO, p.NO.CE, p.NO.NE, 
+     p.NE.NE, p.NE.CQ, p.NE.CE, p.NE.NQ, 
+     p.FE.CQ, p.FE.FE, p.FE.CE, p.FE.FQ,
+     p.NQ.CQ, p.NQ.CE, p.NQ.NQ, p.NQ.NE, 
+     p.FO.CO, p.FO.CE, p.FO.FO, p.FO.FE,
+     p.FQ.CQ, p.FQ.CE, p.FQ.FQ, p.FQ.FE, 
+     p.CO.CO, p.CO.CE, p.CO.FO, p.CO.FE,
+     p.CQ.CQ, p.CQ.CE, p.CQ.FQ, p.CQ.FE,
+     p.CE.CQ, p.CE.CE, p.CE.FQ, p.CE.FE, file=paste0("data/ecig_precomputed_inputs",whichgender,".RData"))
 
-save(p.NO.NO, p.NO.CO, p.NO.CV, p.NO.NV, 
-     p.NV.NV, p.NV.CQ, p.NV.CV, p.NV.NQ, 
-     p.FV.CQ, p.FV.FV, p.FV.CV, p.FV.FQ,
-     p.NQ.CQ, p.NQ.CV, p.NQ.NQ, p.NQ.NV, 
-     p.FO.CO, p.FO.CV, p.FO.FO, p.FO.FV,
-     p.FQ.CQ, p.FQ.CV, p.FQ.FQ, p.FQ.FV, 
-     p.CO.CO, p.CO.CV, p.CO.FO, p.CO.FV,
-     p.CQ.CQ, p.CQ.CV, p.CQ.FQ, p.CQ.FV,
-     p.CV.CQ, p.CV.CV, p.CV.FQ, p.CV.FV, file=paste0("data/ecig_precomputed_inputs",whichgender,".RData"))
-
-# ##generate matrix
-# ##vector of health name states
-# v.en <- c("NHO","NDO","NRO","NHQ","NDQ","NRQ","FHQ","FDQ","FRQ","FHO","FDO","FRO","NHV","NDV","NRV","FHV","FDV","FRV","CHO","CDO","CRO","CHQ","CDQ","CRQ","CHV","CDV","CRV")
-# 
-# ##initiate matrix
-# e.p_t <- matrix(data = 0, nrow = length(v.en), ncol = length(v.en)) 
-# rownames(e.p_t) <-  v.en
-# colnames(e.p_t) <- v.en
-# 
-# ##create list of probability matrices
-# prob_matrices <- list(p.NO.NO, p.NO.CO, p.NO.CV, p.NO.NV, p.NV.NV, p.NV.CQ, p.NV.CV, p.NV.NQ, p.FV.CQ, p.FV.FV, p.FV.CV,p.FV.FQ,p.NQ.CQ,p.NQ.CV,p.NQ.NQ,p.NQ.NV,p.FO.CO,p.FO.CV,p.FO.FO,p.FO.FV,p.FQ.CQ,p.FQ.CV,p.FQ.FQ,p.FQ.FV,p.CO.CO,p.CO.CV,p.CO.FO,p.CO.FV,p.CQ.CQ,p.CQ.CV,p.CQ.FQ,p.CQ.FV,p.CV.CQ,p.CV.CV,p.CV.FQ,p.CV.FV)
-# 
-# ##assign name to each matrice in list
-# names(prob_matrices) <- c("p.NO.NO", "p.NO.CO", "p.NO.CV", "p.NO.NV", "p.NV.NV", "p.NV.CQ", "p.NV.CV", "p.NV.NQ", "p.FV.CQ", "p.FV.FV", "p.FV.CV","p.FV.FQ","p.NQ.CQ","p.NQ.CV","p.NQ.NQ","p.NQ.NV","p.FO.CO","p.FO.CV","p.FO.FO","p.FO.FV","p.FQ.CQ","p.FQ.CV","p.FQ.FQ","p.FQ.FV","p.CO.CO","p.CO.CV","p.CO.FO","p.CO.FV","p.CQ.CQ","p.CQ.CV","p.CQ.FQ","p.CQ.FV","p.CV.CQ","p.CV.CV","p.CV.FQ","p.CV.FV")
-# 
-# 
-# 
-# ##fill empty matrix with transition probabilities
-# fill_pmatrix <- function(age, birth_year){
-#   
-#   ##take in values as numbers
-#   bc <- as.numeric(birth_year)
-#   t <- as.numeric(age)
-#   
-#   int <- 1
-#   ##fill in values into new matrix
-#   for (matrix_name in names(prob_matrices)){
-#     row_name <- substr(matrix_name,3,4)
-#     col_name <- substr(matrix_name,6,7)
-#     row_index <- match(row_name, v.en)
-#     col_index <- match(col_name, v.en)
-#     e.p_t[row_index,col_index] <- prob_matrices[[int]][t,bc]
-#     int <- int + 1
-#   }
-#   return(e.p_t)
-# }
-# 
-# ##first number is age (1=age18-24,2=age25-34,3=age35-90), second number is birth cohort(1=2017-19,2=2019-21)
-# fill_pmatrix(1,2)

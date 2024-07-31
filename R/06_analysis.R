@@ -1,4 +1,4 @@
-## Clean up the workspace and set main working directory
+d## Clean up the workspace and set main working directory
 rm(list = ls()) 
 
 ## RUN MAIN MODEL

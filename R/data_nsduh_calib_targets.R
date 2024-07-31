@@ -31,7 +31,7 @@ save(lst_deptargets,file=paste0("dep_calib_targets_",whichgender,".RData"))
 # vap_microsim targets
 lst_vaptargets <- vector(mode = "list")
 lst_vaptargets$O <- as.matrix(subset(mdseprevs, sex==whichgender & status=="nevervap" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-lst_vaptargets$V <- as.matrix(subset(mdseprevs, sex==whichgender & status=="currentvap" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+lst_vaptargets$E <- as.matrix(subset(mdseprevs, sex==whichgender & status=="currentvap" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
 lst_vaptargets$Q <- as.matrix(subset(mdseprevs, sex==whichgender & status=="formervap" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
 
 # vaping targets for those who vaped past 5+,7+,10+ days 
@@ -44,4 +44,15 @@ lst_cvaptargets$vap10 <- as.matrix(subset(mdseprevs, sex==whichgender & status==
 directory <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/data/"
 save(lst_vaptargets,file=paste0(directory, "vap_calib_targets_",whichgender,".RData"))
 save(lst_cvaptargets,file=paste0(directory, "cvap_calib_targets_",whichgender,".RData"))
+
+# targets for exclcig, exclvap, dual, and neither
+lst_nsduhtargets <- vector(mode = "list")
+lst_nsduhtargets$nsduhexclcig <- as.matrix(subset(mdseprevs, sex==whichgender & status=="exclcig" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+lst_nsduhtargets$nsduhexclvap <- as.matrix(subset(mdseprevs, sex==whichgender & status=="exclvap" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+lst_nsduhtargets$nsduhneither <- as.matrix(subset(mdseprevs, sex==whichgender & status=="neither" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+lst_nsduhtargets$nsduhdual <- as.matrix(subset(mdseprevs, sex==whichgender & status=="dual" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+
+directory <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/data/"
+save(lst_nsduhtargets,file=paste0(directory, "nsduh_general_targets_",whichgender,".RData"))
+
 

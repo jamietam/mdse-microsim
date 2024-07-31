@@ -13,7 +13,7 @@ calib_startyear <-2005
 n.i   <- as.numeric(args[2])                   # number of simulated individuals per run (cohort) - eventually want to run 10,000
 n.t   <- 100                    # time horizon per person, number of years
 #v.n   <- c( "NH","CH","FH","ND","CD","FD","NR","CR","FR","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), "Happy" (H), Depressed (D), "Recovered" (R), Dead (X)
-v.n <- c("NOH","COH","FOH","NOD","COD","FOD","NOR","COR","FOR","NVH","CVH","FVH","NVD","CVD","FVD","NVR","CVR","FVR","NQH","CQH","FQH","NQD","CQD","FQD","NQR","CQR","FQR", "X")
+v.n <- c("NOH","COH","FOH","NOD","COD","FOD","NOR","COR","FOR","NEH","CEH","FEH","NED","CED","FED","NER","CER","FER","NQH","CQH","FQH","NQD","CQD","FQD","NQR","CQR","FQR", "X")
 n.s   <- length(v.n)            # the number of health states
 v.M_1 <- rep("NOH", n.i)         # everyone begins in the Never smoker Never MD state
 
@@ -27,8 +27,12 @@ load(paste0(mainDir,"data/smkdep_calib_targets_",whichgender,".RData")) #lst_smk
 load(paste0(mainDir,"data/vap_calib_targets_",whichgender,".RData")) #lst_vaptargets
 load(paste0(mainDir,"data/cvap_calib_targets_",whichgender,".RData")) #lst_vaptargets
 load(paste0(mainDir,"data/brfss_vap_calib_targets_",whichgender,".RData")) #brfss vaptargets
+load(paste0(mainDir,"data/brfss_general_calib_targets_",whichgender,".RData")) #brfss general targets
+load(paste0(mainDir,"data/nhis_vap_calib_targets_",whichgender,".RData")) #nhis vaptargets
+load(paste0(mainDir,"data/nhis_general_calib_targets_",whichgender,".RData")) #nhis general targets
+load(paste0(mainDir,"data/nsduh_general_targets_",whichgender,".RData")) #nsduh general targets
 
-lst_targets <- c(lst_smktargets,lst_deptargets[2],lst_smkdeptargets, lst_vaptargets, lst_cvaptargets, b_vaptargets)
+lst_targets <- c(lst_smktargets,lst_deptargets[2],lst_smkdeptargets, lst_vaptargets, lst_cvaptargets, b_vaptargets, brfsstargets, n_vaptargets,nhistargets,lst_nsduhtargets)
 lst_calibtargets <- lapply(lst_targets,function(x) x[x[,"survey_year"]<=max(cohorts) & x[,"survey_year"]>=calib_startyear,]) # keep survey years 2016-2020
 
 ## CALIBRATION PARAMETERS - Specify which parameters you want to calibrate (0 vs 1 in column 4), and provide upper and lower bounds for the search algorithm
