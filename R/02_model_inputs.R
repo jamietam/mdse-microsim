@@ -5,7 +5,7 @@ load(paste0(mainDir,"data/dep_precomputed_inputs_",whichgender,".RData"))
 load(paste0(mainDir,"data/smk_precomputed_inputs_",whichgender,".RData")) #lst_smktargets
 load(paste0(mainDir,"data/cuw_inputs_",whichgender,".RData"))
 load(paste0(mainDir,"data/pop_",whichgender,".RData")) # Read in Census population for SAD calculation
-load(paste0(mainDir,"data/ecig_precomputed_inputs",whichgender,".RData"))
+load(paste0(mainDir,"data/ecig_precomputed_inputs_",whichgender,".RData"))
 
 
 cohorts <- 1900:as.numeric(args[3])           # Change from 2016 to 2022 or 2100
@@ -24,15 +24,28 @@ d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by
 load(paste0(mainDir,"data/smk_calib_targets_",whichgender,".RData")) #lst_smktargets
 load(paste0(mainDir,"data/dep_calib_targets_",whichgender,".RData")) #lst_deptargets
 load(paste0(mainDir,"data/smkdep_calib_targets_",whichgender,".RData")) #lst_smkdeptargets
+load(paste0(mainDir,"data/dual_calib_targets_",whichgender,".RData")) #lst_dualtargets
+load(paste0(mainDir,"data/vapdep_calib_targets_",whichgender,".RData")) #lst_vapdeptargets
 load(paste0(mainDir,"data/vap_calib_targets_",whichgender,".RData")) #lst_vaptargets
-load(paste0(mainDir,"data/cvap_calib_targets_",whichgender,".RData")) #lst_vaptargets
+load(paste0(mainDir,"data/cvap_calib_targets_",whichgender,".RData")) #lst_cvaptargets
 load(paste0(mainDir,"data/brfss_vap_calib_targets_",whichgender,".RData")) #brfss vaptargets
 load(paste0(mainDir,"data/brfss_general_calib_targets_",whichgender,".RData")) #brfss general targets
 load(paste0(mainDir,"data/nhis_vap_calib_targets_",whichgender,".RData")) #nhis vaptargets
 load(paste0(mainDir,"data/nhis_general_calib_targets_",whichgender,".RData")) #nhis general targets
 load(paste0(mainDir,"data/nsduh_general_targets_",whichgender,".RData")) #nsduh general targets
 
-lst_targets <- c(lst_smktargets,lst_deptargets[2],lst_smkdeptargets, lst_vaptargets, lst_cvaptargets, b_vaptargets, brfsstargets, n_vaptargets,nhistargets,lst_nsduhtargets)
+lst_targets <- c(lst_smktargets,lst_deptargets[2],lst_dualtargets, lst_vaptargets, lst_smkdeptargets, lst_vapdeptargets, lst_cvaptargets, b_vaptargets, brfsstargets, n_vaptargets,nhistargets,lst_nsduhtargets)
+
+#reorder list
+desired_order <- c("N", "C", "F", "D", "NO", "CO", "FO", "O", "NE", "CE", "FE", "E", "NQ", "CQ", "FQ", "Q", 
+                   "ND", "CD", "FD", "OD", "ED", "QD", "vap5", "vap7", "vap10", "brfssO", "brfssE", "brfssQ",      
+                   "b_exclsmk", "b_exclvap", "b_neither", "b_dual", "nhisO", "nhisE", "nhisQ",       
+                   "n_exclsmk", "n_exclvap", "n_neither", "n_dual", "nsduhexclcig", "nsduhexclvap", "nsduhneither",
+                   "nsduhdual")
+custom_reorder <- function(lst, order) {
+  return(lst[order])
+}
+lst_targets <- custom_reorder(lst_targets, desired_order)
 lst_calibtargets <- lapply(lst_targets,function(x) x[x[,"survey_year"]<=max(cohorts) & x[,"survey_year"]>=calib_startyear,]) # keep survey years 2016-2020
 
 ## CALIBRATION PARAMETERS - Specify which parameters you want to calibrate (0 vs 1 in column 4), and provide upper and lower bounds for the search algorithm

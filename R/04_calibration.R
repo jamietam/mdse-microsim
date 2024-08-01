@@ -3,7 +3,7 @@ rm(list = ls())
 
 ## RUN CALIBRATION
 # mainDir = "/Users/jt936/Dropbox/GitHub/mds-microsim/"
-mainDir = "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/" # Set working directory
+mainDir = "C:/Users/klx3/Dropbox/tobacco-modeling-team/kane/GitHub/mds-microsim/" # Set working directory
 hpc = 0
 source(paste0(mainDir,"R/01_environment.R"), echo=FALSE)
 source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE)

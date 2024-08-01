@@ -4,9 +4,9 @@ library(ggplot2)
 library(ggnewscale)
 ## Run the model ---------------------------------------------------
 model_res<-main_calib(v.params)
-
+s
 v.GOF <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
-for (r in 1:length(lst_calibtargets)){ # sum of squared differences
+for (r in 1:length(model_res)){ # sum of squared differences
   gof<- sum((lst_calibtargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
   v.GOF[r] <-gof 
 }

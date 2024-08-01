@@ -1,5 +1,4 @@
 ##################################### Functions ###########################################
-# TRY THIS AND SEE
 ## MICROSIM FUNCTION ----------------------------------------------------
 # The microsim function keeps track of what happens to each individual during each cycle. 
 # Arguments:  
@@ -69,7 +68,7 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   
   bc1 = bc-1899
   yr = bc + t - 1899
-
+  
   # create matrix of state transition probabilities
   m.p_t <- matrix(data = 0, nrow = length(v.n), ncol = n.i)  
   # give the state names to the rows
@@ -77,225 +76,188 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   
   ##transition probabilities calculations
   #from NHO state
-  m.p_t["NOH", M_t == "NOH"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.NO.CE[t,yr]-p.NO.NE[t,yr]-p.HD[t,bc1])
+  m.p_t["NOH", M_t == "NOH"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.NO.NE[t,yr]-p.HD[t,bc1])
   m.p_t["COH", M_t == "NOH"] <- (1-p.NX[t,bc1])*(p.NC[t,bc1])
-  m.p_t["CEH", M_t == "NOH"] <- (1-p.NX[t,bc1])*(p.NO.CE[t,yr])
   m.p_t["NEH", M_t == "NOH"] <- (1-p.NX[t,bc1])*(p.NO.NE[t,yr])
   m.p_t["NOD", M_t == "NOH"] <- (1-p.NX[t,bc1])*(p.HD[t,bc1])
   m.p_t["X", M_t == "NOH"] <- p.NX[t,bc1]
   
   #from CHO state
-  m.p_t["COH", M_t == "COH"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CO.FE[t,yr]-p.CO.CE[t,yr]-p.HD[t,bc1])
+  m.p_t["COH", M_t == "COH"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CO.CE[t,yr]-p.HD[t,bc1])
   m.p_t["FOH", M_t == "COH"] <- (1-p.CX[t,bc1])*(p.CF[t,bc1])
-  m.p_t["FEH", M_t == "COH"] <- (1-p.CX[t,bc1])*(p.CO.FE[t,yr])
   m.p_t["CEH", M_t == "COH"] <- (1-p.CX[t,bc1])*(p.CO.CE[t,yr])
   m.p_t["COD", M_t == "COH"] <- (1-p.CX[t,bc1])*(p.HD[t,bc1])
   m.p_t["X", M_t == "COH"] <- p.CX[t,bc1]
   
   ##from FHO state
-  m.p_t["FOH", M_t == "FOH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOH"]])*(1-p.FO.CO[t,yr]-p.FO.FE[t,yr]-p.FO.CE[t,yr]-p.HD[t,bc1])
-  m.p_t["COH", M_t == "FOH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOH"]])*(p.FO.CO[t,yr])
+  m.p_t["FOH", M_t == "FOH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOH"]])*(1-p.FO.FE[t,yr]-p.HD[t,bc1])
   m.p_t["FEH", M_t == "FOH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOH"]])*(p.FO.FE[t,yr])
-  m.p_t["CEH", M_t == "FOH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOH"]])*(p.FO.CE[t,yr])
   m.p_t["FOD", M_t == "FOH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOH"]])*(p.HD[t,bc1])
   m.p_t["X", M_t == "FOH"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOH"]]
   
   ##from NHE state
-  m.p_t["NEH", M_t == "NEH"] <- (1-p.NX[t,bc1])*(1-p.NE.CE[t,yr]-p.NE.NQ[t,yr]-p.NE.CQ[t,yr]-p.HD[t, bc1])
+  m.p_t["NEH", M_t == "NEH"] <- (1-p.NX[t,bc1])*(1-p.NE.CE[t,yr]-p.NE.NQ[t,yr]-p.HD[t, bc1])
   m.p_t["CEH", M_t == "NEH"] <- (1-p.NX[t,bc1])*(p.NE.CE[t,yr])
   m.p_t["NQH", M_t == "NEH"] <- (1-p.NX[t,bc1])*(p.NE.NQ[t,yr])
-  m.p_t["CQH", M_t == "NEH"] <- (1-p.NX[t,bc1])*(p.NE.CQ[t,yr])
   m.p_t["NED", M_t == "NEH"] <- (1-p.NX[t,bc1])*(p.HD[t,bc1])
   m.p_t["X" , M_t == "NEH"] <- p.NX[t,bc1]
   
   ##from CHE state
-  m.p_t["CEH", M_t == "CEH"] <- (1-p.CX[t,bc1])*(1-p.CE.CQ[t,yr]-p.CE.FE[t,yr]-p.CE.FQ[t,yr]-p.HD[t,bc1])
+  m.p_t["CEH", M_t == "CEH"] <- (1-p.CX[t,bc1])*(1-p.CE.CQ[t,yr]-p.CE.FE[t,yr]-p.HD[t,bc1])
   m.p_t["FEH", M_t == "CEH"] <- (1-p.CX[t,bc1])*(p.CE.FE[t,yr])
-  m.p_t["FQH", M_t == "CEH"] <- (1-p.CX[t,bc1])*(p.CE.FQ[t,yr])
   m.p_t["CQH", M_t == "CEH"] <- (1-p.CX[t,bc1])*(p.CE.CQ[t,yr])
   m.p_t["CED", M_t == "CEH"] <- (1-p.CX[t,bc1])*(p.HD[t,bc1])
   m.p_t["X", M_t == "CEH"] <- p.CX[t,bc1]
   
   ##from FHE state
-  m.p_t["FEH", M_t == "FEH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FEH"]])*(1-p.FE.FQ[t,yr]-p.FE.CQ[t,yr]-p.FE.CE[t,yr]-p.HD[t,bc1])
+  m.p_t["FEH", M_t == "FEH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FEH"]])*(1-p.FE.FQ[t,yr]-p.HD[t,bc1])
   m.p_t["FQH", M_t == "FEH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FEH"]])*(p.FE.FQ[t,yr])
-  m.p_t["CQH", M_t == "FEH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FEH"]])*(p.FE.CQ[t,yr])
-  m.p_t["CEH", M_t == "FEH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FEH"]])*(p.FE.CE[t,yr])
   m.p_t["FED", M_t == "FEH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FEH"]])*(p.HD[t,bc1])
   m.p_t["X", M_t == "FEH"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FEH"]]
   
   ##from NHQ state
-  m.p_t["NQH", M_t == "NQH"] <- (1-p.NX[t,bc1])*(1-p.NQ.CQ[t,yr]-p.NQ.CE[t,yr]-p.NQ.NE[t,yr]-p.HD[t,bc1])
+  m.p_t["NQH", M_t == "NQH"] <- (1-p.NX[t,bc1])*(1-p.NQ.CQ[t,yr]-p.NQ.NE[t,yr]-p.HD[t,bc1])
   m.p_t["CQH", M_t == "NQH"] <- (1-p.NX[t,bc1])*(p.NQ.CQ[t,yr])
-  m.p_t["CEH", M_t == "NQH"] <- (1-p.NX[t,bc1])*(p.NQ.CE[t,yr])
   m.p_t["NEH", M_t == "NQH"] <- (1-p.NX[t,bc1])*(p.NQ.NE[t,yr])
   m.p_t["NQD", M_t == "NQH"] <- (1-p.NX[t,bc1])*(p.HD[t,bc1])
   m.p_t["X", M_t == "NQH"] <- p.NX[t,bc1]
   
   ##from CHQ state
-  m.p_t["CQH", M_t == "CQH"] <- (1-p.CX[t,bc1])*(1-p.CQ.FQ[t,yr]-p.CQ.FE[t,yr]-p.CQ.CE[t,yr]-p.HD[t,bc1])
+  m.p_t["CQH", M_t == "CQH"] <- (1-p.CX[t,bc1])*(1-p.CQ.FQ[t,yr]-p.HD[t,bc1])
   m.p_t["FQH", M_t == "CQH"] <- (1-p.CX[t,bc1])*(p.CQ.FQ[t,yr])
-  m.p_t["FEH", M_t == "CQH"] <- (1-p.CX[t,bc1])*(p.CQ.FE[t,yr])
-  m.p_t["CEH", M_t == "CQH"] <- (1-p.CX[t,bc1])*(p.CQ.CE[t,yr])
   m.p_t["CQD", M_t == "CQH"] <- (1-p.CX[t,bc1])*(p.HD[t,bc1])
   m.p_t["X", M_t == "CQH"] <- p.CX[t,bc1]
   
   ##from FHQ state
-  m.p_t["FQH", M_t == "FQH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQH"]])*(1-p.FQ.FE[t,yr]-p.FQ.CE[t,yr]-p.FQ.CQ[t,yr]-p.HD[t,bc1])
+  m.p_t["FQH", M_t == "FQH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQH"]])*(1-p.FQ.FE[t,yr]-p.HD[t,bc1])
   m.p_t["FEH", M_t == "FQH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQH"]])*(p.FQ.FE[t,yr])
-  m.p_t["CEH", M_t == "FQH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQH"]])*(p.FQ.CE[t,yr])
-  m.p_t["CQH", M_t == "FQH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQH"]])*(p.FQ.CQ[t,yr])
   m.p_t["FQD", M_t == "FQH"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQH"]])*(p.HD[t,bc1])
   m.p_t["X", M_t == "FQH"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQH"]]
   
   ##from NDO state
-  m.p_t["NOD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.NO.CE[t,yr]-p.NO.NE[t,yr]-p.DR[t])
+  m.p_t["NOD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.NO.NE[t,yr]-p.DR[t])
   m.p_t["COD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(p.NC[t,bc1])
-  m.p_t["CED", M_t == "NOD"] <- (1-p.NX[t,bc1])*(p.NO.CE[t,yr])
   m.p_t["NED", M_t == "NOD"] <- (1-p.NX[t,bc1])*(p.NO.NE[t,yr])
   m.p_t["NOR", M_t == "NOD"] <- (1-p.NX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "NOD"] <- p.NX[t,bc1]
   
   ##from CDO state
-  m.p_t["COD", M_t == "COD"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CO.FE[t,yr]-p.CO.CE[t,yr]-p.DR[t])
+  m.p_t["COD", M_t == "COD"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CO.CE[t,yr]-p.DR[t])
   m.p_t["FOD", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.CF[t,bc1])
-  m.p_t["FED", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.CO.FE[t,yr])
   m.p_t["CED", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.CO.CE[t,yr])
   m.p_t["COR", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "COD"] <- p.CX[t,bc1]
   
   ##from FDO state
-  m.p_t["FOD", M_t == "FOD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]])*(1-p.FO.FE[t,yr]-p.FO.CE[t,yr]-p.FO.CO[t,yr]-p.DR[t])
+  m.p_t["FOD", M_t == "FOD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]])*(1-p.FO.FE[t,yr]-p.DR[t])
   m.p_t["FED", M_t == "FOD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]])*(p.FO.FE[t,yr])
-  m.p_t["CED", M_t == "FOD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]])*(p.FO.CE[t,yr])
-  m.p_t["COD", M_t == "FOD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]])*(p.FO.CO[t,yr])
   m.p_t["FOR", M_t == "FOD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]])*(p.DR[t])
   m.p_t["X", M_t == "FOD"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]]
   
   ##from NDE state
-  m.p_t["NED", M_t == "NED"] <- (1-p.NX[t,bc1])*(1-p.NE.CE[t,yr]-p.NE.NQ[t,yr]-p.NE.CQ[t,yr]-p.DR[t])
+  m.p_t["NED", M_t == "NED"] <- (1-p.NX[t,bc1])*(1-p.NE.CE[t,yr]-p.NE.NQ[t,yr]-p.DR[t])
   m.p_t["CED", M_t == "NED"] <- (1-p.NX[t,bc1])*(p.NE.CE[t,yr])
-  m.p_t["CQD", M_t == "NED"] <- (1-p.NX[t,bc1])*(p.NE.CQ[t,yr])
   m.p_t["NQD", M_t == "NED"] <- (1-p.NX[t,bc1])*(p.NE.NQ[t,yr])
   m.p_t["NER", M_t == "NED"] <- (1-p.NX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "NED"] <- p.NX[t,bc1]
   
   ##from CDE state
-  m.p_t["CED", M_t == "CED"] <- (1-p.CX[t,bc1])*(1-p.CE.FE[t,yr]-p.CE.FQ[t,yr]-p.CE.CQ[t,yr]-p.DR[t])
+  m.p_t["CED", M_t == "CED"] <- (1-p.CX[t,bc1])*(1-p.CE.FE[t,yr]-p.CE.CQ[t,yr]-p.DR[t])
   m.p_t["FED", M_t == "CED"] <- (1-p.CX[t,bc1])*(p.CE.FE[t,yr])
-  m.p_t["FQD", M_t == "CED"] <- (1-p.CX[t,bc1])*(p.CE.FQ[t,yr])
   m.p_t["CQD", M_t == "CED"] <- (1-p.CX[t,bc1])*(p.CE.CQ[t,yr])
   m.p_t["CER", M_t == "CED"] <- (1-p.CX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "CED"] <- p.CX[t,bc1]
   
   ##from FDE state
-  m.p_t["FED", M_t =="FED"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FED"]])*(1-p.FE.FQ[t,yr]-p.FE.CQ[t,yr]-p.FE.CE[t,yr]-p.DR[t])
+  m.p_t["FED", M_t =="FED"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FED"]])*(1-p.FE.FQ[t,yr]-p.DR[t])
   m.p_t["FQD", M_t =="FED"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FED"]])*(p.FE.FQ[t,yr])
-  m.p_t["CQD", M_t =="FED"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FED"]])*(p.FE.CQ[t,yr])
-  m.p_t["CED", M_t =="FED"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FED"]])*(p.FE.CE[t,yr])
   m.p_t["FER", M_t =="FED"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FED"]])*(p.DR[t])
   m.p_t["X", M_t == "FED"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FED"]]
   
   ##from NDQ state
-  m.p_t["NQD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(1-p.NQ.NE[t,yr]-p.NQ.CE[t,yr]-p.NQ.CQ[t,yr]-p.DR[t])
+  m.p_t["NQD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(1-p.NQ.NE[t,yr]-p.NQ.CQ[t,yr]-p.DR[t])
   m.p_t["NED", M_t == "NQD"] <- (1-p.NX[t,bc1])*(p.NQ.NE[t,yr])
-  m.p_t["CED", M_t == "NQD"] <- (1-p.NX[t,bc1])*(p.NQ.CE[t,yr])
   m.p_t["CQD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(p.NQ.CQ[t,yr])
   m.p_t["NQR", M_t == "NQD"] <- (1-p.NX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "NQD"] <- p.NX[t,bc1]
   
   ##from CDQ state
-  m.p_t["CQD", M_t == "CQD"] <- (1-p.CX[t,bc1])*(1-p.CQ.FQ[t,yr]-p.CQ.FE[t,yr]-p.CQ.CE[t,yr]-p.DR[t])
+  m.p_t["CQD", M_t == "CQD"] <- (1-p.CX[t,bc1])*(1-p.CQ.FQ[t,yr]-p.CQ.CE[t,yr]-p.DR[t])
   m.p_t["FQD", M_t == "CQD"] <- (1-p.CX[t,bc1])*(p.CQ.FQ[t,yr])
-  m.p_t["FED", M_t == "CQD"] <- (1-p.CX[t,bc1])*(p.CQ.FE[t,yr])
   m.p_t["CED", M_t == "CQD"] <- (1-p.CX[t,bc1])*(p.CQ.CE[t,yr])
   m.p_t["CQR", M_t == "CQD"] <- (1-p.CX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "CQD"] <- p.CX[t,bc1]
   
   ##from FDQ state
-  m.p_t["FQD", M_t == "FQD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQD"]])*(1-p.FQ.FE[t,yr]-p.FQ.CE[t,yr]-p.FQ.CQ[t,yr]-p.DR[t])
+  m.p_t["FQD", M_t == "FQD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQD"]])*(1-p.FQ.FE[t,yr]-p.DR[t])
   m.p_t["FED", M_t == "FQD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQD"]])*(p.FQ.FE[t,yr])
-  m.p_t["CED", M_t == "FQD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQD"]])*(p.FQ.CE[t,yr])
-  m.p_t["CQD", M_t == "FQD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQD"]])*(p.FQ.CQ[t,yr])
   m.p_t["FQR", M_t == "FQD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQD"]])*(p.DR[t])
   m.p_t["X", M_t == "FQD"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQD"]]
   
   ##from NRO state
-  m.p_t["NOR", M_t == "NOR"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.NO.CE[t,yr]-p.NO.NE[t,yr]-p.RD[t])
+  m.p_t["NOR", M_t == "NOR"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.NO.NE[t,yr]-p.RD[t])
   m.p_t["COR", M_t == "NOR"] <- (1-p.NX[t,bc1])*(p.NC[t,bc1])
-  m.p_t["CER", M_t == "NOR"] <- (1-p.NX[t,bc1])*(p.NO.CE[t,yr])
   m.p_t["NER", M_t == "NOR"] <- (1-p.NX[t,bc1])*(p.NO.NE[t,yr])
   m.p_t["NOD", M_t == "NOR"] <- (1-p.NX[t,bc1])*(p.RD[t])
   m.p_t["X", M_t == "NOR"] <- p.NX[t,bc1]
   
   ##from CRO state
-  m.p_t["COR", M_t == "COR"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CO.FE[t,yr]-p.CO.CE[t,yr]-p.RD[t])
+  m.p_t["COR", M_t == "COR"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CO.CE[t,yr]-p.RD[t])
   m.p_t["FOR", M_t == "COR"] <- (1-p.CX[t,bc1])*(p.CF[t,bc1])
-  m.p_t["FER", M_t == "COR"] <- (1-p.CX[t,bc1])*(p.CO.FE[t,yr])
   m.p_t["CER", M_t == "COR"] <- (1-p.CX[t,bc1])*(p.CO.CE[t,yr])
   m.p_t["COD", M_t == "COR"] <- (1-p.CX[t,bc1])*(p.RD[t])
   m.p_t["X", M_t == "COR"] <- p.CX[t,bc1]
   
   ##from FRO state
-  m.p_t["FOR", M_t == "FOR"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOR"]])*(1-p.FO.FE[t,yr]-p.FO.CE[t,yr]-p.FO.CO[t,yr]-p.RD[t])
+  m.p_t["FOR", M_t == "FOR"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOR"]])*(1-p.FO.FE[t,yr]-p.RD[t])
   m.p_t["FER", M_t == "FOR"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOR"]])*(p.FO.FE[t,yr])
-  m.p_t["CER", M_t == "FOR"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOR"]])*(p.FO.CE[t,yr])
-  m.p_t["COR", M_t == "FOR"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOR"]])*(p.FO.CO[t,yr])
   m.p_t["FOD", M_t == "FOR"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOR"]])*(p.RD[t])
   m.p_t["X", M_t == "FOR"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOR"]]
   
   ##from NRE state
-  m.p_t["NER", M_t == "NER"] <- (1-p.NX[t,bc1])*(1-p.NE.CE[t,yr]-p.NE.CQ[t,yr]-p.NE.NQ[t,yr]-p.RD[t])
+  m.p_t["NER", M_t == "NER"] <- (1-p.NX[t,bc1])*(1-p.NE.CE[t,yr]-p.NE.NQ[t,yr]-p.RD[t])
   m.p_t["CER", M_t == "NER"] <- (1-p.NX[t,bc1])*(p.NE.CE[t,yr])
-  m.p_t["CQR", M_t == "NER"] <- (1-p.NX[t,bc1])*(p.NE.CQ[t,yr])
   m.p_t["NQR", M_t == "NER"] <- (1-p.NX[t,bc1])*(p.NE.NQ[t,yr])
   m.p_t["NED", M_t == "NER"] <- (1-p.NX[t,bc1])*(p.RD[t])
   m.p_t["X", M_t == "NER"] <- p.NX[t,bc1]
   
   ##from CRE state
-  m.p_t["CER", M_t == "CER"] <- (1-p.CX[t,bc1])*(1-p.CE.FE[t,yr]-p.CE.FQ[t,yr]-p.CE.CQ[t,yr]-p.RD[t])
+  m.p_t["CER", M_t == "CER"] <- (1-p.CX[t,bc1])*(1-p.CE.FE[t,yr]-p.CE.CQ[t,yr]-p.RD[t])
   m.p_t["FER", M_t == "CER"] <- (1-p.CX[t,bc1])*(p.CE.FE[t,yr])
-  m.p_t["FQR", M_t == "CER"] <- (1-p.CX[t,bc1])*(p.CE.FQ[t,yr])
   m.p_t["CQR", M_t == "CER"] <- (1-p.CX[t,bc1])*(p.CE.CQ[t,yr])
   m.p_t["CED", M_t == "CER"] <- (1-p.CX[t,bc1])*(p.RD[t])
   m.p_t["X", M_t == "CER"] <- p.CX[t,bc1]
   
   ##from FRE state
-  m.p_t["FER", M_t == "FER"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FER"]])*(1-p.FE.FQ[t,yr]-p.FE.CQ[t,yr]-p.FE.CE[t,yr]-p.RD[t])
+  m.p_t["FER", M_t == "FER"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FER"]])*(1-p.FE.FQ[t,yr]-p.RD[t])
   m.p_t["FQR", M_t == "FER"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FER"]])*(p.FE.FQ[t,yr])
-  m.p_t["CQR", M_t == "FER"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FER"]])*(p.FE.CQ[t,yr])
-  m.p_t["CER", M_t == "FER"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FER"]])*(p.FE.CE[t,yr])
   m.p_t["FED", M_t == "FER"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FER"]])*(p.RD[t])
   m.p_t["X", M_t == "FER"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FER"]]
   
   ##from NRQ state
-  m.p_t["NQR", M_t == "NQR"] <- (1-p.NX[t,bc1])*(1-p.NQ.CQ[t,yr]-p.NQ.CE[t,yr]-p.NQ.NE[t,yr]-p.RD[t])
+  m.p_t["NQR", M_t == "NQR"] <- (1-p.NX[t,bc1])*(1-p.NQ.CQ[t,yr]-p.NQ.NE[t,yr]-p.RD[t])
   m.p_t["CQR", M_t == "NQR"] <- (1-p.NX[t,bc1])*(p.NQ.CQ[t,yr])
-  m.p_t["CER", M_t == "NQR"] <- (1-p.NX[t,bc1])*(p.NQ.CE[t,yr])
   m.p_t["NER", M_t == "NQR"] <- (1-p.NX[t,bc1])*(p.NQ.NE[t,yr])
   m.p_t["NQD", M_t == "NQR"] <- (1-p.NX[t,bc1])*(p.RD[t])
   m.p_t["X", M_t == "NQR"] <- p.NX[t,bc1]
   
   ##from CRQ state
-  m.p_t["CQR", M_t == "CQR"] <- (1-p.CX[t,bc1])*(1-p.CQ.FQ[t,yr]-p.CQ.FE[t,yr]-p.CQ.CE[t,yr]-p.RD[t])
+  m.p_t["CQR", M_t == "CQR"] <- (1-p.CX[t,bc1])*(1-p.CQ.FQ[t,yr]-p.CQ.CE[t,yr]-p.RD[t])
   m.p_t["FQR", M_t == "CQR"] <- (1-p.CX[t,bc1])*(p.CQ.FQ[t,yr])
-  m.p_t["FER", M_t == "CQR"] <- (1-p.CX[t,bc1])*(p.CQ.FE[t,yr])
   m.p_t["CER", M_t == "CQR"] <- (1-p.CX[t,bc1])*(p.CQ.CE[t,yr])
   m.p_t["CQD", M_t == "CQR"] <- (1-p.CX[t,bc1])*(p.RD[t])
   m.p_t["X", M_t == "CQR"] <- p.CX[t,bc1]
   
   ##from FRQ state
-  m.p_t["FQR", M_t == "FQR"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQR"]])*(1-p.FQ.FE[t,yr]-p.FQ.CE[t,yr]-p.FQ.CQ[t,yr]-p.RD[t])
+  m.p_t["FQR", M_t == "FQR"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQR"]])*(1-p.FQ.FE[t,yr]-p.RD[t])
   m.p_t["FER", M_t == "FQR"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQR"]])*(p.FQ.FE[t,yr])
-  m.p_t["CER", M_t == "FQR"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQR"]])*(p.FQ.CE[t,yr])
-  m.p_t["CQR", M_t == "FQR"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQR"]])*(p.FQ.CQ[t,yr])
   m.p_t["FQD", M_t == "FQR"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQR"]])*(p.RD[t])
   m.p_t["X", M_t == "FQR"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQR"]]
   
   
   m.p_t["X" , M_t == "X"] <-  1		
   
- 
+  
   # print birth cohort and age for debugging problematic transition probabilities
   
   # check_transition_probability(m.p_t,verbose=FALSE)
@@ -313,20 +275,20 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
 
 ## COSTS FUNCTION ----------------------------------------------------
 costs <- function(M_t,t) { # gets the costs for each person based on health state M and age t
-    
-    m.c_t <- matrix(data = 0, nrow = n.i, ncol = 1)  
   
-    m.c_t[M_t =="NH"] <- c.NH[t] 
-    m.c_t[M_t =="CH"] <- c.CH[t]
-    m.c_t[M_t =="FH"] <- c.FH[t]
-    m.c_t[M_t =="ND"] <- c.ND[t]
-    m.c_t[M_t =="CD"] <- c.CD[t]
-    m.c_t[M_t =="FD"] <- c.FD[t]
-    m.c_t[M_t =="NR"] <- c.NR[t]
-    m.c_t[M_t =="CR"] <- c.CR[t]
-    m.c_t[M_t =="FR"] <- c.FR[t]
-    m.c_t[M_t =="X"] <- 0
-    
+  m.c_t <- matrix(data = 0, nrow = n.i, ncol = 1)  
+  
+  m.c_t[M_t =="NH"] <- c.NH[t] 
+  m.c_t[M_t =="CH"] <- c.CH[t]
+  m.c_t[M_t =="FH"] <- c.FH[t]
+  m.c_t[M_t =="ND"] <- c.ND[t]
+  m.c_t[M_t =="CD"] <- c.CD[t]
+  m.c_t[M_t =="FD"] <- c.FD[t]
+  m.c_t[M_t =="NR"] <- c.NR[t]
+  m.c_t[M_t =="CR"] <- c.CR[t]
+  m.c_t[M_t =="FR"] <- c.FR[t]
+  m.c_t[M_t =="X"] <- 0
+  
   return(m.c_t) 
 }      
 
@@ -345,7 +307,7 @@ utils <- function(M_t,t) { # gets the utilities for each person based on health 
   m.u_t[M_t =="CR"] <- u.CR[t]
   m.u_t[M_t =="FR"] <- u.FR[t]
   m.u_t[M_t =="X"] <- 0
-
+  
   return(m.u_t) 
 }      
 
@@ -438,7 +400,7 @@ f_gof <- function(v.params){
   
   # Calibrate to N, C, F, D and ND/D, CD/D, FD/D prevalences
   for (r in 1:length(lst_calibtargets)){ # sum of squared differences
-  # for (r in 1:4){
+    # for (r in 1:4){
     gof<- sum((lst_calibtargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
     v.GOF[r] <-gof
   }
@@ -512,25 +474,21 @@ main_calib = function(v.params) { # v.params: run model for parameter calibratio
   rr.DX = c(rep(1,18),rep(rr.DX_18.25,8),rep(rr.DX_26.34,9),rep(rr.DX_35.49,15),rep(rr.DX_50.64,15),rep(rr.DX_65.99,34),1)
   
   # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
- m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
- .export=c('mds_microsim','probs','get_prevs',
-           'n.i','n.t','v.n','n.s','v.M_1',
-           'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
-           'rr.DX','p.HD', 'p.DR', 'p.RD',
-           'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD',
-           'p.NO.NO', 'p.NO.CO', 'p.NO.CE', 'p.NO.NE', 
-           'p.NE.NE', 'p.NE.CQ', 'p.NE.CE', 'p.NE.NQ', 
-           'p.FE.CQ', 'p.FE.FE', 'p.FE.CE', 'p.FE.FQ',
-           'p.NQ.CQ', 'p.NQ.CE', 'p.NQ.NQ', 'p.NQ.NE', 
-           'p.FO.CO', 'p.FO.CE', 'p.FO.FO', 'p.FO.FE',
-           'p.FQ.CQ', 'p.FQ.CE', 'p.FQ.FQ', 'p.FQ.FE', 
-           'p.CO.CO', 'p.CO.CE', 'p.CO.FO', 'p.CO.FE',
-           'p.CQ.CQ', 'p.CQ.CE', 'p.CQ.FQ', 'p.CQ.FE',
-           'p.CE.CQ', 'p.CE.CE', 'p.CE.FQ', 'p.CE.FE')) %dopar% {
-             mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
- }
+  m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
+                 .export=c('mds_microsim','probs','get_prevs',
+                           'n.i','n.t','v.n','n.s','v.M_1',
+                           'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
+                           'rr.DX','p.HD', 'p.DR', 'p.RD',
+                           'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD',
+                           'p.NO.NE', 'p.CO.CE', 'p.FO.FE',
+                           'p.NE.NQ', 'p.CE.CQ', 'p.FE.FQ',
+                           'p.NQ.NE', 'p.CQ.CE', 'p.FQ.FE',
+                           'p.NO.CO', 'p.NE.CE', 'p.NQ.CQ', 
+                           'p.CO.FO', 'p.CQ.FQ', 'p.CE.FE')) %dopar% {
+                             mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
+                           }
   # run in serial for debugging:
- #m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
+  #m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
   
   # Convert matrix from cohort-age to cohort-calendaryear (cy)
   m.M_cy <- matrix(nrow = n.i*length(cohorts), ncol = (length(cohorts)+100))
@@ -628,15 +586,11 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
                            'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
                            'rr.DX','p.HD', 'p.DR', 'p.RD',
                            'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD',
-                           'p.NO.NO', 'p.NO.CO', 'p.NO.CE', 'p.NO.NE', 
-                           'p.NE.NE', 'p.NE.CQ', 'p.NE.CE', 'p.NE.NQ', 
-                           'p.FE.CQ', 'p.FE.FE', 'p.FE.CE', 'p.FE.FQ',
-                           'p.NQ.CQ', 'p.NQ.CE', 'p.NQ.NQ', 'p.NQ.NE', 
-                           'p.FO.CO', 'p.FO.CE', 'p.FO.FO', 'p.FO.FE',
-                           'p.FQ.CQ', 'p.FQ.CE', 'p.FQ.FQ', 'p.FQ.FE', 
-                           'p.CO.CO', 'p.CO.CE', 'p.CO.FO', 'p.CO.FE',
-                           'p.CQ.CQ', 'p.CQ.CE', 'p.CQ.FQ', 'p.CQ.FE',
-                           'p.CE.CQ', 'p.CE.CE', 'p.CE.FQ', 'p.CE.FE')) %dopar% {
+                           'p.NO.NE', 'p.CO.CE', 'p.FO.FE',
+                           'p.NE.NQ', 'p.CE.CQ', 'p.FE.FQ',
+                           'p.NQ.NE', 'p.CQ.CE', 'p.FQ.FE',
+                           'p.NO.CO', 'p.NE.CE', 'p.NQ.CQ', 
+                           'p.CO.FO', 'p.CQ.FQ', 'p.CE.FE')) %dopar% {
                              mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
                            }
   # run in serial for debugging:
@@ -711,7 +665,7 @@ main = function(v.params, v.policy) { # v.params: run model for parameter calibr
   prev_cs <- prev_cs[as.character(age_range), as.character(year_range)]
   prev_fs <- prev_fs[as.character(age_range), as.character(year_range)]
   SAD <- colSums(pop[,as.character(year_range)] * (prev_cs * (deathrates_cs[,as.character(year_range)] - deathrates_ns[,as.character(year_range)]) + 
-                          prev_fs * (deathrates_fs[,as.character(year_range)] - deathrates_ns[,as.character(year_range)])))
+                                                     prev_fs * (deathrates_fs[,as.character(year_range)] - deathrates_ns[,as.character(year_range)])))
   
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer
