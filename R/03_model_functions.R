@@ -96,15 +96,15 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FOH"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOH"]]
   
   ##from NHE state
-  m.p_t["NEH", M_t == "NEH"] <- (1-p.NX[t,bc1])*(1-p.NE.CE[t,yr]-p.NE.NQ[t,yr]-p.HD[t, bc1])
-  m.p_t["CEH", M_t == "NEH"] <- (1-p.NX[t,bc1])*(p.NE.CE[t,yr])
+  m.p_t["NEH", M_t == "NEH"] <- (1-p.NX[t,bc1])*(1-rr.NE.CE[t,yr]*p.NC[t,bc1]-p.NE.NQ[t,yr]-p.HD[t, bc1])
+  m.p_t["CEH", M_t == "NEH"] <- (1-p.NX[t,bc1])*(rr.NE.CE[t,yr]*p.NC[t,bc1])
   m.p_t["NQH", M_t == "NEH"] <- (1-p.NX[t,bc1])*(p.NE.NQ[t,yr])
   m.p_t["NED", M_t == "NEH"] <- (1-p.NX[t,bc1])*(p.HD[t,bc1])
   m.p_t["X" , M_t == "NEH"] <- p.NX[t,bc1]
   
   ##from CHE state
-  m.p_t["CEH", M_t == "CEH"] <- (1-p.CX[t,bc1])*(1-p.CE.CQ[t,yr]-p.CE.FE[t,yr]-p.HD[t,bc1])
-  m.p_t["FEH", M_t == "CEH"] <- (1-p.CX[t,bc1])*(p.CE.FE[t,yr])
+  m.p_t["CEH", M_t == "CEH"] <- (1-p.CX[t,bc1])*(1-p.CE.CQ[t,yr]-rr.CE.FE[t,yr]*p.CF[t,bc1]-p.HD[t,bc1])
+  m.p_t["FEH", M_t == "CEH"] <- (1-p.CX[t,bc1])*(rr.CE.FE[t,yr]*p.CF[t,bc1])
   m.p_t["CQH", M_t == "CEH"] <- (1-p.CX[t,bc1])*(p.CE.CQ[t,yr])
   m.p_t["CED", M_t == "CEH"] <- (1-p.CX[t,bc1])*(p.HD[t,bc1])
   m.p_t["X", M_t == "CEH"] <- p.CX[t,bc1]
@@ -116,16 +116,16 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FEH"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FEH"]]
   
   ##from NHQ state
-  m.p_t["NQH", M_t == "NQH"] <- (1-p.NX[t,bc1])*(1-p.NQ.CQ[t,yr]-p.NQ.NE[t,yr]-p.HD[t,bc1])
-  m.p_t["CQH", M_t == "NQH"] <- (1-p.NX[t,bc1])*(p.NQ.CQ[t,yr])
+  m.p_t["NQH", M_t == "NQH"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.NQ.NE[t,yr]-p.HD[t,bc1])
+  m.p_t["CQH", M_t == "NQH"] <- (1-p.NX[t,bc1])*(p.NC[t,bc1])
   m.p_t["NEH", M_t == "NQH"] <- (1-p.NX[t,bc1])*(p.NQ.NE[t,yr])
   m.p_t["NQD", M_t == "NQH"] <- (1-p.NX[t,bc1])*(p.HD[t,bc1])
   m.p_t["X", M_t == "NQH"] <- p.NX[t,bc1]
   
   ##from CHQ state
-  m.p_t["CQH", M_t == "CQH"] <- (1-p.CX[t,bc1])*(1-p.CQ.FQ[t,yr]-p.HD[t,bc1])
-  m.p_t["FQH", M_t == "CQH"] <- (1-p.CX[t,bc1])*(p.CQ.FQ[t,yr])
-  m.p_t["CQD", M_t == "CQH"] <- (1-p.CX[t,bc1])*(p.HD[t,bc1])
+  m.p_t["CQH", M_t == "CQH"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.HD[t,bc1])
+  m.p_t["FQH", M_t == "CQH"] <- (1-p.CX[t,bc1])*p.CF[t,bc1]
+  m.p_t["CQD", M_t == "CQH"] <- (1-p.CX[t,bc1])*p.HD[t,bc1]
   m.p_t["X", M_t == "CQH"] <- p.CX[t,bc1]
   
   ##from FHQ state
@@ -155,15 +155,15 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FOD"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]]
   
   ##from NDE state
-  m.p_t["NED", M_t == "NED"] <- (1-p.NX[t,bc1])*(1-p.NE.CE[t,yr]-p.NE.NQ[t,yr]-p.DR[t])
-  m.p_t["CED", M_t == "NED"] <- (1-p.NX[t,bc1])*(p.NE.CE[t,yr])
+  m.p_t["NED", M_t == "NED"] <- (1-p.NX[t,bc1])*(1-rr.NE.CE[t,yr]*p.NC[t,bc1]-p.NE.NQ[t,yr]-p.DR[t])
+  m.p_t["CED", M_t == "NED"] <- (1-p.NX[t,bc1])*(rr.NE.CE[t,yr]*p.NC[t,bc1])
   m.p_t["NQD", M_t == "NED"] <- (1-p.NX[t,bc1])*(p.NE.NQ[t,yr])
   m.p_t["NER", M_t == "NED"] <- (1-p.NX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "NED"] <- p.NX[t,bc1]
   
   ##from CDE state
-  m.p_t["CED", M_t == "CED"] <- (1-p.CX[t,bc1])*(1-p.CE.FE[t,yr]-p.CE.CQ[t,yr]-p.DR[t])
-  m.p_t["FED", M_t == "CED"] <- (1-p.CX[t,bc1])*(p.CE.FE[t,yr])
+  m.p_t["CED", M_t == "CED"] <- (1-p.CX[t,bc1])*(1-rr.CE.FE[t,yr]*p.CF[t,bc1]-p.CE.CQ[t,yr]-p.DR[t])
+  m.p_t["FED", M_t == "CED"] <- (1-p.CX[t,bc1])*(rr.CE.FE[t,yr]*p.CF[t,bc1])
   m.p_t["CQD", M_t == "CED"] <- (1-p.CX[t,bc1])*(p.CE.CQ[t,yr])
   m.p_t["CER", M_t == "CED"] <- (1-p.CX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "CED"] <- p.CX[t,bc1]
@@ -175,15 +175,15 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FED"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FED"]]
   
   ##from NDQ state
-  m.p_t["NQD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(1-p.NQ.NE[t,yr]-p.NQ.CQ[t,yr]-p.DR[t])
+  m.p_t["NQD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(1-p.NQ.NE[t,yr]-p.NC[t,bc1]-p.DR[t])
   m.p_t["NED", M_t == "NQD"] <- (1-p.NX[t,bc1])*(p.NQ.NE[t,yr])
-  m.p_t["CQD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(p.NQ.CQ[t,yr])
+  m.p_t["CQD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(p.NC[t,bc1])
   m.p_t["NQR", M_t == "NQD"] <- (1-p.NX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "NQD"] <- p.NX[t,bc1]
   
   ##from CDQ state
-  m.p_t["CQD", M_t == "CQD"] <- (1-p.CX[t,bc1])*(1-p.CQ.FQ[t,yr]-p.CQ.CE[t,yr]-p.DR[t])
-  m.p_t["FQD", M_t == "CQD"] <- (1-p.CX[t,bc1])*(p.CQ.FQ[t,yr])
+  m.p_t["CQD", M_t == "CQD"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CQ.CE[t,yr]-p.DR[t])
+  m.p_t["FQD", M_t == "CQD"] <- (1-p.CX[t,bc1])*p.CF[t,bc1]
   m.p_t["CED", M_t == "CQD"] <- (1-p.CX[t,bc1])*(p.CQ.CE[t,yr])
   m.p_t["CQR", M_t == "CQD"] <- (1-p.CX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "CQD"] <- p.CX[t,bc1]
@@ -215,15 +215,15 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FOR"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOR"]]
   
   ##from NRE state
-  m.p_t["NER", M_t == "NER"] <- (1-p.NX[t,bc1])*(1-p.NE.CE[t,yr]-p.NE.NQ[t,yr]-p.RD[t])
-  m.p_t["CER", M_t == "NER"] <- (1-p.NX[t,bc1])*(p.NE.CE[t,yr])
+  m.p_t["NER", M_t == "NER"] <- (1-p.NX[t,bc1])*(1-rr.NE.CE[t,yr]*p.NC[t,bc1]-p.NE.NQ[t,yr]-p.RD[t])
+  m.p_t["CER", M_t == "NER"] <- (1-p.NX[t,bc1])*(rr.NE.CE[t,yr]*p.NC[t,bc1])
   m.p_t["NQR", M_t == "NER"] <- (1-p.NX[t,bc1])*(p.NE.NQ[t,yr])
   m.p_t["NED", M_t == "NER"] <- (1-p.NX[t,bc1])*(p.RD[t])
   m.p_t["X", M_t == "NER"] <- p.NX[t,bc1]
   
   ##from CRE state
-  m.p_t["CER", M_t == "CER"] <- (1-p.CX[t,bc1])*(1-p.CE.FE[t,yr]-p.CE.CQ[t,yr]-p.RD[t])
-  m.p_t["FER", M_t == "CER"] <- (1-p.CX[t,bc1])*(p.CE.FE[t,yr])
+  m.p_t["CER", M_t == "CER"] <- (1-p.CX[t,bc1])*(1-rr.CE.FE[t,yr]*p.CF[t,bc1]-p.CE.CQ[t,yr]-p.RD[t])
+  m.p_t["FER", M_t == "CER"] <- (1-p.CX[t,bc1])*(rr.CE.FE[t,yr]*p.CF[t,bc1])
   m.p_t["CQR", M_t == "CER"] <- (1-p.CX[t,bc1])*(p.CE.CQ[t,yr])
   m.p_t["CED", M_t == "CER"] <- (1-p.CX[t,bc1])*(p.RD[t])
   m.p_t["X", M_t == "CER"] <- p.CX[t,bc1]
@@ -235,17 +235,17 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FER"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FER"]]
   
   ##from NRQ state
-  m.p_t["NQR", M_t == "NQR"] <- (1-p.NX[t,bc1])*(1-p.NQ.CQ[t,yr]-p.NQ.NE[t,yr]-p.RD[t])
-  m.p_t["CQR", M_t == "NQR"] <- (1-p.NX[t,bc1])*(p.NQ.CQ[t,yr])
+  m.p_t["NQR", M_t == "NQR"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.NQ.NE[t,yr]-p.RD[t])
+  m.p_t["CQR", M_t == "NQR"] <- (1-p.NX[t,bc1])*(p.NC[t,bc1])
   m.p_t["NER", M_t == "NQR"] <- (1-p.NX[t,bc1])*(p.NQ.NE[t,yr])
   m.p_t["NQD", M_t == "NQR"] <- (1-p.NX[t,bc1])*(p.RD[t])
   m.p_t["X", M_t == "NQR"] <- p.NX[t,bc1]
   
   ##from CRQ state
-  m.p_t["CQR", M_t == "CQR"] <- (1-p.CX[t,bc1])*(1-p.CQ.FQ[t,yr]-p.CQ.CE[t,yr]-p.RD[t])
-  m.p_t["FQR", M_t == "CQR"] <- (1-p.CX[t,bc1])*(p.CQ.FQ[t,yr])
-  m.p_t["CER", M_t == "CQR"] <- (1-p.CX[t,bc1])*(p.CQ.CE[t,yr])
-  m.p_t["CQD", M_t == "CQR"] <- (1-p.CX[t,bc1])*(p.RD[t])
+  m.p_t["CQR", M_t == "CQR"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CQ.CE[t,yr]-p.RD[t])
+  m.p_t["FQR", M_t == "CQR"] <- (1-p.CX[t,bc1])*p.CF[t,bc1]
+  m.p_t["CER", M_t == "CQR"] <- (1-p.CX[t,bc1])*p.CQ.CE[t,yr]
+  m.p_t["CQD", M_t == "CQR"] <- (1-p.CX[t,bc1])*p.RD[t]
   m.p_t["X", M_t == "CQR"] <- p.CX[t,bc1]
   
   ##from FRQ state
@@ -399,14 +399,14 @@ f_gof <- function(v.params){
   v.GOF <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
   
   # Calibrate to N, C, F, D and ND/D, CD/D, FD/D prevalences
-  for (r in 1:length(lst_calibtargets)){ # sum of squared differences
+  for (r in 1:length(model_res)){ # sum of squared differences
     # for (r in 1:4){
     gof<- sum((lst_calibtargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
     v.GOF[r] <-gof
   }
   
   # OEERALL
-  v.weights <- c(1,1,1,3,1,1,1) # can assign targets different weights
+  v.weights <- rep(1,length(lst_calibtargets)) # can assign targets different weights
   # weighted sum
   GOF_overall <- sum(v.GOF[1:n.target] * v.weights)
   cat(GOF_overall)
@@ -440,16 +440,6 @@ main_calib = function(v.params) { # v.params: run model for parameter calibratio
   p.DR[51:65] <- p.DR_50_64
   p.DR[66:99] <- p.DR_65_99
   
-  # Recurrence
-  p.RD = NULL
-  p.RD[1:12] <- p.RD[100] <- 0 # final value = 0 because mortality prob = 1
-  p.RD[13:18] <- p.RD_12.17
-  p.RD[19:26] <- p.RD_18.25
-  p.RD[27:35] <- p.RD_26.34
-  p.RD[36:50] <- p.RD_35.49
-  p.RD[51:65] <- p.RD_50_64
-  p.RD[66:99] <- p.RD_65_99
-  
   ## Incidence
   for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
     bc1 = bc-1899
@@ -471,20 +461,21 @@ main_calib = function(v.params) { # v.params: run model for parameter calibratio
   ## Cessation - No cessation before 18
   p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
   
-  rr.DX = c(rep(1,18),rep(rr.DX_18.25,8),rep(rr.DX_26.34,9),rep(rr.DX_35.49,15),rep(rr.DX_50.64,15),rep(rr.DX_65.99,34),1)
+  # Effects of e-cigarettes on smoking initiation and cessation
+  rr.NE.CE = matrix(data=rr.NE.CE, nrow=100, ncol=201)
+  rr.CE.FE = matrix(data=rr.CE.FE, nrow=100, ncol=201)
   
   # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
   m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
                  .export=c('mds_microsim','probs','get_prevs',
                            'n.i','n.t','v.n','n.s','v.M_1',
                            'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
-                           'rr.DX','p.HD', 'p.DR', 'p.RD',
+                           'p.HD', 'p.DR', 'p.RD',
                            'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD',
                            'p.NO.NE', 'p.CO.CE', 'p.FO.FE',
                            'p.NE.NQ', 'p.CE.CQ', 'p.FE.FQ',
                            'p.NQ.NE', 'p.CQ.CE', 'p.FQ.FE',
-                           'p.NO.CO', 'p.NE.CE', 'p.NQ.CQ', 
-                           'p.CO.FO', 'p.CQ.FQ', 'p.CE.FE')) %dopar% {
+                           'rr.CE.FE', 'rr.NE.CE')) %dopar% {
                              mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
                            }
   # run in serial for debugging:
