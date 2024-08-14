@@ -30,7 +30,7 @@ mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, 
     if (bc+t>2100){ # exit for loop if going past the year 2100
       break
     }
-    v.ysq <- ifelse((m.M[,t] =="FH"|m.M[,t] =="FD"|m.M[,t] =="FR" ) ,v.ysq +1 , 0)
+    v.ysq <- ifelse(grepl("F", m.M[, t]), v.ysq + 1, 0) # if health state contains the letter 'F', add 1 year since quitting
     v.ysq <- ifelse(v.ysq>40 , 40, v.ysq) # Fix mortality after 40 years since quitting
     
     m.P <- probs(bc, t, v.ysq, m.M[, t])           # calculate the transition probabilities at cycle t 

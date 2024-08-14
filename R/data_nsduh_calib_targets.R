@@ -1,31 +1,29 @@
 # Create list of calibration targets
-mainDir <- "/Users/jt936/Dropbox/GitHub/mds-microsim/data/"
+mainDir <- "/Users/jt936/Dropbox/GitHub/mds-microsim/"
 setwd(file.path(mainDir))
 
-load("mdseprevs0522.rda")
+load("data/mdseprevs0522.rda")
 
-# drop 18.99 age group
-mdseprevs <- subset(mdseprevs, age!=18.99)
 mdseprevs<-mdseprevs[order(mdseprevs$age),]
 
-whichgender = "females"
+whichgender = "males"
 
 # smk_microsim targets
-lst_smktargets <- vector(mode = "list")
-lst_smktargets$N <- as.matrix(subset(mdseprevs, sex==whichgender & status=="neversmk" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-lst_smktargets$C <- as.matrix(subset(mdseprevs, sex==whichgender & status=="currentsmk" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
-lst_smktargets$F <- as.matrix(subset(mdseprevs, sex==whichgender & status=="formersmk" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
-rownames(lst_smktargets$N) <- NULL
-rownames(lst_smktargets$C) <- NULL
-rownames(lst_smktargets$F) <- NULL
+lst_calibtargets <- vector(mode = "list")
+lst_calibtargets$N <- as.matrix(subset(mdseprevs, sex==whichgender & status=="neversmk" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+lst_calibtargets$C <- as.matrix(subset(mdseprevs, sex==whichgender & status=="currentsmk" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
+lst_calibtargets$F <- as.matrix(subset(mdseprevs, sex==whichgender & status=="formersmk" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
+lst_calibtargets$D <- as.matrix(subset(mdseprevs, sex==whichgender & status=="dep" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
+lst_calibtargets$ND <- as.matrix(subset(mdseprevs, sex==whichgender & status=="neversmk" & subpopulation=="deppop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+lst_calibtargets$CD <- as.matrix(subset(mdseprevs, sex==whichgender & status=="currentsmk" & subpopulation=="deppop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
+lst_calibtargets$FD <- as.matrix(subset(mdseprevs, sex==whichgender & status=="formersmk" & subpopulation=="deppop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
 
-save(lst_smktargets,file=paste0("smk_calib_targets_",whichgender,".RData"))
+rownames(lst_calibtargets$N) <- NULL
+rownames(lst_calibtargets$C) <- NULL
+rownames(lst_calibtargets$F) <- NULL
+rownames(lst_calibtargets$D) <- NULL
+rownames(lst_calibtargets$ND) <- NULL
+rownames(lst_calibtargets$CD) <- NULL
+rownames(lst_calibtargets$FD) <- NULL
 
-# dep_microsim targets
-lst_deptargets <- vector(mode = "list")
-lst_deptargets$H <- as.matrix(subset(mdseprevs, sex==whichgender & status=="nevdep" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-lst_deptargets$D <- as.matrix(subset(mdseprevs, sex==whichgender & status=="dep" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
-lst_deptargets$R <- as.matrix(subset(mdseprevs, sex==whichgender & status=="fdep" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
-lst_deptargets$E <- as.matrix(subset(mdseprevs, sex==whichgender & status=="everdep" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-
-save(lst_deptargets,file=paste0("dep_calib_targets_",whichgender,".RData"))
+save(lst_calibtargets,file=paste0("data/mdse_calib_targets_",whichgender,".RData"))
