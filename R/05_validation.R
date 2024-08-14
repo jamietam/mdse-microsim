@@ -8,7 +8,11 @@ model_res<-main_calib(v.params)
 v.GOF <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
 
 for (r in 1:length(lst_calibtargets)){ # sum of squared differences - removes model years after 2022 (where we don't have NSDUH data for calibration)
-  gof<- sum((lst_calibtargets[[r]][,"prev"] - subset(model_res[[r]],model_res[[r]][,2]<=min(max(cohorts),2022))[,"prev"])^2) # prevalence by age group
+  # gof<- sum((lst_calibtargets[[r]][,"prev"] - subset(model_res[[r]],model_res[[r]][,2]<=calib_endyear)[,"prev"])^2) # prevalence by age group
+  # fit to the 18.99 age group ONLY
+  gof <- sum((subset(lst_calibtargets[[r]],lst_calibtargets[[r]][,"age"]==18.99)[,"prev"]-
+                subset(model_res[[r]],model_res[[r]][,"age"]==18.99 & model_res[[r]][,"year"]<=calib_endyear)[,"prev"])^2)
+  
   v.GOF[r] <-gof 
 }
 names(v.GOF) <- paste0(names(lst_calibtargets),".fit_value")
@@ -72,13 +76,13 @@ rr.CR.CD <- select_param("rr.CR.CD")
 rr.CD.FD <- select_param("rr.CD.FD")
 
 # Model prevalence
-modelprev <- do.call(rbind, lapply(names(model_res), function(status) {
+df_modelprev <- do.call(rbind, lapply(names(model_res), function(status) {
   cbind(data.frame(model_res[[status]]), status = status)
 }))
 
 # Calibration targets
-calibtargets <- do.call(rbind, lapply(names(lst_targets), function(status) {
-  cbind(data.frame(lst_targets[[status]]), status = status)
+df_calibtargets <- do.call(rbind, lapply(names(lst_calibtargets), function(status) {
+  cbind(data.frame(lst_calibtargets[[status]]), status = status)
 }))
 
 ## Data visualization ------------------------------------------------------
@@ -102,36 +106,36 @@ p.CF_age <- ggplot(data=cessprobs) +  geom_line( aes(x=age, y=prob, linetype=inp
   labs(title="Cessation probabilities")
 
 ns_age <-ggplot() +
-  geom_pointrange(data= subset(calibtargets,status=="N"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="N" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
+  geom_pointrange(data= subset(df_calibtargets,status=="N"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
+  geom_line(data = subset(df_modelprev, status=="N" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  scale_x_continuous(name="Year",limits=c(calib_startyear,calib_endyear),breaks=seq(calib_startyear,calib_endyear,1))  +
   labs(title=paste0("Never smokers - ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 cs_age <-ggplot() +
-  geom_pointrange(data= subset(calibtargets,status=="C"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="C" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
+  geom_pointrange(data= subset(df_calibtargets,status=="C"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
+  geom_line(data = subset(df_modelprev, status=="C" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  scale_x_continuous(name="Year",limits=c(calib_startyear,calib_endyear),breaks=seq(calib_startyear,calib_endyear,1))  +
   labs(title=paste0("Current smokers - ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 fs_age <-ggplot() +
-  geom_pointrange(data= subset(calibtargets,status=="F"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="F" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
+  geom_pointrange(data= subset(df_calibtargets,status=="F"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
+  geom_line(data = subset(df_modelprev, status=="F" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  scale_x_continuous(name="Year",limits=c(calib_startyear,calib_endyear),breaks=seq(calib_startyear,calib_endyear,1))  +
   labs(title=paste0("Former smokers - ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 
 ncf_total <- ggplot() +
-  geom_pointrange(data=subset(calibtargets,age==18.99 & (status=="N" | status=="C" | status=="F")), 
+  geom_pointrange(data=subset(df_calibtargets,age==18.99 & (status=="N" | status=="C" | status=="F")), 
                   aes(x = survey_year, y = prev,ymin=prev_lowCI, ymax=prev_highCI, color=status,shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, age==18.99 & (status=="N" | status=="C" | status=="F") ),  aes(x=year, y= prev,color=status))+
+  geom_line(data = subset(df_modelprev, age==18.99 & (status=="N" | status=="C" | status=="F") ),  aes(x=year, y= prev,color=status))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  scale_x_continuous(name="Year",limits=c(calib_startyear,calib_endyear),breaks=seq(calib_startyear,calib_endyear,1))  +
   labs(title=paste0("Smoking distribution - ",whichgender," ages 18-99"))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
@@ -164,57 +168,57 @@ p.RD_age <- ggplot() +  geom_line( aes(x=0:99, y=p.RD)) + geom_point(aes(x=0:99)
   labs(title="Recurrence, calibrated estimates, rr.CR.CD")
 
 D_age <-ggplot() +
-  geom_pointrange(data= subset(calibtargets,status=="D"&age!=18.99), 
+  geom_pointrange(data= subset(df_calibtargets,status=="D"&age!=18.99), 
                   aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), 
                       shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="D" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
+  geom_line(data = subset(df_modelprev, status=="D" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,0.4),breaks=seq(0,0.4,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  scale_x_continuous(name="Year",limits=c(calib_startyear,calib_endyear),breaks=seq(calib_startyear,calib_endyear,1))  +
   labs(title=paste0("Current MDE - ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 D_total <- ggplot() +
-  geom_pointrange(data=subset(calibtargets, status=="D" & age==18.99), 
+  geom_pointrange(data=subset(df_calibtargets, status=="D" & age==18.99), 
                   aes(x = survey_year, y = prev,ymin=prev_lowCI, ymax=prev_highCI, color=status,shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="D" & age==18.99),  aes(x=year, y= prev,color=status))+
+  geom_line(data = subset(df_modelprev, status=="D" & age==18.99),  aes(x=year, y= prev,color=status))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,0.3), breaks=seq(0,0.3,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  scale_x_continuous(name="Year",limits=c(calib_startyear,calib_endyear),breaks=seq(calib_startyear,calib_endyear,1))  +
   labs(title=paste0("MDE distribution - ",whichgender," ages 18-99"))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 
 # Figures for depressed population
 ns_ageD <-ggplot() +
-  geom_pointrange(data= subset(calibtargets,status=="ND"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="ND" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
+  geom_pointrange(data= subset(df_calibtargets,status=="ND"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
+  geom_line(data = subset(df_modelprev, status=="ND" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  scale_x_continuous(name="Year",limits=c(calib_startyear,calib_endyear),breaks=seq(calib_startyear,calib_endyear,1))  +
   labs(title=paste0("Never smokers - deppop, ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 cs_ageD <-ggplot() +
-  geom_pointrange(data= subset(calibtargets,status=="CD"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="CD" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
+  geom_pointrange(data= subset(df_calibtargets,status=="CD"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
+  geom_line(data = subset(df_modelprev, status=="CD" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  scale_x_continuous(name="Year",limits=c(calib_startyear,calib_endyear),breaks=seq(calib_startyear,calib_endyear,1))  +
   labs(title=paste0("Current smokers - deppop, ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 fs_ageD <-ggplot() +
-  geom_pointrange(data= subset(calibtargets,status=="FD"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="FD" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
+  geom_pointrange(data= subset(df_calibtargets,status=="FD"&age!=18.99), aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), shape="National Survey on Drug Use and Health"))+
+  geom_line(data = subset(df_modelprev, status=="FD" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  scale_x_continuous(name="Year",limits=c(calib_startyear,calib_endyear),breaks=seq(calib_startyear,calib_endyear,1))  +
   labs(title=paste0("Former smokers - deppop, ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 
 ncf_totalD <- ggplot() +
-  geom_pointrange(data=subset(calibtargets,age==18.99 & (status=="ND" | status=="CD" | status=="FD")), 
+  geom_pointrange(data=subset(df_calibtargets,age==18.99 & (status=="ND" | status=="CD" | status=="FD")), 
                   aes(x = survey_year, y = prev,ymin=prev_lowCI, ymax=prev_highCI, color=status,shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, age==18.99 & (status=="ND" | status=="CD" | status=="FD")),  aes(x=year, y= prev,color=status))+
+  geom_line(data = subset(df_modelprev, age==18.99 & (status=="ND" | status=="CD" | status=="FD")),  aes(x=year, y= prev,color=status))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,1),breaks=seq(0,1,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  scale_x_continuous(name="Year",limits=c(calib_startyear,calib_endyear),breaks=seq(calib_startyear,calib_endyear,1))  +
   labs(title=paste0("Smoking distribution - ",whichgender," ages 18-99"))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
@@ -251,7 +255,7 @@ pdf(file = paste0(mainDir,"output/", whichgender,"_mds_calib_",format(as.POSIXct
 plot.new()
 text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
 text(.5, 1.0, "Calibration fit values", font=2, cex=1.5)
-grid.table(c(v.GOF, fit_value),rows=c(names(lst_targets),"Overall Fit"))
+grid.table(c(v.GOF, fit_value),rows=c(names(lst_calibtargets),"Overall Fit"))
 plot.new()
 text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
 text(.5, 1.0, "Calibration parameters", font=2, cex=1.5)

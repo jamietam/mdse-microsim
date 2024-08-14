@@ -273,8 +273,10 @@ f_gof <- function(v.params){
   
   # Calibrate to N, C, F, D and ND/D, CD/D, FD/D prevalences
   for (r in 1:length(lst_calibtargets)){ # sum of squared differences
-    # for (r in 1:4){
-    gof<- sum((lst_calibtargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
+    # gof <- sum((lst_calibtargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
+    # fit to the 18.99 age group ONLY
+    gof <- sum((subset(lst_calibtargets[[r]],lst_calibtargets[[r]][,"age"]==18.99)[,"prev"]-
+                 subset(model_res[[r]],model_res[[r]][,"age"]==18.99 & model_res[[r]][,"year"]<=calib_endyear)[,"prev"])^2)
     v.GOF[r] <-gof
   }
   

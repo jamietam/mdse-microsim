@@ -8,6 +8,7 @@ load(paste0(mainDir,"data/pop_",whichgender,".RData")) # Read in Census populati
 
 cohorts <- 1900:as.numeric(args[3])           # Change from 2016 to 2022 or 2100
 calib_startyear <-2005
+calib_endyear <- 2022
 n.i   <- as.numeric(args[2])                   # number of simulated individuals per run (cohort) - eventually want to run 10,000
 n.t   <- 100                    # time horizon per person, number of years
 v.n   <- c( "NH","CH","FH","ND","CD","FD","NR","CR","FR","X") # model states: Neversmoker (N), Currentsmoker (C), Formersmoker (F), "Happy" (H), Depressed (D), "Recovered" (R), Dead (X)
@@ -18,18 +19,18 @@ d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by
 
 # CALIBRATION TARGETS
 load(paste0(mainDir,"data/mdse_calib_targets_",whichgender,".RData")) 
-lst_calibtargets <- lapply(lst_calibtargets,function(x) x[x[,"survey_year"]<=max(cohorts) & x[,"survey_year"]>=calib_startyear,]) # keep survey years 2016-2020
+lst_calibtargets <- lapply(lst_calibtargets,function(x) x[x[,"survey_year"]<=calib_endyear & x[,"survey_year"]>=calib_startyear,]) # keep survey years 2016-2020
 
 ## CALIBRATION PARAMETERS - Specify which parameters you want to calibrate (0 vs 1 in column 4), and provide upper and lower bounds for the search algorithm
 if (whichgender == "males") {
   calib_inputs <-rbind( 
-    "s.NC_9.17" = c(2.05287465042159, 2.0, 2.5, 0),
-    "s.NC_18.25" = c(0.0848159716005523, 0, 1, 0),
-    "s.CF_18.25" = c(0.758981274877442, 0.50, 1.0, 0),
-    "s.CF_26.34" = c(0.616667582480333, 0.50, 1.0, 0),
-    "s.CF_35.49" = c(0.746427943601139, 0.50, 1.0, 0),
-    "s.CF_50.64" = c(0.912583380690363, 0.50, 1.0, 0),
-    "s.CF_65.99" = c(0.720470979706167, 0.50, 1.0, 0),
+    "s.NC_9.17" = c(2.05287465042159, 2.0, 2.5, 1),
+    "s.NC_18.25" = c(0.0848159716005523, 0, 1, 1),
+    "s.CF_18.25" = c(0.758981274877442, 0.30, 1.0, 1),
+    "s.CF_26.34" = c(0.616667582480333, 0.30, 1.0, 1),
+    "s.CF_35.49" = c(0.746427943601139, 0.30, 1.0, 1),  
+    "s.CF_50.64" = c(0.912583380690363, 0.30, 1.0, 1), 
+    "s.CF_65.99" = c(0.720470979706167, 0.30, 1.0, 1),  
     "p.DR_12.17" = c(0.173, 0.0, 1.0, 0),
     "p.DR_18.25" = c(0.173, 0.0, 1.0, 0),
     "p.DR_26.34" = c(0.173, 0.0, 1.0, 0),
@@ -46,13 +47,13 @@ if (whichgender == "males") {
     "yearinc_p.HD" = c(2016, 2012.5, 2018.5, 0))
 } else if (whichgender == "females") {
   calib_inputs <-rbind( 
-    "s.NC_9.17" = c(2.081761888, 2.0, 2.5, 0),
-    "s.NC_18.25" = c(0, 0, 1, 0),
-    "s.CF_18.25" = c(0.993978012, 0.50, 1.0, 0),
-    "s.CF_26.34" = c(0.564477195, 0.50, 1.0, 0),
-    "s.CF_35.49" = c(0.87073767, 0.50, 1.0, 0),
-    "s.CF_50.64" = c(0.654785173, 0.50, 1.0, 0),
-    "s.CF_65.99" = c(0.664328015, 0.50, 1.0, 0),
+    "s.NC_9.17" = c(2.081761888, 2.0, 2.5, 1),
+    "s.NC_18.25" = c(0, 0, 1, 1),
+    "s.CF_18.25" = c(0.993978012, 0.30, 1.0, 1),
+    "s.CF_26.34" = c(0.564477195, 0.30, 1.0, 1),
+    "s.CF_35.49" = c(0.87073767, 0.30, 1.0, 1),
+    "s.CF_50.64" = c(0.654785173, 0.30, 1.0, 1),
+    "s.CF_65.99" = c(0.664328015, 0.30, 1.0, 1),
     "p.DR_12.17" = c(0.173, 0.0, 1.0, 0),
     "p.DR_18.25" = c(0.173, 0.0, 1.0, 0),
     "p.DR_26.34" = c(0.173, 0.0, 1.0, 0),
