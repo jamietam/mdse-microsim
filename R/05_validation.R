@@ -2,6 +2,8 @@
 # Internal validation to compare model-predicted outputs evaluated at calibrated parameters vs the calibration targets
 library(ggplot2)
 library(ggnewscale)
+library(grid)
+library(gridExtra)
 ## Run the model ---------------------------------------------------
 model_res<-main_calib(v.params)
 
@@ -392,26 +394,39 @@ pdf(file = paste0(mainDir,"output/", whichgender,"_mds_calib_",format(as.POSIXct
 # text(.5, 1.0, "Calibration fit values", font=2, cex=1.5)
 # grid.table(c(v.GOF[1:22], fit_value),rows=c(names(lst_targets[1:22]),"Overall Fit"))
 
-# Divide the plotting area into 2 columns
-par(mfrow=c(1,2))
+# Create the first table
+table1 <- tableGrob(c(v.GOF[1:11], fit_value), 
+                    rows = c(names(lst_targets[1:11]), "Overall Fit"),
+                    theme = ttheme_minimal(base_size = 10))
 
-# Display the first half of the table
-plot.new()
-text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
-text(.5, 1.0, "Calibration fit values", font=2, cex=1.5)
-grid.table(c(v.GOF[1:11], fit_value), rows=c(names(lst_targets[1:11]), "Overall Fit"))
+# Create the second table
+table2 <- tableGrob(c(v.GOF[12:22], fit_value), 
+                    rows = c(names(lst_targets[12:22]), "Overall Fit"),
+                    theme = ttheme_minimal(base_size = 10))
 
-# Display the second half of the table
-plot.new()
-text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
-text(.5, 1.0, "Calibration fit values (Cont.)", font=2, cex=1.5)
-grid.table(c(v.GOF[12:22], fit_value), rows=c(names(lst_targets[12:22]), "Overall Fit"))
+# Title for the first table
+title1 <- textGrob(paste0("mds_microsim \n",whichgender), gp = gpar(fontsize = 15))
+subtitle1 <- textGrob("Calibration fit values", gp = gpar(fontsize = 15, fontface = "bold"))
 
+# Title for the second table
+title2 <- textGrob(paste0("mds_microsim \n",whichgender), gp = gpar(fontsize = 15))
+subtitle2 <- textGrob("Calibration fit values (Cont.)", gp = gpar(fontsize = 15, fontface = "bold"))
+
+# Combine title and table for the first plot
+table1_with_titles <- arrangeGrob(grobs = list(title1, subtitle1, table1), 
+                                  nrow = 3, heights = c(0.3, 0.3, 1))
+
+# Combine title and table for the second plot
+table2_with_titles <- arrangeGrob(grobs = list(title2, subtitle2, table2), 
+                                  nrow = 3, heights = c(0.3, 0.3, 1))
+
+# Arrange the two tables side by side
+grid.arrange(table1_with_titles, table2_with_titles, ncol = 2)
 
 plot.new()
 text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
 text(.5, 1.0, "Calibration parameters", font=2, cex=1.5)
-grid.table(df.calib)
+grid.table(df.calib[df.calib$calib == 1, ]) #only calibrated parameters
 grid_arrange_shared_legend(list(p.NC_age,p.CF_age),2,"Smoking inputs")
 grid_arrange_shared_legend(list(ns_age, cs_age, fs_age),3,"Smoking distribution")
 ncf_total
