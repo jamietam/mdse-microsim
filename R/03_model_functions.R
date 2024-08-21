@@ -440,6 +440,22 @@ main_calib = function(v.params) { # v.params: run model for parameter calibratio
   p.DR[51:65] <- p.DR_50_64
   p.DR[66:99] <- p.DR_65_99
   
+  rr.NE.CE = NULL
+  rr.NE.CE[1:17] <- rr.NE.CE_1.17
+  rr.NE.CE[18:25] <- rr.NE.CE_18.25
+  rr.NE.CE[26:34] <- rr.NE.CE_26.34
+  rr.NE.CE[35:49] <- rr.NE.CE_35.49
+  rr.NE.CE[50:64] <- rr.NE.CE_50.64
+  rr.NE.CE[65:99] <- rr.NE.CE_65.99
+  
+  rr.CE.FE = NULL
+  rr.CE.FE[1:17] <- rr.CE.FE_1.17
+  rr.CE.FE[18:25] <- rr.CE.FE_18.25
+  rr.CE.FE[26:34] <- rr.CE.FE_26.34
+  rr.CE.FE[35:49] <- rr.CE.FE_35.49
+  rr.CE.FE[50:64] <- rr.CE.FE_50.64
+  rr.CE.FE[65:99] <- rr.CE.FE_65.99
+  
   ## Incidence
   for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
     bc1 = bc-1899

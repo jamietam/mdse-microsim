@@ -55,6 +55,7 @@ p.DR[66:99] <- select_param("p.DR_65_99")
 s.HD_12.17 <- select_param("s.HD_12.17")
 s.HD_18.25 <- select_param("s.HD_18.25")
 s.HD_26.34 <- select_param("s.HD_26.34")
+yearinc_p.HD <- round(select_param("yearinc_p.HD"))
 for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
   bc1 = bc-1899
   for (age in 0:34){ # increase applies to youth and young adults ages 0-25
@@ -69,10 +70,10 @@ for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort forma
     }
   }
 }
-yearinc_p.HD <- round(select_param("yearinc_p.HD"))
+
 
 # Mortality
-rr.DX <- rep(1, 100)
+# rr.DX <- rep(1, 100)
 # rr.DX[19:26] <- select_param("rr.DX_18.25")
 # rr.DX[27:35] <- select_param("rr.DX_26.34")
 # rr.DX[36:50] <- select_param("rr.DX_35.49")
@@ -363,9 +364,9 @@ names(Xprobs) <- c("prob","status","age")
 Xprobs$prob <- as.numeric(Xprobs$prob)
 Xprobs$age <- as.numeric(Xprobs$age)
 Xprobs_age <- ggplot(data=Xprobs) +  geom_line( aes(x=age, y=prob, color=status)) + 
-  geom_line(aes(x=age,y=prob*rr.DX,color=status),linetype=2)+
+  geom_line(aes(x=age,y=prob,color=status),linetype=2)+
   scale_color_manual(values=c('red', 'blue', 'springgreen3'))+
-  scale_y_continuous(name="Annual mortality by smoking status (rr.DX)", limits=c(0,1), breaks=seq(0,1,0.1)) +
+  scale_y_continuous(name="Annual mortality by smoking status", limits=c(0,1), breaks=seq(0,1,0.1)) +
   scale_x_continuous(name="Age", limits=c(0,99), breaks=seq(0,99,10)) +
   labs(title="Mortality probabilities by smoking and MDE status")
 

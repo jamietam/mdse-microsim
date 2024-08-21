@@ -71,8 +71,18 @@ if (whichgender == "males") {
     "rr.CR.CD" = c(2.3571995968942, 1.0, 4.0, 0),
     "rr.CD.FD" = c(1.57036702143777, 1.0, 4.0, 0),
     "yearinc_p.HD" = c(2016, 2012.5, 2018.5, 0),
-    "rr.CE.FE" = c(1, 0, 4, 1),
-    "rr.NE.CE" = c(1, 0, 4, 1))
+    "rr.CE.FE_1.17" = c(1, 0, 4, 1),
+    "rr.CE.FE_18.25" = c(1, 0, 4, 1),
+    "rr.CE.FE_26.34" = c(1,0,4,1),
+    "rr.CE.FE_35.49" = c(1,0,4,1),
+    "rr.CE.FE_50.64" = c(1,0,4,1),
+    "rr.CE.FE_65.99" = c(1,0,4,1),
+    "rr.NE.CE_1.17" = c(2, 0, 4, 1),
+    "rr.NE.CE_18.25" = c(0.5,0,4,1),
+    "rr.NE.CE_26.34" = c(1,0,4,1),
+    "rr.NE.CE_35.49" = c(1,0,4,1),
+    "rr.NE.CE_50.64" = c(1,0,4,1),
+    "rr.NE.CE_65.99" = c(1,0,4,1))
 } else if (whichgender == "females") {
   calib_inputs <-rbind( 
     "s.NC_9.17" = c(2.081761888, 2.0, 2.5, 0),
@@ -96,8 +106,18 @@ if (whichgender == "males") {
     "rr.CR.CD" = c(1, 1.0, 4.0, 0),
     "rr.CD.FD" = c(1, 1.0, 4.0, 0),
     "yearinc_p.HD" = c(2016, 2012.5, 2018.5, 0),
-    "rr.CE.FE" = c(1, 0, 4, 1),
-    "rr.NE.CE" = c(1, 0, 4, 1))
+    "rr.CE.FE_1.17" = c(1, 0, 4, 1),
+    "rr.CE.FE_18.25" = c(1, 0, 4, 1),
+    "rr.CE.FE_26.34" = c(1,0,4,1),
+    "rr.CE.FE_35.49" = c(1,0,4,1),
+    "rr.CE.FE_50.64" = c(1,0,4,1),
+    "rr.CE.FE_65.99" = c(1,0,4,1),
+    "rr.NE.CE_1.17" = c(2, 0, 4, 1),
+    "rr.NE.CE_18.25" = c(0.5,0,4,1),
+    "rr.NE.CE_26.34" = c(1,0,4,1),
+    "rr.NE.CE_35.49" = c(1,0,4,1),
+    "rr.NE.CE_50.64" = c(1,0,4,1),
+    "rr.NE.CE_65.99" = c(1,0,4,1))
 } 
 colnames(calib_inputs) =c("value","lower","upper","calib")  
 v.params <- calib_inputs[calib_inputs[,"calib"]==1,][,"value"]  
