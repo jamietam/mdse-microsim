@@ -5,20 +5,23 @@
   
 l.model_prevs<-main_calib(v.params)
 
-v.GOF <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
+v.gof <- v.ssd <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
 
-for (r in 1:length(l.calibtargets)){ # sum of squared differences - removes model years after 2022 (where we don't have NSDUH data for calibration)
-  gof<- sum((l.calibtargets[[r]][,"prev"] - subset(l.model_prevs[[r]],l.model_prevs[[r]][,2]>=calib_startyear & l.model_prevs[[r]][,2]<=calib_endyear)[,"prev"])^2) # prevalence by age group
-  # fit to the 18.99 age group ONLY
-  # gof <- sum((subset(l.calibtargets[[r]],l.calibtargets[[r]][,"age"]==18.99)[,"prev"]-
-  #               subset(l.model_prevs[[r]],l.model_prevs[[r]][,"age"]==18.99 & l.model_prevs[[r]][,"year"]<=calib_endyear)[,"prev"])^2)
-  
-  v.GOF[r] <-gof 
+for (r in 1:length(l.calib_targets)){ # sum of squared differences - removes model years after 2022 (where we don't have NSDUH data for calibration)
+  ssd <- sum((l.calib_targets[[r]][,"prev"] - subset(l.model_prevs[[r]],l.model_prevs[[r]][,2]>=calib_startyear & l.model_prevs[[r]][,2]<=calib_endyear)[,"prev"])^2) # prevalence by age group
+  gof = gof_norm_loglike(target_mean = l.calib_targets[[r]][,"prev"],
+                         model_output = subset(l.model_prevs[[r]],l.model_prevs[[r]][,"year"]>=calib_startyear & l.model_prevs[[r]][,"year"]<=calib_endyear)[,"prev"],
+                         target_sd = l.calib_targets[[r]][,"se"])
+  v.gof[r] <- gof
+  v.ssd[r] <- ssd
 }
-names(v.GOF) <- paste0(names(l.calibtargets),".fit_value")
-fit_value <- sum(v.GOF)
-print(fit_value)
-print(v.GOF)
+names(v.gof) <- paste0(names(l.calib_targets),".loglik")
+names(v.ssd) <- paste0(names(l.calib_targets),".ssd")
+loglik_value <- sum(v.gof)
+ssd_value <- sum(v.ssd)
+print(loglik_value)
+print(v.gof)
+print(ssd_value)
 
 ## Process model inputs ----------------------------------------------------
 
@@ -81,8 +84,8 @@ df.model_prevs <- do.call(rbind, lapply(names(l.model_prevs), function(status) {
 }))
 
 # Calibration targets
-df.calibtargets <- do.call(rbind, lapply(names(l.calibtargets), function(status) {
-  cbind(data.frame(l.calibtargets[[status]]), status = status)
+df.calibtargets <- do.call(rbind, lapply(names(l.calib_targets), function(status) {
+  cbind(data.frame(l.calib_targets[[status]]), status = status)
 }))
 
 ## Data visualization ------------------------------------------------------
@@ -255,11 +258,11 @@ pdf(file = paste0(mainDir,"output/", whichgender,"_mds_calib_",format(as.POSIXct
 plot.new()
 text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
 text(.5, 1.0, "Calibration fit values", font=2, cex=1.5)
-grid.table(c(v.GOF, fit_value),rows=c(names(l.calibtargets),"Overall Fit"))
+grid.table(cbind(c(v.gof, loglik_value), c(v.ssd, ssd_value)),rows=c(names(l.calib_targets),"Overall Fit"), cols=c("loglik","sum of sq diffs"))
 plot.new()
 text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
 text(.5, 1.0, "Calibration parameters", font=2, cex=1.5)
-grid.table(df.calib)
+grid.table(m.calib_inputs)
 grid_arrange_shared_legend(list(p.NC_age,p.CF_age),2,"Smoking inputs")
 grid_arrange_shared_legend(list(ns_age, cs_age, fs_age),3,"Smoking distribution")
 ncf_total

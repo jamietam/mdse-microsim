@@ -276,7 +276,7 @@ gof_norm_loglike <- function(target_mean, target_sd, model_output){
 f_gof <- function(v.params){
   
   l.model_prevs <- main_calib(v.params)
-  v.GOF <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
+  v.gof <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
   # Calibrate to N, C, F, D and ND/D, CD/D, FD/D prevalences
   for (r in 1:length(l.calib_targets)){ # use log likelihood as metric
     # fit to 18.99 age group only
@@ -286,13 +286,13 @@ f_gof <- function(v.params){
     gof = gof_norm_loglike(target_mean = l.calib_targets[[r]][,"prev"],
                            model_output = subset(l.model_prevs[[r]],l.model_prevs[[r]][,"year"]>=calib_startyear & l.model_prevs[[r]][,"year"]<=calib_endyear)[,"prev"],
                            target_sd = l.calib_targets[[r]][,"se"])
-    v.GOF[r] <-gof
+    v.gof[r] <-gof
   }
   
   # OVERALL
   v.weights <- c(1,1,1,1,1,1,1) # can assign targets different weights
   # weighted sum
-  GOF_overall <- sum(v.GOF[1:n.target] * v.weights)
+  GOF_overall <- sum(v.gof[1:n.target] * v.weights)
   cat(GOF_overall)
   # return GOF
   return(GOF_overall)
