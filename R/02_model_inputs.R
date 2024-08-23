@@ -2,7 +2,7 @@
 whichgender <- args[1]
 
 load(paste0(mainDir,"data/dep_precomputed_inputs_",whichgender,".RData")) 
-load(paste0(mainDir,"data/smk_precomputed_inputs_",whichgender,".RData")) #lst_smktargets
+load(paste0(mainDir,"data/smk_precomputed_inputs_",whichgender,".RData")) #l.smktargets
 load(paste0(mainDir,"data/cuw_inputs_",whichgender,".RData"))
 load(paste0(mainDir,"data/pop_",whichgender,".RData")) # Read in Census population for SAD calculation
 
@@ -19,11 +19,11 @@ d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by
 
 # CALIBRATION TARGETS
 load(paste0(mainDir,"data/mdse_calib_targets_",whichgender,".RData")) 
-lst_calibtargets <- lapply(lst_calibtargets,function(x) x[x[,"survey_year"]<=calib_endyear & x[,"survey_year"]>=calib_startyear,]) # keep survey years 2016-2020
+l.calib_targets <- lapply(l.calib_targets,function(x) x[x[,"survey_year"]<=calib_endyear & x[,"survey_year"]>=calib_startyear,]) # keep survey years 2016-2020
 
 ## CALIBRATION PARAMETERS - Specify which parameters you want to calibrate (0 vs 1 in column 4), and provide upper and lower bounds for the search algorithm
 if (whichgender == "males") {
-  calib_inputs <-rbind( 
+  m.calib_inputs <-rbind( 
     "s.NC_9.17" = c(2.05287465042159, 2.0, 2.5, 1),
     "s.NC_18.25" = c(0.0848159716005523, 0, 1, 1),
     "s.CF_18.25" = c(0.758981274877442, 0.30, 1.0, 1),
@@ -46,7 +46,7 @@ if (whichgender == "males") {
     "rr.CD.FD" = c(1.57036702143777, 1.0, 4.0, 1),
     "yearinc_p.HD" = c(2016, 2012.5, 2018.5, 0))
 } else if (whichgender == "females") {
-  calib_inputs <-rbind( 
+  m.calib_inputs <-rbind( 
     "s.NC_9.17" = c(2.081761888, 2.0, 2.5, 1),
     "s.NC_18.25" = c(0, 0, 1, 1),
     "s.CF_18.25" = c(0.993978012, 0.30, 1.0, 1),
@@ -69,6 +69,6 @@ if (whichgender == "males") {
     "rr.CD.FD" = c(1, 1.0, 4.0, 1),
     "yearinc_p.HD" = c(2016, 2012.5, 2018.5, 0))
 } 
-colnames(calib_inputs) =c("value","lower","upper","calib")  
-v.params <- calib_inputs[calib_inputs[,"calib"]==1,][,"value"]  
+colnames(m.calib_inputs) =c("value","lower","upper","calib")  
+v.params <- m.calib_inputs[m.calib_inputs[,"calib"]==1,][,"value"]  
 n.param <- length(v.params) # number of parameters to calibrate
