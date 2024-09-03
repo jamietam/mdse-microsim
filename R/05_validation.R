@@ -4,24 +4,32 @@ library(ggplot2)
 library(ggnewscale)
 library(grid)
 library(gridExtra)
-## Run the model ---------------------------------------------------
-model_res<-main_calib(v.params)
+## Run the model ---------------------------------------------------  
+l.model_prevs<-main_calib(v.params)
 
-v.GOF <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
-for (r in 1:length(model_res)){ # sum of squared differences
-  gof<- sum((lst_calibtargets[[r]][,"prev"] - model_res[[r]][,"prev"])^2) # prevalence by age group
-  v.GOF[r] <-gof 
+v.gof <- v.ssd <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
+
+for (r in 1:length(l.calib_targets)){ # sum of squared differences - removes model years after 2022 (where we don't have NSDUH data for calibration)
+  ssd <- sum((l.calib_targets[[r]][,"prev"] - subset(l.model_prevs[[r]],l.model_prevs[[r]][,2]>=calib_startyear & l.model_prevs[[r]][,2]<=calib_endyear)[,"prev"])^2) # prevalence by age group
+  gof = gof_norm_loglike(target_mean = l.calib_targets[[r]][,"prev"],
+                         model_output = subset(l.model_prevs[[r]],l.model_prevs[[r]][,"year"]>=calib_startyear & l.model_prevs[[r]][,"year"]<=calib_endyear)[,"prev"],
+                         target_sd = l.calib_targets[[r]][,"se"])
+  v.gof[r] <- gof
+  v.ssd[r] <- ssd
 }
-names(v.GOF) <- paste0(names(lst_calibtargets[1:22]),".fit_value")
-fit_value <- sum(v.GOF)
-print(fit_value)
-print(v.GOF)
+names(v.gof) <- paste0(names(l.calib_targets),".loglik")
+names(v.ssd) <- paste0(names(l.calib_targets),".ssd")
+loglik_value <- sum(v.gof)
+ssd_value <- sum(v.ssd)
+print(loglik_value)
+print(v.gof)
+print(ssd_value)
 
 ## Process model inputs ----------------------------------------------------
 
 # Helper function for parameter selection
 select_param <- function(param_name) {
-  ifelse(calib_inputs[param_name, "calib"] == 1, v.params[param_name], calib_inputs[param_name, "value"])
+  ifelse(m.calib_inputs[param_name, "calib"] == 1, v.params[param_name], m.calib_inputs[param_name, "value"])
 }
 
 # Initiation and cessation probabilities
@@ -44,20 +52,12 @@ p.DR[36:50] <- select_param("p.DR_35.49")
 p.DR[51:65] <- select_param("p.DR_50_64")
 p.DR[66:99] <- select_param("p.DR_65_99")
 
-# Recurrence
-# p.RD <- rep(0,100)
-# p.RD[13:18] <- select_param("p.RD_12.17")
-# p.RD[19:26] <- select_param("p.RD_18.25")
-# p.RD[27:35] <- select_param("p.RD_26.34")
-# p.RD[36:50] <- select_param("p.RD_35.49")
-# p.RD[51:65] <- select_param("p.RD_50_64")
-# p.RD[66:99] <- select_param("p.RD_65_99")
-
 # Incidence
 s.HD_12.17 <- select_param("s.HD_12.17")
 s.HD_18.25 <- select_param("s.HD_18.25")
 s.HD_26.34 <- select_param("s.HD_26.34")
-yearinc_p.HD <- round(select_param("yearinc_p.HD"))
+
+yearinc_p.HD <- select_param("yearinc_p.HD")
 for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
   bc1 = bc-1899
   for (age in 0:34){ # increase applies to youth and young adults ages 0-25
@@ -73,15 +73,6 @@ for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort forma
   }
 }
 
-
-# Mortality
-# rr.DX <- rep(1, 100)
-# rr.DX[19:26] <- select_param("rr.DX_18.25")
-# rr.DX[27:35] <- select_param("rr.DX_26.34")
-# rr.DX[36:50] <- select_param("rr.DX_35.49")
-# rr.DX[51:65] <- select_param("rr.DX_50.64")
-# rr.DX[66:99] <- select_param("rr.DX_65.99")
-
 # Interaction effects
 rr.ND.CD <- select_param("rr.ND.CD")
 rr.CH.CD <- select_param("rr.CH.CD")
@@ -90,8 +81,8 @@ rr.CD.FD <- select_param("rr.CD.FD")
 
 
 # Model prevalence
-modelprev <- do.call(rbind, lapply(names(model_res), function(status) {
-  cbind(data.frame(model_res[[status]]), status = status)
+df.model_prevs <- do.call(rbind, lapply(names(l.model_prevs), function(status) {
+  cbind(data.frame(l.model_prevs[[status]]), status = status)
 }))
 
 ##sum prevalences to create the states for exclvap, exclsmk, and neither
@@ -126,8 +117,8 @@ for(y in c(2005:2100)) { # loop through years
 }
 
 # Calibration targets
-calibtargets <- do.call(rbind, lapply(names(lst_targets), function(status) {
-  cbind(data.frame(lst_targets[[status]]), status = status)
+df.calibtargets <- do.call(rbind, lapply(names(l.calib_targets), function(status) {
+  cbind(data.frame(l.calib_targets[[status]]), status = status)
 }))
 
 #turn all numbers into numeric values
@@ -300,21 +291,21 @@ p.RD_age <- ggplot() +  geom_line( aes(x=0:99, y=p.RD)) + geom_point(aes(x=0:99)
   labs(title="Recurrence, calibrated estimates, rr.CR.CD")
 
 D_age <-ggplot() +
-  geom_pointrange(data= subset(calibtargets,status=="D"&age!=18.99), 
+  geom_pointrange(data= subset(df.calibtargets,status=="D"&age!=18.99), 
                   aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, colour=factor(age), 
                       shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="D" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
+  geom_line(data = subset(df.model_prevs, status=="D" & age!=18.99),  aes(x=year, y= prev, colour=factor(age)))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,0.4),breaks=seq(0,0.4,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  scale_x_continuous(name="Year",limits=c(calib_startyear,calib_endyear),breaks=seq(calib_startyear,calib_endyear,1))  +
   labs(title=paste0("Current MDE - ",whichgender))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
 D_total <- ggplot() +
-  geom_pointrange(data=subset(calibtargets, status=="D" & age==18.99), 
+  geom_pointrange(data=subset(df.calibtargets, status=="D" & age==18.99), 
                   aes(x = survey_year, y = prev,ymin=prev_lowCI, ymax=prev_highCI, color=status,shape="National Survey on Drug Use and Health"))+
-  geom_line(data = subset(modelprev, status=="D" & age==18.99),  aes(x=year, y= prev,color=status))+
+  geom_line(data = subset(df.model_prevs, status=="D" & age==18.99),  aes(x=year, y= prev,color=status))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,0.3), breaks=seq(0,0.3,0.05)) +
-  scale_x_continuous(name="Year",limits=c(2005,max(cohorts)),breaks=seq(2005,max(cohorts),1))  +
+  scale_x_continuous(name="Year",limits=c(calib_startyear,calib_endyear),breaks=seq(calib_startyear,calib_endyear,1))  +
   labs(title=paste0("MDE distribution - ",whichgender," ages 18-99"))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
@@ -385,7 +376,7 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
   )
 }
 
-df.calib <- merge(as.data.frame(v.params),as.data.frame(calib_inputs),by="row.names",all.x=TRUE,all.y=TRUE,sort=FALSE)
+df.calib <- merge(as.data.frame(v.params),as.data.frame(m.calib_inputs),by="row.names",all.x=TRUE,all.y=TRUE,sort=FALSE)
 colnames(df.calib)[1:3] <- c("parameters", "est","initial")
 
 pdf(file = paste0(mainDir,"output/", whichgender,"_mds_calib_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
@@ -424,9 +415,13 @@ table2_with_titles <- arrangeGrob(grobs = list(title2, subtitle2, table2),
 grid.arrange(table1_with_titles, table2_with_titles, ncol = 2)
 
 plot.new()
+grid.table(cbind(c(v.gof, loglik_value), c(v.ssd, ssd_value)),rows=c(names(l.calib_targets),"Overall Fit"), cols=c("loglik","sum of sq diffs"))
+
+plot.new()                        
 text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
 text(.5, 1.0, "Calibration parameters", font=2, cex=1.5)
 grid.table(df.calib[df.calib$calib == 1, ]) #only calibrated parameters
+
 grid_arrange_shared_legend(list(p.NC_age,p.CF_age),2,"Smoking inputs")
 grid_arrange_shared_legend(list(ns_age, cs_age, fs_age),3,"Smoking distribution")
 ncf_total
@@ -440,4 +435,3 @@ grid_arrange_shared_legend(list(ncf_totalD, Xprobs_age),2,"NCF Smoking")
 grid_arrange_shared_legend(list(nv_ageD, cv_ageD, fv_ageD),3,"Vaping distribution among people with depression")
 grid_arrange_shared_legend(list(v_totalD),3,"OEQ Vaping")
 dev.off()
-
