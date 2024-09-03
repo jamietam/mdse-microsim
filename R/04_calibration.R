@@ -2,6 +2,7 @@
 rm(list = ls()) 
 
 ## RUN CALIBRATION
+#mainDir = "C:/Users/klx3/Dropbox/tobacco-modeling-team/kane/GitHub/mds-microsim/" # Set working directory
 mainDir = "/Users/jt936/Dropbox/GitHub/mds-microsim/"
 # mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" # Set working directory
 hpc = 0 # 1 = run using high performance computing clusters, 0 = run without
@@ -45,12 +46,12 @@ if (calibration == 1) { ## For calibration runs - Run this section of code
   colnames(m.calib_res) <- c(names(v.params), "Overall_fit")
   for (j in 1:n.init){ # j <- 1
     
-    # L-BFGS-B optimization method
-    l.fit_optim <-   optim(v.params_init[j,], f_gof, method = "L-BFGS-B",lower=v.lb,upper=v.ub,
+  # L-BFGS-B optimization method
+  l.fit_optim <-   optim(v.params_init[j,], f_gof, method = "L-BFGS-B",lower=v.lb,upper=v.ub,
                       control = list(fnscale = -1, # fnscale = -1 switches from minimization to maximization
                                      maxit = 1000),
                       hessian = T)
-    m.calib_res[j,] <- c(l.fit_optim$par, l.fit_optim$value)
+  m.calib_res[j,] <- c(l.fit_optim$par, l.fit_optim$value)
   }
   
   # Calculate computation time
