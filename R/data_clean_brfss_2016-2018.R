@@ -1,18 +1,19 @@
 rm(list = ls()) 
 library(tidyverse)
 library(survey)
-mainDir <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/"
+# mainDir <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/"
+mainDir = "/Users/jt936/Dropbox/GitHub/mds-microsim/"
 setwd(file.path(mainDir))
 
 #load in brfss2016-2018vars
-load("C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/data/BRFSS2018vars.Rda")
-load("C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/data/brfss2017vars.Rda")
-load("C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/data/brfss2016vars.Rda")
+# load("data-raw/brfss2018vars.Rda")
+# load("data-raw/brfss2017vars.Rda")
+# load("data-raw/brfss2016vars.Rda")
 
 #load in og data sets (brfss2018,brfss2017,brfss2016)
-load("~/GitHub/mds-microsim/R/LLCP2018.Rda")
-load("~/GitHub/mds-microsim/R/LLCP2017.Rda")
-load("~/GitHub/mds-microsim/R/LLCP2016.Rda")
+load("data-raw/LLCP2018.Rda")
+load("data-raw/LLCP2017.Rda")
+load("data-raw/LLCP2016.Rda")
 
 ##function to process states
 process_brfss <- function(brfssvars) {
@@ -247,7 +248,6 @@ for (d in c(1:10)){ # for each survey year
   }
 }
 colnames(brfss_smkecigdep) <- c("year","gender","age","depstatus","states","subgroup", "prev","stderr","lowCIprev","highCIprev")
-directory <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/R/"
-save(brfss_smkecigdep,file=paste0(directory, "brfss1618.rda"))
-load("brfss1618.rda")
+save(brfss_smkecigdep,file=paste0("data/brfss1618.rda"))
+# load("brfss1618.rda")
 

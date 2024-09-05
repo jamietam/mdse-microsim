@@ -67,6 +67,8 @@ p.NE.CE <- matrix(c(0.122, 0.112, 0.06, 0.045,
                   nrow = 4, ncol = 4, byrow = TRUE,
                   dimnames = list(c("18.24", "25.34", "35.54", "55.90"),
                                   c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
+# rr.NE.CE <- p.NE.CE / p.NO.CO
+
 # non-current --> cig-only
 p.NQ.CQ <- matrix(c(0.224, 0.194, 0.083, 0.06,
                     0.132, 0.136, 0.074, 0.04,
@@ -77,7 +79,7 @@ p.NQ.CQ <- matrix(c(0.224, 0.194, 0.083, 0.06,
                                   c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
 
 
-rr.NE.CE <- p.NE.CE / p.NO.CO
+
 ## ecig effects on smoking cessation
 # cig-only-->non-current
 p.CO.FO <- p.CQ.FQ <- matrix(c(0.013, 0.137, 0.1, 0.104,
@@ -95,6 +97,8 @@ p.CE.FE <- matrix(c(0.13, 0.133, 0.203, 0.28,
                   nrow = 4, ncol = 4, byrow = TRUE,
                   dimnames = list(c("18.24", "25.34", "35.54", "55.90"),
                                   c("2013-2014", "2015-2016", "2017-2019", "2020-2021")))
+
+# rr.CE.FE <- p.CE.FE / p.CO.FO
 
 # e-cig relapse is the same as e-cig initiation because non-use could be never or former
 p.NQ.NE <- p.FO.FE
@@ -186,15 +190,10 @@ for (v in vars) {
 }
 
 
-# Effects on smoking ------------------------------------------------------
-# 
+# save e-cig transition matrices ------------------------------------------------------
 
-whichgender <- "females"
+whichgender <- "males"
 save(p.NO.NE, p.CO.CE, p.FO.FE,
      p.NE.NQ, p.CE.CQ, p.FE.FQ,
      p.NQ.NE, p.CQ.CE, p.FQ.FE, 
-     p.NO.CO, p.NE.CE, p.NQ.CQ, 
-     p.CO.FO, p.CQ.FQ, p.CE.FE, file=paste0("data/ecig_precomputed_inputs_", whichgender,".RData"))
-
-rr.CE.FE <- p.CE.FE / p.CO.FO
-
+     file=paste0("data/ecig_precomputed_inputs_", whichgender,".RData"))

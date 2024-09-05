@@ -1,8 +1,7 @@
 ## Clean up the workspace and set main working directory
 rm(list = ls()) 
-
 ## RUN CALIBRATION
-#mainDir = "C:/Users/klx3/Dropbox/tobacco-modeling-team/kane/GitHub/mds-microsim/" # Set working directory
+# mainDir = "C:/Users/klx3/Dropbox/tobacco-modeling-team/kane/GitHub/mds-microsim/" # Set working directory
 mainDir = "/Users/jt936/Dropbox/GitHub/mds-microsim/"
 # mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" # Set working directory
 hpc = 0 # 1 = run using high performance computing clusters, 0 = run without

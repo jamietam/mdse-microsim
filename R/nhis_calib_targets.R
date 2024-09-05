@@ -1,11 +1,13 @@
 rm(list = ls()) 
-mainDir <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/R"
+#mainDir = "C:/Users/klx3/Dropbox/tobacco-modeling-team/kane/GitHub/mds-microsim/"
+mainDir <- "/Users/jt936/Dropbox/GitHub/mds-microsim/"
 setwd(file.path(mainDir))
-load("nhis1922.rda")
+
+load("data/nhis1922.rda")
 
 nhis <- as.data.frame(nhis_smkecigdep)
 
-whichgender = "females"
+whichgender = "males"
 ##change column names to match nsduh calib target column names
 colnames(nhis)[colnames(nhis) == "year"] <- "survey_year"
 colnames(nhis)[colnames(nhis) == "stderr"] <- "se"
@@ -42,23 +44,15 @@ for(y in c(2019,2022)) { # loop through years
   }
 }
 
-nhistargets <- vector(mode = "list")
-nhistargets$n_exclsmk <- as.matrix(subset(nhis, gender==whichgender & states=="exclsmk" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-nhistargets$n_exclvap <- as.matrix(subset(nhis, gender==whichgender & states=="exclvap" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-nhistargets$n_neither <- as.matrix(subset(nhis, gender==whichgender & states=="neither" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-nhistargets$n_dual <- as.matrix(subset(nhis, gender==whichgender & states=="CE" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-directory <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/data/"
-save(nhistargets,file=paste0(directory, "nhis_general_calib_targets_",whichgender,".RData"))
-
-#smoking targets
-
-#depression targets
+l.nhis_targets <- vector(mode = "list")
+l.nhis_targets$n_exclsmk <- as.matrix(subset(nhis, gender==whichgender & states=="exclsmk" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+l.nhis_targets$n_exclvap <- as.matrix(subset(nhis, gender==whichgender & states=="exclvap" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+l.nhis_targets$n_neither <- as.matrix(subset(nhis, gender==whichgender & states=="neither" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+l.nhis_targets$n_dual <- as.matrix(subset(nhis, gender==whichgender & states=="CE" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
 
 #vaping targets
-n_vaptargets <- vector(mode = "list")
-n_vaptargets$nhisO <- as.matrix(subset(nhis, gender==whichgender & states=="O" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-n_vaptargets$nhisE <- as.matrix(subset(nhis, gender==whichgender & states=="E" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-n_vaptargets$nhisQ <- as.matrix(subset(nhis, gender==whichgender & states=="Q" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+l.nhis_targets$nhisO <- as.matrix(subset(nhis, gender==whichgender & states=="O" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+l.nhis_targets$nhisE <- as.matrix(subset(nhis, gender==whichgender & states=="E" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+l.nhis_targets$nhisQ <- as.matrix(subset(nhis, gender==whichgender & states=="Q" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
 
-directory <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/data/"
-save(n_vaptargets,file=paste0(directory, "nhis_vap_calib_targets_",whichgender,".RData"))
+save(l.nhis_targets,file=paste0("data/nhis_calib_targets_",whichgender,".RData"))

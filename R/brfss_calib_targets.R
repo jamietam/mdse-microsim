@@ -1,9 +1,12 @@
 rm(list = ls()) 
-load("C:/Users/klx3/OneDrive - Yale University/Documents/GitHub/mds-microsim/R/brfss1618.rda")
+# mainDir <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/"
+mainDir = "/Users/jt936/Dropbox/GitHub/mds-microsim/"
+setwd(file.path(mainDir))
+load("data/brfss1618.rda")
 
 brfss <- as.data.frame(brfss_smkecigdep)
 
-whichgender = "females"
+whichgender = "males"
 ##change column names to match nsduh calib target column names
 colnames(brfss)[colnames(brfss) == "year"] <- "survey_year"
 colnames(brfss)[colnames(brfss) == "stderr"] <- "se"
@@ -42,26 +45,16 @@ for(y in c(2016:2018)) { # loop through years
   }
 }
 
-
-#make these four states into targets
-brfsstargets <- vector(mode = "list")
-brfsstargets$b_exclsmk <- as.matrix(subset(brfss, gender==whichgender & states=="exclsmk" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-brfsstargets$b_exclvap <- as.matrix(subset(brfss, gender==whichgender & states=="exclvap" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-brfsstargets$b_neither <- as.matrix(subset(brfss, gender==whichgender & states=="neither" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-brfsstargets$b_dual <- as.matrix(subset(brfss, gender==whichgender & states=="CE" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-directory <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/data/"
-save(brfsstargets,file=paste0(directory, "brfss_general_calib_targets_",whichgender,".RData"))
-
-#smoking targets
-
-#depression targets
+# make these four states into targets
+l.brfss_targets <- vector(mode = "list")
+l.brfss_targets$b_exclsmk <- as.matrix(subset(brfss, gender==whichgender & states=="exclsmk" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+l.brfss_targets$b_exclvap <- as.matrix(subset(brfss, gender==whichgender & states=="exclvap" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+l.brfss_targets$b_neither <- as.matrix(subset(brfss, gender==whichgender & states=="neither" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+l.brfss_targets$b_dual <- as.matrix(subset(brfss, gender==whichgender & states=="CE" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
 
 #vaping targets
-b_vaptargets <- vector(mode = "list")
-b_vaptargets$brfssO <- as.matrix(subset(brfss, gender==whichgender & states=="O" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-b_vaptargets$brfssE <- as.matrix(subset(brfss, gender==whichgender & states=="E" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
-b_vaptargets$brfssQ <- as.matrix(subset(brfss, gender==whichgender & states=="Q" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+l.brfss_targets$brfssO <- as.matrix(subset(brfss, gender==whichgender & states=="O" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+l.brfss_targets$brfssE <- as.matrix(subset(brfss, gender==whichgender & states=="E" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+l.brfss_targets$brfssQ <- as.matrix(subset(brfss, gender==whichgender & states=="Q" & subgroup=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
 
-directory <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/data/"
-save(b_vaptargets,file=paste0(directory, "brfss_vap_calib_targets_",whichgender,".RData"))
-
+save(l.brfss_targets,file=paste0("data/brfss_calib_targets_",whichgender,".RData"))

@@ -20,13 +20,11 @@ v.M_1 <- rep("NOH", n.i)         # everyone begins in the Never smoker Never MD 
 d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by 3%
 
 # CALIBRATION TARGETS
-load(paste0(mainDir,"data/mdse_calib_targets_",whichgender,".RData")) 
-load(paste0(mainDir,"data/brfss_vap_calib_targets_",whichgender,".RData")) #brfss vaptargets
-load(paste0(mainDir,"data/brfss_general_calib_targets_",whichgender,".RData")) #brfss general targets
-load(paste0(mainDir,"data/nhis_vap_calib_targets_",whichgender,".RData")) #nhis vaptargets
-load(paste0(mainDir,"data/nhis_general_calib_targets_",whichgender,".RData")) #nhis general targets
+load(paste0(mainDir,"data/nsduh_calib_targets_",whichgender,".RData")) 
+load(paste0(mainDir,"data/brfss_calib_targets_",whichgender,".RData")) 
+load(paste0(mainDir,"data/nhis_calib_targets_",whichgender,".RData")) 
 
-l.calib_targets <- c(l.calib_targts, b_vaptargets, brfsstargets, n_vaptargets,nhistargets)
+l.calib_targets <- c(l.calib_targets, l.brfss_targets, l.nhis_targets)
 
 #reorder list
 desired_order <- c("N", "C", "F", "D", "NO", "CO", "FO", "O", "NE", "CE", "FE", "E", "NQ", "CQ", "FQ", "Q", 
@@ -112,6 +110,6 @@ if (whichgender == "males") {
     "rr.NE.CE_50.64" = c(1,0,4,1),
     "rr.NE.CE_65.99" = c(1,0,4,1))
 } 
-colnames(calib_inputs) =c("value","lower","upper","calib")  
-v.params <- calib_inputs[calib_inputs[,"calib"]==1,][,"value"]  
+colnames(m.calib_inputs) =c("value","lower","upper","calib")  
+v.params <- m.calib_inputs[m.calib_inputs[,"calib"]==1,][,"value"]  
 n.param <- length(v.params) # number of parameters to calibrate

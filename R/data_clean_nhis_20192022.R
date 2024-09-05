@@ -1,13 +1,14 @@
 # NHIS 2019 & 2022 has questions about e-cigarettes, smoking, and depression status
 rm(list = ls()) 
-mainDir <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/"
+# mainDir <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/"
+mainDir <- "/Users/jt936/Dropbox/GitHub/mds-microsim/"
 setwd(file.path(mainDir))
 
 library(survey)
 library(haven) # to read in the Stata file
 library(dplyr)
 
-nhis_data <- read_dta("~/GitHub/mds-microsim/data/nhis_00016.dta")
+nhis_data <- read_dta("data-raw/nhis_00016.dta")
 
 ##subset for years 2019 and 2022
 nhis_data <- subset(nhis_data, year == 2019 | year == 2022)
@@ -211,8 +212,7 @@ for(s in c(1:8)){ #for each subgroup
   }
 }
 colnames(nhis_smkecigdep) <- c("year","gender","age","states","subgroup", "prev","stderr","lowCIprev","highCIprev")
-directory <- "C:/Users/klx3/OneDrive - Yale University/Documents/Github/mds-microsim/R/"
-save(nhis_smkecigdep,file=paste0(directory, "nhis1922.rda"))
+save(nhis_smkecigdep,file=paste0("data/nhis1922.rda"))
 
 # e-cigarette use prevalence in 2019
 svymean(~E,design=svy19,na.rm=TRUE)
@@ -223,4 +223,3 @@ svymean(~E,design=svy19,na.rm=TRUE)
 
 # e-cigarette use prevalence in 2022
 svymean(~E,design=svy22,na.rm=TRUE) # https://www.cdc.gov/mmwr/volumes/72/wr/mm7218a1.htm
-
