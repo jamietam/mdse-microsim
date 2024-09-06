@@ -527,12 +527,11 @@ main_calib <- function(v.params) { # v.params: run model for parameter calibrati
   colnames(m.M_cy) <- c(min(cohorts):(max(cohorts)+100))
   
   # Output prevalence results as a list
-  l.model_prevs <- lapply(c("N", "C","F", "D", "NO", "CO", "FO", "O", "NE", "CE", "FE", "E", "NQ", "CQ", "FQ", "Q"), get_prevs_combined, m.cohortbyyear=m.M_cy, denom=NULL, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
-  l.model_prevs <- c(l.model_prevs, lapply(c("N.D","C.D","F.D"), get_prevs_combined, denom="D",m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts))) # denominator is everyone in "D" subpopulation
-  l.model_prevs <- c(l.model_prevs, lapply(c("OD","ED","QD"), get_prevs_combined, denom="D",m_cohortbyyear=m.M_cy, minyear=calib_startyear, maxyear=max(cohorts)))
-  
+  l.model_prevs <- lapply(c("N", "C","F", "D", "NO", "CO", "FO", "O", "NE", "CE", "FE", "E", "NQ", "CQ", "FQ", "Q"), get_prevs_combined, m.cohortbyyear=m.M_cy, denom=NULL, minyear=calib_startyear, maxyear=calib_endyear) # denominator is everyone still alive
+  l.model_prevsD <- lapply(c("N.D", "C.D","F.D", "OD", "ED", "QD"), get_prevs_combined, m.cohortbyyear=m.M_cy, denom="D", minyear=calib_startyear, maxyear=calib_endyear) # denominator is everyone still alive
+  l.model_prevs <- c(l.model_prevs,l.model_prevsD)
   names(l.model_prevs) <- c("N", "C","F", "D", "NO", "CO", "FO", "O", "NE", "CE", "FE", "E", "NQ", "CQ", "FQ", "Q", "ND","CD","FD","OD","ED","QD")
-   for (l in 1:length(l.model_prevs)){
+  for (l in 1:length(l.model_prevs)){
     l.model_prevs[[l]] <- l.model_prevs[[l]][order(l.model_prevs[[l]][,"age"],decreasing=FALSE),] # re-order the age groups from 18.25, 18.99, 26.34, etc
   }
   
