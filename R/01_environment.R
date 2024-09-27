@@ -3,7 +3,7 @@ setwd(file.path(mainDir))
 ## R environment and install package dependencies
 # install CRAN packages
 packages <- c('stringr','splines','foreach','doParallel','ggplot2','gridBase','gridExtra','grid','ggrepel',
-              'lhs','matrixStats','backports','devtools','ellipse','tidyr','dplyr','reshape2')
+              'lhs','matrixStats','backports','devtools','ellipse','tidyr','dplyr','reshape2','ggnewscale')
 installed_packages <- packages %in% rownames(installed.packages())
 if (any(installed_packages == FALSE)) {
   install.packages(packages[!installed_packages])
