@@ -457,20 +457,18 @@ main_calib <- function(v.params) { # v.params: run model for parameter calibrati
   p.DR[66:99] <- p.DR_65.99
   
   rr.NE.CE = NULL
-  rr.NE.CE[1:17] <- rr.NE.CE_1.17
-  rr.NE.CE[18:25] <- rr.NE.CE_18.25
-  rr.NE.CE[26:34] <- rr.NE.CE_26.34
-  rr.NE.CE[35:49] <- rr.NE.CE_35.49
-  rr.NE.CE[50:64] <- rr.NE.CE_50.64
-  rr.NE.CE[65:99] <- rr.NE.CE_65.99
+  rr.NE.CE[1:18] <- rr.NE.CE_1.17
+  rr.NE.CE[19:35] <- rr.NE.CE_18.34
+  rr.NE.CE[36:65] <- rr.NE.CE_35.64
+  rr.NE.CE[66:99] <- rr.NE.CE_65.99
+  rr.NE.CE[100] <- 0
   
   rr.CE.FE = NULL
-  rr.CE.FE[1:17] <- rr.CE.FE_1.17
-  rr.CE.FE[18:25] <- rr.CE.FE_18.25
-  rr.CE.FE[26:34] <- rr.CE.FE_26.34
-  rr.CE.FE[35:49] <- rr.CE.FE_35.49
-  rr.CE.FE[50:64] <- rr.CE.FE_50.64
-  rr.CE.FE[65:99] <- rr.CE.FE_65.99
+  rr.CE.FE[1:18] <- rr.CE.FE_1.17
+  rr.CE.FE[19:35] <- rr.CE.FE_18.34
+  rr.CE.FE[36:65] <- rr.CE.FE_35.64
+  rr.CE.FE[66:99] <- rr.CE.FE_65.99
+  rr.CE.FE[100] <- 0
   
   ## Incidence
   for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
@@ -519,10 +517,10 @@ main_calib <- function(v.params) { # v.params: run model for parameter calibrati
   colnames(m.M_cy) <- c(min(cohorts):(max(cohorts)+100))
   
   # Output prevalence results as a list
-  l.model_prevs <- lapply(c("N", "C","F", "D", "NO", "CO", "FO", "O", "NE", "CE", "FE", "E", "NQ", "CQ", "FQ", "Q"), get_prevs_combined, m.cohortbyyear=m.M_cy, denom=NULL, minyear=calib_startyear, maxyear=calib_endyear) # denominator is everyone still alive
-  l.model_prevs_D <- lapply(c("N.D", "C.D","F.D", "OD", "ED", "QD"), get_prevs_combined, m.cohortbyyear=m.M_cy, denom="D", minyear=calib_startyear, maxyear=calib_endyear) # denominator is everyone still alive
+  l.model_prevs <- lapply(c("N","C","F","D","E","NE","CE","FE"), get_prevs_combined, m.cohortbyyear=m.M_cy, denom=NULL, minyear=calib_startyear, maxyear=calib_endyear) # denominator is everyone still alive
+  l.model_prevs_D <- lapply(c("N.D","C.D","F.D","ED","NED","CED","FED"), get_prevs_combined, m.cohortbyyear=m.M_cy, denom="D", minyear=calib_startyear, maxyear=calib_endyear) # denominator is everyone still alive
   l.model_prevs <- c(l.model_prevs,l.model_prevs_D)
-  names(l.model_prevs) <- c("N", "C","F", "D", "NO", "CO", "FO", "O", "NE", "CE", "FE", "E", "NQ", "CQ", "FQ", "Q", "ND","CD","FD","OD","ED","QD")
+  names(l.model_prevs) <- c("N","C","F","D","E","NE","CE","FE","N_D","C_D","F_D","E_D","NE_D","CE_D","FE_D")
   
   l.model_prevs <- lapply(l.model_prevs, reorder_by_age) # re-order the age groups from 18.25, 18.99, 26.34, etc
 

@@ -21,21 +21,6 @@ d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by
 d.year <- 2023 # which year to start discounting from
 # CALIBRATION TARGETS
 load(paste0(mainDir,"data/nsduh_calib_targets_",whichgender,".RData")) 
-# load(paste0(mainDir,"data/brfss_calib_targets_",whichgender,".RData")) 
-# load(paste0(mainDir,"data/nhis_calib_targets_",whichgender,".RData")) 
-# l.calib_targets <- c(l.calib_targets, l.brfss_targets, l.nhis_targets)
-
-#reorder list
-desired_order <- c("N", "C", "F", "D", "NO", "CO", "FO", "O", "NE", "CE", "FE", "E", "NQ", "CQ", "FQ", "Q", 
-                   "ND", "CD", "FD", "OD", "ED", "QD", "vap5", "vap7", "vap10", #"brfssO", "brfssE", "brfssQ",      
-                   #"b_exclsmk", "b_exclvap", "b_neither", "b_dual", "nhisO", "nhisE", "nhisQ",       
-                   #"n_exclsmk", "n_exclvap", "n_neither", "n_dual", 
-                   "nsduhexclcig", "nsduhexclvap", "nsduhneither",
-                   "nsduhdual")
-custom_reorder <- function(lst, order) {
-  return(lst[order])
-}
-l.calib_targets <- custom_reorder(l.calib_targets, desired_order)
 l.calib_targets <- lapply(l.calib_targets,function(x) x[x[,"survey_year"]<=calib_endyear & x[,"survey_year"]>=calib_startyear,]) # keep survey years for calibration targets only
 
 ## CALIBRATION PARAMETERS - Specify which parameters you want to calibrate (0 vs 1 in column 4), and provide upper and lower bounds for the search algorithm
@@ -59,17 +44,13 @@ if (whichgender == "males") {
     "rr.CD.FD" = c(1.58679257003318, 1.0, 4.0, 0),
     "yearinc_p.HD" = c(2016, 2012.5, 2018.5, 0),
     "rr.CE.FE_1.17" = c(1, 0, 4, 1),
-    "rr.CE.FE_18.25" = c(1, 0, 4, 1),
-    "rr.CE.FE_26.34" = c(1,0,4,1),
-    "rr.CE.FE_35.49" = c(1,0,4,1),
-    "rr.CE.FE_50.64" = c(1,0,4,1),
-    "rr.CE.FE_65.99" = c(1,0,4,1),
+    "rr.CE.FE_18.34" = c(1, 0, 4, 1),
+    "rr.CE.FE_35.64" = c(1, 0, 4, 1),
+    "rr.CE.FE_65.99" = c(1, 0, 4, 1),
     "rr.NE.CE_1.17" = c(1, 0, 4, 1),
-    "rr.NE.CE_18.25" = c(1,0,4,1),
-    "rr.NE.CE_26.34" = c(1,0,4,1),
-    "rr.NE.CE_35.49" = c(1,0,4,1),
-    "rr.NE.CE_50.64" = c(1,0,4,1),
-    "rr.NE.CE_65.99" = c(1,0,4,1))
+    "rr.NE.CE_18.34" = c(1, 0,4, 1),
+    "rr.NE.CE_35.64" = c(1, 0, 4, 1),
+    "rr.NE.CE_65.99" = c(1, 0, 4, 1))
 } else if (whichgender == "females") {
   m.calib_inputs <-rbind( 
     "s.NC_9.17" = c(1.999, 2.0, 2.5, 0),
@@ -90,17 +71,13 @@ if (whichgender == "males") {
     "rr.CD.FD" = c(1.21159854532057, 1.0, 4.0, 0),
     "yearinc_p.HD" = c(2016, 2012.5, 2018.5, 0),
     "rr.CE.FE_1.17" = c(1, 0, 4, 1),
-    "rr.CE.FE_18.25" = c(1, 0, 4, 1),
-    "rr.CE.FE_26.34" = c(1,0,4,1),
-    "rr.CE.FE_35.49" = c(1,0,4,1),
-    "rr.CE.FE_50.64" = c(1,0,4,1),
-    "rr.CE.FE_65.99" = c(1,0,4,1),
+    "rr.CE.FE_18.34" = c(1, 0, 4, 1),
+    "rr.CE.FE_35.64" = c(1, 0, 4, 1),
+    "rr.CE.FE_65.99" = c(1, 0, 4, 1),
     "rr.NE.CE_1.17" = c(1, 0, 4, 1),
-    "rr.NE.CE_18.25" = c(1,0,4,1),
-    "rr.NE.CE_26.34" = c(1,0,4,1),
-    "rr.NE.CE_35.49" = c(1,0,4,1),
-    "rr.NE.CE_50.64" = c(1,0,4,1),
-    "rr.NE.CE_65.99" = c(1,0,4,1))
+    "rr.NE.CE_18.34" = c(1, 0,4, 1),
+    "rr.NE.CE_35.64" = c(1, 0, 4, 1),
+    "rr.NE.CE_65.99" = c(1, 0, 4, 1))
 } 
 colnames(m.calib_inputs) =c("value","lower","upper","calib")  
 v.params <- m.calib_inputs[m.calib_inputs[,"calib"]==1,][,"value"]  
