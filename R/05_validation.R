@@ -2,7 +2,8 @@
 # Internal validation to compare model-predicted outputs evaluated at calibrated parameters vs the calibration targets
 
 ## Run the model ---------------------------------------------------  
-l.model_prevs<-main_calib(v.params)
+l.model_prevs<-main_calib(v.params,NULL)[[2]]
+
 
 v.gof <- v.ssd <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
 
@@ -37,8 +38,19 @@ s.CF_26.34 <- select_param("s.CF_26.34")
 s.CF_35.49 <- select_param("s.CF_35.49")
 s.CF_50.64 <- select_param("s.CF_50.64")
 s.CF_65.99 <- select_param("s.CF_65.99")
+
 p.NC <- smk_init * c(rep(s.NC_9.17, 18), rep(s.NC_18.25, 8), rep(0, 74))
 p.CF <- smk_cess * c(rep(0, 16), rep(s.CF_18.25, 10), rep(s.CF_26.34, 9), rep(s.CF_35.49, 15), rep(s.CF_50.64, 15), rep(s.CF_65.99, 35))
+
+s.NC_D_9.17 <- select_param("s.NC_D_9.17")
+s.NC_D_18.25 <- select_param("s.NC_D_18.25")
+s.CF_D_18.25 <- select_param("s.CF_D_18.25")
+s.CF_D_26.34 <- select_param("s.CF_D_26.34")
+s.CF_D_35.49 <- select_param("s.CF_D_35.49")
+s.CF_D_50.64 <- select_param("s.CF_D_50.64")
+s.CF_D_65.99 <- select_param("s.CF_D_65.99")
+p.NC_D = smk_init*c(rep(s.NC_D_9.17,18),rep(s.NC_D_18.25,8),rep(0,74))
+p.CF_D = smk_cess*c(rep(0,16),rep(s.CF_D_18.25,10), rep(s.CF_D_26.34,9),rep(s.CF_D_35.49,15),rep(s.CF_D_50.64,15),rep(s.CF_D_65.99,35))
 
 # Recovery
 p.DR <- rep(0,100)
@@ -82,10 +94,8 @@ for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort forma
 }
 
 # Interaction effects
-rr.ND.CD <- select_param("rr.ND.CD")
 rr.CH.CD <- select_param("rr.CH.CD")
 rr.CR.CD <- select_param("rr.CR.CD")
-rr.CD.FD <- select_param("rr.CD.FD")
 
 
 # Model prevalence
@@ -147,7 +157,7 @@ df.calib_targets$prev_highCI <- as.numeric(df.calib_targets$prev_highCI)
 # Model inputs ------------------------------------------------------------
 
 # Figures for initiation and cessation for smoking
-initprobs <- as.data.frame(cbind(c(p.NC[,100],rr.ND.CD*p.NC[,100],smk_init[,100]),c(rep("calibrated",100),rep("rr.ND.CD",100),rep("CISNET",100)),c(rep(0:99,3))))
+initprobs <- as.data.frame(cbind(c(p.NC[,100],p.NC_D[,100],smk_init[,100]),c(rep("calibrated",100),rep("p.NC_D",100),rep("CISNET",100)),c(rep(0:99,3))))
 names(initprobs) <- c("prob","inputs","age")
 initprobs$prob<-as.numeric(as.character(initprobs$prob))
 initprobs$age<-as.numeric(as.character(initprobs$age))
@@ -155,7 +165,7 @@ p.NC_age <- ggplot(data=initprobs) +  geom_line( aes(x=age, y=prob, linetype=inp
   scale_x_continuous(name="Age", limits=c(0,50), breaks=seq(0,99,10)) +
   labs(title="Initiation probabilities")
 
-cessprobs <- as.data.frame(cbind(c(p.CF[,100],rr.CD.FD*p.CF[,100],smk_cess[,100]),c(rep("calibrated",100),rep("rr.CD.FD",100),rep("CISNET",100)),c(rep(0:99,3))))
+cessprobs <- as.data.frame(cbind(c(p.CF[,100],p.CF_D[,100],smk_cess[,100]),c(rep("calibrated",100),rep("p.CF_D",100),rep("CISNET",100)),c(rep(0:99,3))))
 names(cessprobs) <- c("prob","inputs","age")
 cessprobs$prob<-as.numeric(as.character(cessprobs$prob))
 cessprobs$age<-as.numeric(as.character(cessprobs$age))

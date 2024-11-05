@@ -135,15 +135,15 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FQH"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQH"]]
   
   ##from NDO state
-  m.p_t["NOD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(1-rr.ND.CD*p.NC[t,bc1]-p.NO.NE[t,yr]-p.DR[t])
-  m.p_t["COD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(rr.ND.CD*p.NC[t,bc1])
+  m.p_t["NOD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(1-p.NC_D[t,bc1]-p.NO.NE[t,yr]-p.DR[t])
+  m.p_t["COD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(p.NC_D[t,bc1])
   m.p_t["NED", M_t == "NOD"] <- (1-p.NX[t,bc1])*(p.NO.NE[t,yr])
   m.p_t["NOR", M_t == "NOD"] <- (1-p.NX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "NOD"] <- p.NX[t,bc1]
   
   ##from CDO state
-  m.p_t["COD", M_t == "COD"] <- (1-p.CX[t,bc1])*(1-rr.CD.FD*p.CF[t,bc1]-p.CO.CE[t,yr]-p.DR[t])
-  m.p_t["FOD", M_t == "COD"] <- (1-p.CX[t,bc1])*(rr.CD.FD*p.CF[t,bc1])
+  m.p_t["COD", M_t == "COD"] <- (1-p.CX[t,bc1])*(1-p.CF_D[t,bc1]-p.CO.CE[t,yr]-p.DR[t])
+  m.p_t["FOD", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.CF_D[t,bc1])
   m.p_t["CED", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.CO.CE[t,yr])
   m.p_t["COR", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "COD"] <- p.CX[t,bc1]
@@ -155,15 +155,15 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FOD"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]]
   
   ##from NDE state
-  m.p_t["NED", M_t == "NED"] <- (1-p.NX[t,bc1])*(1-rr.NE.CE[t,yr]*p.NC[t,bc1]-p.NE.NQ[t,yr]-p.DR[t])
-  m.p_t["CED", M_t == "NED"] <- (1-p.NX[t,bc1])*(rr.NE.CE[t,yr]*p.NC[t,bc1])
+  m.p_t["NED", M_t == "NED"] <- (1-p.NX[t,bc1])*(1-rr.NE.CE[t,yr]*p.NC_D[t,bc1]-p.NE.NQ[t,yr]-p.DR[t])
+  m.p_t["CED", M_t == "NED"] <- (1-p.NX[t,bc1])*(rr.NE.CE[t,yr]*p.NC_D[t,bc1])
   m.p_t["NQD", M_t == "NED"] <- (1-p.NX[t,bc1])*(p.NE.NQ[t,yr])
   m.p_t["NER", M_t == "NED"] <- (1-p.NX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "NED"] <- p.NX[t,bc1]
   
   ##from CDE state
-  m.p_t["CED", M_t == "CED"] <- (1-p.CX[t,bc1])*(1-rr.CE.FE[t,yr]*p.CF[t,bc1]-p.CE.CQ[t,yr]-p.DR[t])
-  m.p_t["FED", M_t == "CED"] <- (1-p.CX[t,bc1])*(rr.CE.FE[t,yr]*p.CF[t,bc1])
+  m.p_t["CED", M_t == "CED"] <- (1-p.CX[t,bc1])*(1-rr.CE.FE[t,yr]*p.CF_D[t,bc1]-p.CE.CQ[t,yr]-p.DR[t])
+  m.p_t["FED", M_t == "CED"] <- (1-p.CX[t,bc1])*(rr.CE.FE[t,yr]*p.CF_D[t,bc1])
   m.p_t["CQD", M_t == "CED"] <- (1-p.CX[t,bc1])*(p.CE.CQ[t,yr])
   m.p_t["CER", M_t == "CED"] <- (1-p.CX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "CED"] <- p.CX[t,bc1]
@@ -175,15 +175,15 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FED"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FED"]]
   
   ##from NDQ state
-  m.p_t["NQD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(1-p.NQ.NE[t,yr]-p.NC[t,bc1]-p.DR[t])
+  m.p_t["NQD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(1-p.NQ.NE[t,yr]-p.NC_D[t,bc1]-p.DR[t])
   m.p_t["NED", M_t == "NQD"] <- (1-p.NX[t,bc1])*(p.NQ.NE[t,yr])
-  m.p_t["CQD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(p.NC[t,bc1])
+  m.p_t["CQD", M_t == "NQD"] <- (1-p.NX[t,bc1])*(p.NC_D[t,bc1])
   m.p_t["NQR", M_t == "NQD"] <- (1-p.NX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "NQD"] <- p.NX[t,bc1]
   
   ##from CDQ state
-  m.p_t["CQD", M_t == "CQD"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CQ.CE[t,yr]-p.DR[t])
-  m.p_t["FQD", M_t == "CQD"] <- (1-p.CX[t,bc1])*p.CF[t,bc1]
+  m.p_t["CQD", M_t == "CQD"] <- (1-p.CX[t,bc1])*(1-p.CF_D[t,bc1]-p.CQ.CE[t,yr]-p.DR[t])
+  m.p_t["FQD", M_t == "CQD"] <- (1-p.CX[t,bc1])*p.CF_D[t,bc1]
   m.p_t["CED", M_t == "CQD"] <- (1-p.CX[t,bc1])*(p.CQ.CE[t,yr])
   m.p_t["CQR", M_t == "CQD"] <- (1-p.CX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "CQD"] <- p.CX[t,bc1]
@@ -439,7 +439,7 @@ f_gof <- function(v.params){
   return(GOF_overall)
 }
 
-main_calib <- function(v.params) { # v.params: run model for parameter calibration; no policy effects
+main_calib <- function(v.params,l.policy_effects) { # v.params: run model for parameter calibration; no policy effects
   
   t_init <- Sys.time() # Start timer
   
@@ -486,22 +486,41 @@ main_calib <- function(v.params) { # v.params: run model for parameter calibrati
     }
   }
   
-  ## Initiation - No initiation after 25
-  p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
-  ## Cessation - No cessation before 18
-  p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
+  if (is.null(l.policy_effects)){
+    #Initiation and Cessation for Healthy
+        ## Initiation - No initiation after 25
+        p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
+        ## Cessation - No cessation before 18
+        p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
+    ## Initiation and Cessation for Depressed scaling factors - No initiation after 25 
+        p.NC_D = smk_init*c(rep(s.NC_D_9.17,18),rep(s.NC_D_18.25,8),rep(0,74))
+        ## Cessation - No cessation before 18
+        p.CF_D = smk_cess*c(rep(0,16),rep(s.CF_D_18.25,10), rep(s.CF_D_26.34,9),rep(s.CF_D_35.49,15),rep(s.CF_D_50.64,15),rep(s.CF_D_65.99,35))
+  } else {
+    p.NC = unname(l.policy_effects[["m.initeff"]])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
+    p.CF = unname(l.policy_effects[["m.cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
+    p.NC_D = unname(l.policy_effects[["m.initeff"]])*smk_init*c(rep(s.NC_D_9.17,18),rep(s.NC_D_18.25,8),rep(0,74))
+    p.CF_D = unname(l.policy_effects[["m.cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_D_18.25,10), rep(s.CF_D_26.34,9),rep(s.CF_D_35.49,15),rep(s.CF_D_50.64,15),rep(s.CF_D_65.99,35))
+    
+    }
   
   # Effects of e-cigarettes on smoking initiation and cessation
   rr.NE.CE = matrix(data=rr.NE.CE, nrow=100, ncol=201)
   rr.CE.FE = matrix(data=rr.CE.FE, nrow=100, ncol=201)
   
+  
+  
+  
+  #p.CF[p.CF > 1] <- 1 # replace any cessation probabilities that are greater than 1 with 1
+  ##why is this needed?
+  
   # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
   m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
                  .export=c('mds_microsim','probs','get_prevs_combined',
                            'n.i','n.t','v.n','n.s','v.M_1',
-                           'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
+                           'p.NC','p.CF','p.NC_D','p.CF_D','p.NX','p.CX','a_p.FX.ysq',
                            'p.HD', 'p.DR', 'p.RD',
-                           'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD',
+                           'rr.CH.CD','rr.CR.CD',
                            'p.NO.NE', 'p.CO.CE', 'p.FO.FE',
                            'p.NE.NQ', 'p.CE.CQ', 'p.FE.FQ',
                            'p.NQ.NE', 'p.CQ.CE', 'p.FQ.FE',
@@ -526,7 +545,8 @@ main_calib <- function(v.params) { # v.params: run model for parameter calibrati
 
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer
-  return(l.model_prevs) # For calibration only
+  #return(m.M) # For calibration only
+  return(list(m.M,l.model_prevs))
 }
 
 ## MAIN POLICY FUNCTIONS ------------------------------------------
@@ -566,82 +586,10 @@ reorder_by_age <- function(data) {
 
 main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for parameter calibration; l.policy_effects: policy effects
   
-  t_init <- Sys.time() # Start timer
-  
-  # Loop over parameter names and assign values dynamically
-  for (param in rownames(m.calib_inputs)) {
-    assign(param, get_value(param,v.params))
-  }
-  
-  yearinc_p.HD <- round(yearinc_p.HD)
-  
-  # Recovery
-  p.DR=NULL
-  p.DR[1:12] <- p.DR[100] <- 0 # final value = 0 because mortality prob = 1
-  p.DR[13:65] <- p.DR_12.64
-  p.DR[66:99] <- p.DR_65.99
-  
-  
-  rr.NE.CE = NULL
-  rr.NE.CE[1:17] <- rr.NE.CE_1.17
-  rr.NE.CE[18:25] <- rr.NE.CE_18.25
-  rr.NE.CE[26:34] <- rr.NE.CE_26.34
-  rr.NE.CE[35:49] <- rr.NE.CE_35.49
-  rr.NE.CE[50:64] <- rr.NE.CE_50.64
-  rr.NE.CE[65:99] <- rr.NE.CE_65.99
-  
-  rr.CE.FE = NULL
-  rr.CE.FE[1:17] <- rr.CE.FE_1.17
-  rr.CE.FE[18:25] <- rr.CE.FE_18.25
-  rr.CE.FE[26:34] <- rr.CE.FE_26.34
-  rr.CE.FE[35:49] <- rr.CE.FE_35.49
-  rr.CE.FE[50:64] <- rr.CE.FE_50.64
-  rr.CE.FE[65:99] <- rr.CE.FE_65.99
-  
-  # Effects of e-cigarettes on smoking initiation and cessation
-  rr.NE.CE = matrix(data=rr.NE.CE, nrow=100, ncol=201)
-  rr.CE.FE = matrix(data=rr.CE.FE, nrow=100, ncol=201)
+  l.main_calib_outputs<-main_calib(v.params,l.policy_effects)
+  m.M<-l.main_calib_outputs[[1]]
+  l.model_prevs<-l.main_calib_outputs[[2]]
 
-  ## Incidence
-  for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
-    bc1 = bc-1899
-    for (age in 0:34){ # increase applies to youth and young adults ages 0-25
-      if ((bc+age)>=yearinc_p.HD & age>=18 & age<=25){ # starting in 2016
-        p.HD[(age+1),bc1] = s.HD_18.25*p.HD[(age+1),bc1]
-      }
-      if ((bc+age)>=yearinc_p.HD & age<18){
-        p.HD[(age+1),bc1] = s.HD_12.17*p.HD[(age+1),bc1]
-      }
-      if ((bc+age)>=yearinc_p.HD & age>=26){
-        p.HD[(age+1),bc1] = s.HD_26.34*p.HD[(age+1),bc1]
-      }
-    }
-  }
-  
-  if (is.null(l.policy_effects)){
-    p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
-    p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
-  } else {
-    p.NC = unname(l.policy_effects[["m.initeff"]])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
-    p.CF = unname(l.policy_effects[["m.cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
-  }
-  
-  p.CF[p.CF > 1] <- 1 # replace any cessation probabilities that are greater than 1 with 1
-  
-  # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
-  m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
-                 .export=c('mds_microsim','probs','get_prevs_combined',
-                           
-                           'n.i','n.t','v.n','n.s','v.M_1',
-                           'p.NC','p.CF','p.NX','p.CX','a_p.FX.ysq',
-                           'p.HD', 'p.DR', 'p.RD',
-                           'rr.ND.CD','rr.CH.CD','rr.CR.CD','rr.CD.FD',
-                           'p.NO.NE', 'p.CO.CE', 'p.FO.FE',
-                           'p.NE.NQ', 'p.CE.CQ', 'p.FE.FQ',
-                           'p.NQ.NE', 'p.CQ.CE', 'p.FQ.FE',
-                           'rr.CE.FE', 'rr.NE.CE')) %dopar% {
-                             mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
-                           }
   # To run in serial for debugging purposes, uncomment the line below, and comment out the 'foreach' loop above
   # m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
   
@@ -849,7 +797,7 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
                         init = p.NC, cess = p.CF, m.prev_C=m.prev_C, m.prev_F = m.prev_F, m.prev_N=m.prev_N)
     
   l.results_D <- list(l.model_prevs = l.model_prevs_D, m.cuw=m.cuw_D, v.lifeyears=v.lifeyears_D, v.SAD=v.SAD_D,  v.cea=v.cea_D,
-                        init = rr.ND.CD*p.NC, cess = rr.CD.FD*p.CF, m.prev_C=m.prev_C_D, m.prev_F = m.prev_F_D, m.prev_N=m.prev_N_D)
+                        init = p.NC_D, cess = p.CF_D, m.prev_C=m.prev_C_D, m.prev_F = m.prev_F_D, m.prev_N=m.prev_N_D)
   
   l.results_notD <- list(l.model_prevs=l.model_prevs_notD, m.cuw=m.cuw_notD , v.lifeyears = v.lifeyears_notD, v.SAD=v.SAD_notD, v.cea=v.cea_notD,
                          init = p.NC, cess = p.CF, m.prev_C=m.prev_C_notD, m.prev_F = m.prev_F_notD, m.prev_N=m.prev_N_notD)
