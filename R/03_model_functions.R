@@ -142,8 +142,8 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "NOD"] <- p.NX[t,bc1]
   
   ##from CDO state
-  m.p_t["COD", M_t == "COD"] <- (1-p.CX[t,bc1])*(1-p.CF_D[t,bc1]-p.CO.CE[t,yr]-p.DR[t])
-  m.p_t["FOD", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.CF_D[t,bc1])
+  m.p_t["COD", M_t == "COD"] <- (1-p.CX[t,bc1])*(1-rr.CD.FD*p.CF[t,bc1]-p.CO.CE[t,yr]-p.DR[t])
+  m.p_t["FOD", M_t == "COD"] <- (1-p.CX[t,bc1])*(rr.CD.FD*p.CF[t,bc1])
   m.p_t["CED", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.CO.CE[t,yr])
   m.p_t["COR", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "COD"] <- p.CX[t,bc1]
@@ -162,8 +162,8 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "NED"] <- p.NX[t,bc1]
   
   ##from CDE state
-  m.p_t["CED", M_t == "CED"] <- (1-p.CX[t,bc1])*(1-rr.CE.FE[t,yr]*p.CF_D[t,bc1]-p.CE.CQ[t,yr]-p.DR[t])
-  m.p_t["FED", M_t == "CED"] <- (1-p.CX[t,bc1])*(rr.CE.FE[t,yr]*p.CF_D[t,bc1])
+  m.p_t["CED", M_t == "CED"] <- (1-p.CX[t,bc1])*(1-rr.CE.FE[t,yr]*rr.CD.FD*p.CF[t,bc1]-p.CE.CQ[t,yr]-p.DR[t])
+  m.p_t["FED", M_t == "CED"] <- (1-p.CX[t,bc1])*(rr.CE.FE[t,yr]*rr.CD.FD*p.CF[t,bc1])
   m.p_t["CQD", M_t == "CED"] <- (1-p.CX[t,bc1])*(p.CE.CQ[t,yr])
   m.p_t["CER", M_t == "CED"] <- (1-p.CX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "CED"] <- p.CX[t,bc1]
@@ -182,8 +182,8 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "NQD"] <- p.NX[t,bc1]
   
   ##from CDQ state
-  m.p_t["CQD", M_t == "CQD"] <- (1-p.CX[t,bc1])*(1-p.CF_D[t,bc1]-p.CQ.CE[t,yr]-p.DR[t])
-  m.p_t["FQD", M_t == "CQD"] <- (1-p.CX[t,bc1])*p.CF_D[t,bc1]
+  m.p_t["CQD", M_t == "CQD"] <- (1-p.CX[t,bc1])*(1-rr.CD.FD*p.CF[t,bc1]-p.CQ.CE[t,yr]-p.DR[t])
+  m.p_t["FQD", M_t == "CQD"] <- (1-p.CX[t,bc1])*rr.CD.FD*p.CF[t,bc1]
   m.p_t["CED", M_t == "CQD"] <- (1-p.CX[t,bc1])*(p.CQ.CE[t,yr])
   m.p_t["CQR", M_t == "CQD"] <- (1-p.CX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "CQD"] <- p.CX[t,bc1]
@@ -493,14 +493,13 @@ main_calib <- function(v.params,l.policy_effects) { # v.params: run model for pa
         ## Cessation - No cessation before 18
         p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
     ## Initiation and Cessation for Depressed scaling factors - No initiation after 25 
-        p.NC_D = smk_init*c(rep(s.NC_D_9.17,18),rep(s.NC_D_18.25,8),rep(0,74))
+        p.NC_D = smk_init*c(rep(s.NC_D_9.17,18),rep(s.NC_D_18.25,8),rep(s.NC_D_26.34,9),rep(0,65))
         ## Cessation - No cessation before 18
-        p.CF_D = smk_cess*c(rep(0,16),rep(s.CF_D_18.25,10), rep(s.CF_D_26.34,9),rep(s.CF_D_35.49,15),rep(s.CF_D_50.64,15),rep(s.CF_D_65.99,35))
+        
   } else {
     p.NC = unname(l.policy_effects[["m.initeff"]])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
     p.CF = unname(l.policy_effects[["m.cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
     p.NC_D = unname(l.policy_effects[["m.initeff"]])*smk_init*c(rep(s.NC_D_9.17,18),rep(s.NC_D_18.25,8),rep(0,74))
-    p.CF_D = unname(l.policy_effects[["m.cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_D_18.25,10), rep(s.CF_D_26.34,9),rep(s.CF_D_35.49,15),rep(s.CF_D_50.64,15),rep(s.CF_D_65.99,35))
     
     }
   
@@ -518,9 +517,9 @@ main_calib <- function(v.params,l.policy_effects) { # v.params: run model for pa
   m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
                  .export=c('mds_microsim','probs','get_prevs_combined',
                            'n.i','n.t','v.n','n.s','v.M_1',
-                           'p.NC','p.CF','p.NC_D','p.CF_D','p.NX','p.CX','a_p.FX.ysq',
+                           'p.NC','p.CF','p.NC_D','p.NX','p.CX','a_p.FX.ysq',
                            'p.HD', 'p.DR', 'p.RD',
-                           'rr.CH.CD','rr.CR.CD',
+                           'rr.CH.CD','rr.CR.CD','rr.CD.FD',
                            'p.NO.NE', 'p.CO.CE', 'p.FO.FE',
                            'p.NE.NQ', 'p.CE.CQ', 'p.FE.FQ',
                            'p.NQ.NE', 'p.CQ.CE', 'p.FQ.FE',
@@ -545,8 +544,11 @@ main_calib <- function(v.params,l.policy_effects) { # v.params: run model for pa
 
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer
-  #return(m.M) # For calibration only
-  return(list(m.M,l.model_prevs))
+  if (calibration==1){
+    return(l.model_prevs)
+  }else{
+    return(list(m.M,l.model_prevs))
+  }
 }
 
 ## MAIN POLICY FUNCTIONS ------------------------------------------
@@ -797,7 +799,7 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
                         init = p.NC, cess = p.CF, m.prev_C=m.prev_C, m.prev_F = m.prev_F, m.prev_N=m.prev_N)
     
   l.results_D <- list(l.model_prevs = l.model_prevs_D, m.cuw=m.cuw_D, v.lifeyears=v.lifeyears_D, v.SAD=v.SAD_D,  v.cea=v.cea_D,
-                        init = p.NC_D, cess = p.CF_D, m.prev_C=m.prev_C_D, m.prev_F = m.prev_F_D, m.prev_N=m.prev_N_D)
+                        init = p.NC_D, cess = rr.CD.FD*p.CF, m.prev_C=m.prev_C_D, m.prev_F = m.prev_F_D, m.prev_N=m.prev_N_D)
   
   l.results_notD <- list(l.model_prevs=l.model_prevs_notD, m.cuw=m.cuw_notD , v.lifeyears = v.lifeyears_notD, v.SAD=v.SAD_notD, v.cea=v.cea_notD,
                          init = p.NC, cess = p.CF, m.prev_C=m.prev_C_notD, m.prev_F = m.prev_F_notD, m.prev_N=m.prev_N_notD)
