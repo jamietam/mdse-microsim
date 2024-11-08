@@ -364,8 +364,8 @@ grid_arrange_shared_legend(list(N_D_age, C_D_age, F_D_age),3,"Smoking distributi
 grid_arrange_shared_legend(list(NCF_total, NCF_D_total),2,"Smoking distribution")
 grid_arrange_shared_legend(list(E_age,E_D_age),2,"Vaping by age and Depression Status")
 grid_arrange_shared_legend(list(E_total,E_D_total),2,"Vaping by Smoking Status - all ages")
-grid_arrange_shared_legend(list(NE_age, CE_age, FE_age),3,"Smoking Status Age Distribution among current Vapers in the Total Population")
-grid_arrange_shared_legend(list(NE_D_age, CE_D_age, FE_D_age),3,"Smoking Status Age Distribution among current Vapers in the Depressed Population")
+grid_arrange_shared_legend(list(NE_age, CE_age, FE_age),3,"Smoking and Vaping Status Age Distribution in the Total Population")
+grid_arrange_shared_legend(list(NE_D_age, CE_D_age, FE_D_age),3,"Smoking and Vaping Status Age Distribution in the Depressed Population")
 # inputs
 grid_arrange_shared_legend(list(p.NC_age,p.CF_age),2,"Smoking inputs")
 grid_arrange_shared_legend(list(p.HD_age,p.HD_ageC),2,"Incidence by smoking status")
