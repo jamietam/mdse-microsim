@@ -435,7 +435,6 @@ f_gof <- function(v.params){
   # weighted sum
   GOF_overall <- sum(v.gof[1:n.target] * v.weights)
   cat(GOF_overall)
-  GOF_overall=10
   # return GOF
   return(GOF_overall)
 }
