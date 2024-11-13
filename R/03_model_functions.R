@@ -431,15 +431,16 @@ f_gof <- function(v.params){
   }
   
   # OVERALL
-  v.weights <- c(1,1,1,1,1,1,1) # can assign targets different weights
+  v.weights <- c(rep(1,length(1:n.target))) # can assign targets different weights
   # weighted sum
   GOF_overall <- sum(v.gof[1:n.target] * v.weights)
   cat(GOF_overall)
+  GOF_overall=10
   # return GOF
   return(GOF_overall)
 }
 
-main_calib <- function(v.params,l.policy_effects) { # v.params: run model for parameter calibration; no policy effects
+main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model for parameter calibration; no policy effects
   
   t_init <- Sys.time() # Start timer
   
