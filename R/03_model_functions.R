@@ -416,7 +416,7 @@ gof_norm_loglike <- function(target_mean, target_sd, model_output){
 # Write goodness-of-fit function to pass to calibration algorithm
 f_gof <- function(v.params){
   
-  l.model_prevs <- main_calib(v.params)
+  l.model_prevs <- main_calib(v.params)[[2]]
   v.gof <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
   # Calibrate to N, C, F, D and ND/D, CD/D, FD/D prevalences
   for (r in 1:length(l.calib_targets)){ # use log likelihood as metric
@@ -501,7 +501,9 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
     p.CF = unname(l.policy_effects[["m.cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
     p.NC_D = unname(l.policy_effects[["m.initeff"]])*smk_init*c(rep(s.NC_D_9.17,18),rep(s.NC_D_18.25,8),rep(0,74))
     
-    }
+  }
+  #hey Jamie is this needed
+  p.CF[p.CF > 1] <- 1 # replace any cessation probabilities that are greater than 1 with 1
   
   # Effects of e-cigarettes on smoking initiation and cessation
   rr.NE.CE = matrix(data=rr.NE.CE, nrow=100, ncol=201)
@@ -544,11 +546,9 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
 
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer
-  if (calibration==1){
-    return(l.model_prevs)
-  }else{
-    return(list(m.M,l.model_prevs))
-  }
+
+  return(list(m.M,l.model_prevs,p.NC,p.CF,p.NC_D,rr.CD.FD))
+  
 }
 
 ## MAIN POLICY FUNCTIONS ------------------------------------------
@@ -587,10 +587,15 @@ reorder_by_age <- function(data) {
 }
 
 main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for parameter calibration; l.policy_effects: policy effects
-  
+  t_init <- Sys.time() 
   l.main_calib_outputs<-main_calib(v.params,l.policy_effects)
   m.M<-l.main_calib_outputs[[1]]
   l.model_prevs<-l.main_calib_outputs[[2]]
+  #p.NC,p.CF,p.NC_D,rr.CD.FD. for outputs later
+  p.NC<-l.main_calib_outputs[[3]]
+  p.CF<-l.main_calib_outputs[[4]]
+  p.NC_D<-l.main_calib_outputs[[5]]
+  rr.CD.FD<-l.main_calib_outputs[[6]]
 
   # To run in serial for debugging purposes, uncomment the line below, and comment out the 'foreach' loop above
   # m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
@@ -756,7 +761,7 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
                      colSums(m.C_D,na.rm=TRUE)+colSums(m.B_D,na.rm=TRUE)-colSums(m.W_D,na.rm=TRUE)) # societal costs = medical costs + consumer expenditures (non-medical) -  productivity 
   
   m.total_cuw_notD <- m.total_cuw - m.total_cuw_D
-  rownames(m.total_cuw) <- rownames(m.total_cuw_D) <- rownames(m.total_cuw_notD) <- c("med_costs","QALYs","productivity","consumer_exp","soc_costs","lifeyears")
+  rownames(m.total_cuw) <- rownames(m.total_cuw_D) <- rownames(m.total_cuw_notD) <- c("med_costs","QALYs","productivity","consumer_exp","soc_costs")#,"lifeyears")
   colnames(m.total_cuw) <- colnames(m.C) <- colnames(m.U) <- colnames(m.W) <- colnames(m.B) <- colnames(m.C_D) <- colnames(m.U_D) <- colnames(m.W_D) <- colnames(m.B_D) <- c(min(cohorts):(max(cohorts)+100))
   
   # Assume 2023 is the starting year for discounting purposes, calculate discount weight based on the discount rate d.c
@@ -793,7 +798,7 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
   
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer
-  
+
   # Output results as two lists: one for general population, and one for depressed population
   l.results <- list(l.model_prevs = l.model_prevs, m.cuw=m.cuw, v.lifeyears=v.lifeyears, v.SAD=v.SAD, v.cea=v.cea,
                         init = p.NC, cess = p.CF, m.prev_C=m.prev_C, m.prev_F = m.prev_F, m.prev_N=m.prev_N)

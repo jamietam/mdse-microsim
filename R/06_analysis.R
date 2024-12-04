@@ -1,9 +1,10 @@
 ## Clean up the workspace and set main working directory
 rm(list = ls()) 
 
-mainDir = "/Users/jt936/Dropbox/GitHub/mds-microsim/"
+mainDir = "/Users/srs249/Documents/GitHub/mds-microsim/"
 # mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" # Set working directory
 hpc=0
+calibration=0 #need to set this to 0 so main_calib works and outputs proper matrix for main function
 args <- `if`(hpc == 1, commandArgs(TRUE), c("females", 1000, 2100, 40)) # Parameters for HPV vs non-HPC setup
 
 source(paste0(mainDir,"R/01_environment.R"), echo=FALSE) #
@@ -20,21 +21,22 @@ v.affected_ages <- c(0:99) # affects all ages
 
 params <- list(
   baseline = c(1, 1),
-  init_0.5 = c(0.5,1), # 50% decrease in initiation
-  init_0.1 = c(0.9,1), # 10% decrease in initiation
-  init_0.85 = c(0.15,1), # 85% decrease in initiation
-  cess_2.10 = c(1,3.10), # 210% increase in cessation
-  cess_0.69 = c(1,1.69), # 69% increase in cessation
-  cess_4.96 = c(1,5.96), # 496% increase in cessation
-  init_0.5_cess_2.10 = c(0.5, 3.10), # 50% decrease to initiation (rr.init=0.5) , rr.cess=3.10
-  init_0.5_cess_0.69 = c(0.5, 1.69), # rr.cess=1.69
-  init_0.5_cess_4.96 = c(0.5, 5.96), # rr.cess=5.96
-  init_0.1_cess_2.10 = c(0.9, 3.10), # 10% decrease to initiation (rr.init=0.9) 
-  init_0.1_cess_0.69 = c(0.9, 1.69),
-  init_0.1_cess_4.96 = c(0.9, 5.96),
-  init_0.85_cess_2.10 = c(0.15, 3.10), # 85% decrease to initiation (rr.init=0.15)
-  init_0.85_cess_0.69 = c(0.15, 1.69),
-  init_0.85_cess_4.96 = c(0.15, 5.96)
+  MPRPM = c(0,100000), # no initiation, everyone quits (setting it to 100000 makes all cessation probabilities set to 1)
+  noinit_cess_1=c(0,1)
+  # init_0.1 = c(0.9,1), # 10% decrease in initiation
+  # init_0.85 = c(0.15,1), # 85% decrease in initiation
+  # cess_2.10 = c(1,3.10), # 210% increase in cessation
+  # cess_0.69 = c(1,1.69), # 69% increase in cessation
+  # cess_4.96 = c(1,5.96), # 496% increase in cessation
+  # init_0.5_cess_2.10 = c(0.5, 3.10), # 50% decrease to initiation (rr.init=0.5) , rr.cess=3.10
+  # init_0.5_cess_0.69 = c(0.5, 1.69), # rr.cess=1.69
+  # init_0.5_cess_4.96 = c(0.5, 5.96), # rr.cess=5.96
+  # init_0.1_cess_2.10 = c(0.9, 3.10), # 10% decrease to initiation (rr.init=0.9) 
+  # init_0.1_cess_0.69 = c(0.9, 1.69),
+  # init_0.1_cess_4.96 = c(0.9, 5.96),
+  # init_0.85_cess_2.10 = c(0.15, 3.10), # 85% decrease to initiation (rr.init=0.15)
+  # init_0.85_cess_0.69 = c(0.15, 1.69),
+  # init_0.85_cess_4.96 = c(0.15, 5.96)
 )
 
 scenarios <- names(params)
@@ -52,7 +54,8 @@ allresults <- lapply(scenarios, run_policy)
 names(allresults) <- scenarios
 save(allresults, file = paste0("output/rnc_",whichgender,"_",n.i,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".Rda"))
 
-load("output/rnc_males_1000_09.25.24_05.46PM.Rda")
+load("output/rnc_females_1000_12.03.24_11.28AM.Rda")
+#load("output/rnc_males_1000_12.03.24_03.10PM.Rda")
 
 # organize data by population
 l.results <- list() # total population
@@ -191,12 +194,34 @@ calc_icers <- function(cea_data) {
   return(cea_data)
 }
 
-l.results_total <- reformat_model_outputs(l.results)
-df.model_prevs, smkprobs, combined_data, df.cea
-# Specify which population to generate results for
-results = l.results
-results = l.results_D
 
+#figures for depressed, not depressed, and total
+typefig=3 #1=total, 2= depressed, 3=not depressed
+
+
+specialname="Not Depressed"
+if (typefig==1){
+  l.results_total <- reformat_model_outputs(l.results)
+  specialname="Total Population"
+  status1=c("C")
+}else if(typefig==2){
+  l.results_total <- reformat_model_outputs(l.results_D)
+  specialname="Depressed"
+  status1="C_D"
+}else if (typefig==3){
+  l.results_total <- reformat_model_outputs(l.results_notD)
+  specialname="Not Depressed"
+  status1="C"
+}
+#df.model_prevs, smkprobs, combined_data, df.cea
+# Specify which population to generate results for
+#results = l.results
+#results = l.results_D
+
+df.model_prevs=l.results_total[[1]]
+smkprobs=l.results_total[[2]]
+combined_data=l.results_total[[3]]
+df.cea=l.results_total[[4]]
 # FIGURES -----------------------------------------------------------------
 
 # Define ggplot figures
@@ -209,6 +234,7 @@ create_figure <- function(data, y, title, xlim = NULL, ylim = NULL, ylab = NULL)
     theme(axis.text.x = element_text(angle = 60, hjust = 1), legend.title = element_blank())
 }
 
+
 p.NC_age <- ggplot(data = smkprobs) +
   geom_line(aes(x = age, y = init, linetype = scenario, color = scenario)) +
   scale_x_continuous(name = "Age", limits = c(0, 30), breaks = seq(0, 99, 10)) +
@@ -219,11 +245,12 @@ p.CF_age <- ggplot(data = smkprobs) +
   scale_x_continuous(name = "Age", limits = c(0, 99), breaks = seq(0, 99, 10)) +
   labs(title = "Cessation probabilities")
 
+
 csprevs <- ggplot() +
-  geom_pointrange(data = subset(df.calib_targets, age == 18.99 & (status == "CD" | status == "C")),
+  geom_pointrange(data = subset(df.calib_targets, age == 18.99 & (status %in% status1)),#| status == "C" "C_D"
                   aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, linetype = status, shape = status)) +
-  geom_line(data = subset(df.model_prevs, age == 18.99 & (status == "CD" | status == "C")),
-            aes(x = year, y = prev, color = scenario, linetype = status)) +
+  geom_line(data = subset(df.model_prevs, age == 18.99 & (status == "C" )),#| status == "C"
+            aes(x = year, y = prev, color = scenario)) +
   scale_y_continuous(name = "Prevalence (%)", limits = c(0, 0.5), breaks = seq(0, 0.5, 0.05)) +
   scale_x_continuous(name = "Year", limits = c(2005, 2100), breaks = seq(2005, 2100, 10)) +
   labs(title = paste0("Current smoking - ",whichgender, " ages 18-99")) +
@@ -264,10 +291,10 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
 }
 
 # Create PDF of results
-pdf(file = paste0(mainDir,"output/", "rnc_general_",whichgender,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
+pdf(file = paste0(mainDir,"output/", "policy_general_",specialname,whichgender,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
 plot.new()
-text(.5, 0.5, paste0("Policy outcomes \n",whichgender,"\n",n.i," per birth cohort"), font=1, cex=1.5)
-text(cea_data)
+text(.5, 0.5, paste0("Policy outcomes \n",specialname,whichgender,"\n",n.i," per birth cohort"), font=1, cex=1.5)
+#text(cea_data)
 grid_arrange_shared_legend(list(p.NC_age,p.CF_age),2,"Smoking probabilities")
 csprevs
 grid_arrange_shared_legend(list(aSAD_averted_fig,cSAD_averted_fig),2,"Smoking-Attributable Deaths")

@@ -21,6 +21,8 @@ d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by
 d.year <- 2023 # which year to start discounting from
 # CALIBRATION TARGETS
 load(paste0(mainDir,"data/nsduh_calib_targets_",whichgender,".RData")) 
+
+#l.calib_targets <-l.calib_targets[c("N","C","F","D","N_D","C_D","F_D")]
 l.calib_targets <- lapply(l.calib_targets,function(x) x[x[,"survey_year"]<=calib_endyear & x[,"survey_year"]>=calib_startyear,]) # keep survey years for calibration targets only
 
 ## CALIBRATION PARAMETERS - Specify which parameters you want to calibrate (0 vs 1 in column 4), and provide upper and lower bounds for the search algorithm
@@ -63,8 +65,10 @@ if (whichgender == "males") {
 } else if (whichgender == "females") {
   m.calib_inputs <-rbind( 
     #healthy (not depressed) scaling
-    "s.NC_9.17" = c(1.9, 0, 3, 1),
-    "s.NC_18.25" = c(0, 0, 3, 1),
+    # "s.NC_9.17" = c(1.7202115, 0, 3, 1),
+    # "s.NC_18.25" = c(0.0011597277, 0, 3, 1),
+    "s.NC_9.17" = c(1.7519452, 0, 3, 1),
+    "s.NC_18.25" = c(0.0010687291 , 0, 3, 1),
     "s.CF_18.25" = c(0.533405964435913, 0.50, 1.0, 0),
     "s.CF_26.34" = c(0.6715885419285, 0.50, 1.0, 0),
     "s.CF_35.49" = c(0.769270653272708, 0.50, 1.0, 0),
@@ -72,19 +76,22 @@ if (whichgender == "males") {
     "s.CF_65.99" = c(0.701643230463244, 0.50, 1.0, 0),
     
     #depressed scaling factors
-    "s.NC_D_9.17" = c(2, 0, 4, 1), #run this
-    "s.NC_D_18.25" = c(3.4, 0, 4, 1),#run this
-    "s.NC_D_26.34" = c(2.5, 0, 4, 1),#run this
+    # "s.NC_D_9.17" = c(2.00000000, 0, 4, 1), #run this
+    # "s.NC_D_18.25" = c(3.4, 0, 4, 1),#run this
+    # "s.NC_D_26.34" = c(2.5, 0, 4, 1),#run this
+    "s.NC_D_9.17" = c(1.34322900, 0, 4, 1), #run this
+    "s.NC_D_18.25" = c(3.149159, 0, 4, 1),#run this
+    "s.NC_D_26.34" = c(2.72366789 , 0, 4, 1),#run this
 
     
     "p.DR_12.64" = c(0.173, 0.0, 1.0, 0),
     "p.DR_65.99" = c(0.65, 0.6, 0.65, 0),
-    "s.HD_12.17" = c(2, 1.0, 3.0, 1),
+    "s.HD_12.17" = c(2, 1.0, 3.0, 0),
     "s.HD_18.25" = c(2.5, 2.0, 4.0, 0), 
     "s.HD_26.34" = c(2, 1.0, 3.0, 0),
     "rr.CH.CD" = c(1.49641597032344, 1.0, 4.0, 0),
     "rr.CR.CD" = c(1.31121594579336, 1.0, 4.0, 0),
-    "rr.CD.FD" = c(1.58679257003318, 1.0, 4.0, 1),
+    "rr.CD.FD" = c(1.700771  , 1.0, 4.0, 1),
     
     "yearinc_p.HD" = c(2016, 2012.5, 2018.5, 0),
     "rr.CE.FE_1.17" = c(1, 0, 4, 0),
