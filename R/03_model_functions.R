@@ -607,6 +607,7 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
   m.M_notD[grepl(pattern = "D|X", x = m.M_notD)] <- NA # remove people without current depression and dead people
   
   # Calculate costs, utilities, and productivity at each person's age
+  #here we are just making the matrix to hold costs and utilities. then below in for loop we caluclate
   m.C <- m.U <- m.W <- m.B <- m.F <- m.C_D <- m.U_D <- m.W_D <- m.B_D <- m.F_D <- m.C_notD <- m.U_notD <- m.W_notD <- m.B_notD <- m.F_notD <- matrix(nrow = n.i*length(cohorts), ncol = n.t + 1, 
                                             dimnames = list(paste(rep(cohorts,each=n.i), 1:n.i, sep = "."), # each individual, year of birth
                                                             paste(0:n.t, sep = " ")))  
@@ -756,13 +757,13 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
   
   # Calculate costs, utilities, and productivity for each health state by age in the population
   m.total_cuw <- rbind(colSums(m.C,na.rm=TRUE),colSums(m.U,na.rm=TRUE),colSums(m.W,na.rm=TRUE),colSums(m.B,na.rm=TRUE),
-                     colSums(m.C,na.rm=TRUE)+colSums(m.B,na.rm=TRUE)-colSums(m.W,na.rm=TRUE)) # societal costs = medical costs + consumer expenditures (non-medical) -  productivity 
+                     colSums(m.C,na.rm=TRUE)+colSums(m.B,na.rm=TRUE)-colSums(m.W,na.rm=TRUE),v.lifeyears) # societal costs = medical costs + consumer expenditures (non-medical) -  productivity 
   
   m.total_cuw_D <- rbind(colSums(m.C_D,na.rm=TRUE),colSums(m.U_D,na.rm=TRUE),colSums(m.W_D,na.rm=TRUE),colSums(m.B_D,na.rm=TRUE),
-                     colSums(m.C_D,na.rm=TRUE)+colSums(m.B_D,na.rm=TRUE)-colSums(m.W_D,na.rm=TRUE)) # societal costs = medical costs + consumer expenditures (non-medical) -  productivity 
+                     colSums(m.C_D,na.rm=TRUE)+colSums(m.B_D,na.rm=TRUE)-colSums(m.W_D,na.rm=TRUE),v.lifeyears_D) # societal costs = medical costs + consumer expenditures (non-medical) -  productivity 
   
   m.total_cuw_notD <- m.total_cuw - m.total_cuw_D
-  rownames(m.total_cuw) <- rownames(m.total_cuw_D) <- rownames(m.total_cuw_notD) <- c("med_costs","QALYs","productivity","consumer_exp","soc_costs")#,"lifeyears")
+  rownames(m.total_cuw) <- rownames(m.total_cuw_D) <- rownames(m.total_cuw_notD) <- c("med_costs","QALYs","productivity","consumer_exp","soc_costs","lifeyears")
   colnames(m.total_cuw) <- colnames(m.C) <- colnames(m.U) <- colnames(m.W) <- colnames(m.B) <- colnames(m.C_D) <- colnames(m.U_D) <- colnames(m.W_D) <- colnames(m.B_D) <- c(min(cohorts):(max(cohorts)+100))
   
   # Assume 2023 is the starting year for discounting purposes, calculate discount weight based on the discount rate d.c
@@ -770,6 +771,7 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
   
   # Total discounted costs, QALYs, and productivity
   m.d_total_cuw <- m.total_cuw %*% diag(v.d) # multiple each row of the cuw matrix by the discounting vector
+  #we wouldn't want dicsounting vector for qaly or life years right?
   m.d_total_cuw_D <- m.total_cuw_D %*% diag(v.d) # depressed pop
   m.d_total_cuw_notD <- m.total_cuw_notD %*% diag(v.d) # not depressed pop
   colnames(m.d_total_cuw) <- colnames(m.d_total_cuw_D)  <- colnames(m.d_total_cuw_notD) <- min(cohorts):(max(cohorts)+100)
@@ -782,19 +784,22 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
             avg_cons_exp = mean(m.d_total_cuw["consumer_exp",as.character(v.year_range)]),
             avg_prod = mean(m.d_total_cuw["productivity",as.character(v.year_range)]),
             avg_soc_costs = mean(m.d_total_cuw["soc_costs",as.character(v.year_range)]),            
-            avg_QALYs = mean(m.d_total_cuw["QALYs",as.character(v.year_range)]))
+            avg_QALYs = mean(m.d_total_cuw["QALYs",as.character(v.year_range)]),
+            avg_LYs= mean(m.d_total_cuw["lifeyears",as.character(v.year_range)]))
   
   v.cea_D = c(avg_med_costs = mean(m.d_total_cuw_D["med_costs",as.character(v.year_range)]),
             avg_cons_exp = mean(m.d_total_cuw_D["consumer_exp",as.character(v.year_range)]),
             avg_prod = mean(m.d_total_cuw_D["productivity",as.character(v.year_range)]),
             avg_soc_costs = mean(m.d_total_cuw_D["soc_costs",as.character(v.year_range)]),            
-            avg_QALYs = mean(m.d_total_cuw_D["QALYs",as.character(v.year_range)]))
+            avg_QALYs = mean(m.d_total_cuw_D["QALYs",as.character(v.year_range)]),
+            avg_LYs= mean(m.d_total_cuw_D["lifeyears",as.character(v.year_range)]))
   
   v.cea_notD = c(avg_med_costs = mean(m.d_total_cuw_notD["med_costs",as.character(v.year_range)]),
               avg_cons_exp = mean(m.d_total_cuw_notD["consumer_exp",as.character(v.year_range)]),
               avg_prod = mean(m.d_total_cuw_notD["productivity",as.character(v.year_range)]),
               avg_soc_costs = mean(m.d_total_cuw_notD["soc_costs",as.character(v.year_range)]),            
-              avg_QALYs = mean(m.d_total_cuw_notD["QALYs",as.character(v.year_range)]))
+              avg_QALYs = mean(m.d_total_cuw_notD["QALYs",as.character(v.year_range)]),
+              avg_LYs= mean(m.d_total_cuw_notD["lifeyears",as.character(v.year_range)]))
   
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer

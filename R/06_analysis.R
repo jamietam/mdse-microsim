@@ -5,7 +5,7 @@ mainDir = "/Users/srs249/Documents/GitHub/mds-microsim/"
 # mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" # Set working directory
 hpc=0
 calibration=0 #need to set this to 0 so main_calib works and outputs proper matrix for main function
-args <- `if`(hpc == 1, commandArgs(TRUE), c("females", 1000, 2100, 40)) # Parameters for HPV vs non-HPC setup
+args <- `if`(hpc == 1, commandArgs(TRUE), c("males", 1000, 2100, 40)) # Parameters for HPV vs non-HPC setup
 
 source(paste0(mainDir,"R/01_environment.R"), echo=FALSE) #
 source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE)
@@ -54,7 +54,6 @@ allresults <- lapply(scenarios, run_policy)
 names(allresults) <- scenarios
 save(allresults, file = paste0("output/rnc_",whichgender,"_",n.i,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".Rda"))
 
-load("output/rnc_females_1000_12.03.24_11.28AM.Rda")
 #load("output/rnc_males_1000_12.03.24_03.10PM.Rda")
 
 # organize data by population
@@ -165,7 +164,8 @@ reformat_model_outputs <- function(l.results){
                avg_cons_exp = policy$v.cea["avg_cons_exp"],
                avg_prod = policy$v.cea["avg_prod"],
                avg_soc_costs = policy$v.cea["avg_soc_costs"],
-               avg_QALYs = policy$v.cea["avg_QALYs"])
+               avg_QALYs = policy$v.cea["avg_QALYs"],
+               avg_LYs = policy$v.cea["avg_LYs"])
   }) %>%
     bind_rows()
   
@@ -181,24 +181,40 @@ calc_icers <- function(cea_data) {
       inc_soc_cost <- (cea_data[i, "avg_soc_costs"] - cea_data[1, "avg_soc_costs"])
       inc_cons_exp <- (cea_data[i, "avg_cons_exp"] - cea_data[1, "avg_cons_exp"])
       inc_prod <- (cea_data[i, "avg_prod"] - cea_data[1, "avg_prod"])
-      inc_effect <- (cea_data[i, "avg_QALYs"] - cea_data[1, "avg_QALYs"])
+      inc_effectQALY <- (cea_data[i, "avg_QALYs"] - cea_data[1, "avg_QALYs"])
+      inc_effectLY <- (cea_data[i, "avg_LYs"] - cea_data[1, "avg_LYs"])
       cea_data[i, "inc_med_cost"] <- inc_med_cost
       cea_data[i, "inc_cons_exp"] <- inc_cons_exp
       cea_data[i, "inc_prod"] <- inc_prod
       cea_data[i, "inc_soc_cost"] <- inc_soc_cost
-      cea_data[i, "inc_effect"] <- inc_effect
-      cea_data[i, "icer_med"] <- round(inc_med_cost / inc_effect,0)
-      cea_data[i, "icer_soc"] <- round(inc_soc_cost / inc_effect,0)
+      cea_data[i, "inc_effectQALY"] <- inc_effectQALY
+      cea_data[i, "inc_effectLY"] <- inc_effectLY
+      cea_data[i, "icer_medQALY"] <- round(inc_med_cost / inc_effectQALY,0)
+      cea_data[i, "icer_socQALY"] <- round(inc_soc_cost / inc_effectQALY,0)
+      cea_data[i, "icer_medLY"] <- round(inc_med_cost / inc_effectLY,0)
+      cea_data[i, "icer_socLY"] <- round(inc_soc_cost / inc_effectLY,0)
     }
   } 
   return(cea_data)
 }
 
 
+#Obtain table of ICERS:
+ICERST=  reformat_model_outputs(l.results)[[4]]
+ICERSD=reformat_model_outputs(l.results_D)[[4]]
+ICERSND=reformat_model_outputs(l.results_notD)[[4]]
+ICERSND$population=c(rep("not derpessed",3))
+ICERSD$population=c(rep("derpessed",3))
+ICERST$population=c(rep("total",3))
+ICERALL=rbind(ICERST,ICERSD,ICERSND)
+
+
+
 #figures for depressed, not depressed, and total
-typefig=3 #1=total, 2= depressed, 3=not depressed
 
-
+for (i in 1:3){
+  
+typefig=i #1=total, 2= depressed, 3=not depressed
 specialname="Not Depressed"
 if (typefig==1){
   l.results_total <- reformat_model_outputs(l.results)
@@ -269,6 +285,7 @@ aQALYs_fig <- create_figure(combined_data, combined_data$aQALYs / 1000000, "QALY
 cQALYs_fig <- create_figure(combined_data, combined_data$cQALYs / 1000000, "QALYs (cumulative)", xlim = c(2020, 2100), ylab = "QALYs (millions)")
 dQALYs_fig <- create_figure(combined_data, combined_data$dQALYs / 1000000, "QALYs (difference)", xlim = c(2020, 2100), ylab = "QALYs (millions)")
 
+
 acosts_fig <- create_figure(combined_data, combined_data$aCosts / 1000000, "Costs (annual)", xlim = c(2020, 2100), ylab = "Costs ($ millions)")
 ccosts_fig <- create_figure(combined_data, combined_data$cCosts / 1000000, "Costs (cumulative)", xlim = c(2020, 2100), ylab = "Costs ($ millions)")
 dcosts_fig <- create_figure(combined_data, combined_data$dCosts / 1000000, "Costs (difference)", xlim = c(2020, 2100), ylab = "Costs ($ millions)")
@@ -301,8 +318,10 @@ grid_arrange_shared_legend(list(aSAD_averted_fig,cSAD_averted_fig),2,"Smoking-At
 grid_arrange_shared_legend(list(acosts_fig, ccosts_fig, dcosts_fig),3, "Medical costs")
 grid_arrange_shared_legend(list(aprod_fig, cprod_fig, dprod_fig),3, "Productivity")
 grid_arrange_shared_legend(list(aQALYs_fig, cQALYs_fig, dQALYs_fig),3, "QALYs")
+aLY_fig
+#grid_arrange_shared_legend(list(aLY_fig, cLY_fig),2, "LYs")
 dev.off()
-
+}
 # Save the ggplot figures
 # save_plot <- function(plot, filename) {
 #   ggsave(filename = filename, plot = plot, dpi = 300, width = 10, height = 6, units = "in")

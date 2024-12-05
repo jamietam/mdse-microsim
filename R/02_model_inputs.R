@@ -50,7 +50,7 @@ if (whichgender == "males") {
     #rr of depression and recovery among smokers
     "rr.CH.CD" = c(1.35368578518526, 1.0, 4.0, 0),
     "rr.CR.CD" = c(1.21112237244282, 1.0, 4.0, 0),
-    "rr.CD.FD" = c(1.2, 1.0, 4.0, 1),
+    "rr.CD.FD" = c(1, 1.0, 4.0, 1),
     
     "yearinc_p.HD" = c(2016, 2012.5, 2018.5, 0),
     #Ecig effects
@@ -74,10 +74,12 @@ if (whichgender == "males") {
     "s.CF_65.99" = c(0.701643230463244, 0.50, 1.0, 0),
     
     #depressed scaling factors
-    "s.NC_D_9.17" = c(2.00000000, 0, 4, 1), 
-    "s.NC_D_18.25" = c(3.4, 0, 4, 1),
-    "s.NC_D_26.34" = c(2.5, 0, 4, 1),
-    
+
+    "s.NC_D_9.17" = c(2.00000000, 0, 4, 1), #run this
+    "s.NC_D_18.25" = c(3.4, 0, 4, 1),#run this
+    "s.NC_D_26.34" = c(2.5, 0, 4, 1),#run this
+
+
     "p.DR_12.64" = c(0.173, 0.0, 1.0, 0),
     "p.DR_65.99" = c(0.65, 0.6, 0.65, 0),
     "s.HD_12.17" = c(2, 1.0, 3.0, 0),
@@ -86,6 +88,7 @@ if (whichgender == "males") {
     "rr.CH.CD" = c(1.49641597032344, 1.0, 4.0, 0),
     "rr.CR.CD" = c(1.31121594579336, 1.0, 4.0, 0),
     "rr.CD.FD" = c(1, 0, 1.0, 1),
+
     
     "yearinc_p.HD" = c(2016, 2012.5, 2018.5, 0),
     "rr.CE.FE_1.17" = c(1, 0, 4, 0),
