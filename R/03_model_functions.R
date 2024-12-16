@@ -662,11 +662,30 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
   m.F_notD <- cohortage_to_cohortyear(m.F_notD)
   
   # Get mortality counts by year
-  # n.X = apply(m.M,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
+   n.X = apply(m.M,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
+   n.X_D = apply(m.M_D,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
+   n.X_notD = apply(m.M_notD,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
+   
+   n.X =  n.X [paste0(d.year:max(cohorts))]
+   n.X_D = n.X_D[paste0(d.year:max(cohorts))]
+   n.X_notD=n.X_notD[paste0(d.year:max(cohorts))]
+   
   # Get total person life-years by year
   v.lifeyears = apply(m.M,2,function(x) sum(x!="X",na.rm=TRUE))
   v.lifeyears_D = apply(m.M_D,2,function(x) sum(x!="X",na.rm=TRUE))
   v.lifeyears_notD = apply(m.M_notD,2,function(x) sum(x!="X",na.rm=TRUE))
+  
+  v.lifeyears <- v.lifeyears[paste0(d.year:max(cohorts))]
+  v.lifeyears_D <- v.lifeyears_D[paste0(d.year:max(cohorts))]
+  v.lifeyears_notD <- v.lifeyears_notD[paste0(d.year:max(cohorts))]
+  
+  
+  #Get mortality rate by year for each state.Check this with Jamie
+  v.deathrate=n.X/v.lifeyears
+  v.deathrate_D=n.X_D/v.lifeyears_D
+  v.deathrate_notD=n.X_notD/v.lifeyears_notD
+  
+  
   
   # Output prevalence results as a list -------------------------------------
   
@@ -752,18 +771,18 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
   v.yll = colSums(le_N[,as.character(v.year_range)]*m.SADcs) + colSums(le_N[,as.character(v.year_range)]*m.SADfs.ysq)
   v.yll_D = colSums(le_N[,as.character(v.year_range)]*m.SADcs_D)+ colSums(le_N[,as.character(v.year_range)]*m.SADfs.ysq_D)
   v.yll_notD <- v.yll - v.yll_D
-  
+
   # Economic outcomes -------------------------------------------------------
   
   # Calculate costs, utilities, and productivity for each health state by age in the population
   m.total_cuw <- rbind(colSums(m.C,na.rm=TRUE),colSums(m.U,na.rm=TRUE),colSums(m.W,na.rm=TRUE),colSums(m.B,na.rm=TRUE),
-                     colSums(m.C,na.rm=TRUE)+colSums(m.B,na.rm=TRUE)-colSums(m.W,na.rm=TRUE),v.lifeyears) # societal costs = medical costs + consumer expenditures (non-medical) -  productivity 
+                     colSums(m.C,na.rm=TRUE)+colSums(m.B,na.rm=TRUE)-colSums(m.W,na.rm=TRUE),v.lifeyears,v.yll) # societal costs = medical costs + consumer expenditures (non-medical) -  productivity 
   
   m.total_cuw_D <- rbind(colSums(m.C_D,na.rm=TRUE),colSums(m.U_D,na.rm=TRUE),colSums(m.W_D,na.rm=TRUE),colSums(m.B_D,na.rm=TRUE),
-                     colSums(m.C_D,na.rm=TRUE)+colSums(m.B_D,na.rm=TRUE)-colSums(m.W_D,na.rm=TRUE),v.lifeyears_D) # societal costs = medical costs + consumer expenditures (non-medical) -  productivity 
+                     colSums(m.C_D,na.rm=TRUE)+colSums(m.B_D,na.rm=TRUE)-colSums(m.W_D,na.rm=TRUE),v.lifeyears_D,v.yll_D) # societal costs = medical costs + consumer expenditures (non-medical) -  productivity 
   
   m.total_cuw_notD <- m.total_cuw - m.total_cuw_D
-  rownames(m.total_cuw) <- rownames(m.total_cuw_D) <- rownames(m.total_cuw_notD) <- c("med_costs","QALYs","productivity","consumer_exp","soc_costs","lifeyears")
+  rownames(m.total_cuw) <- rownames(m.total_cuw_D) <- rownames(m.total_cuw_notD) <- c("med_costs","QALYs","productivity","consumer_exp","soc_costs","lifeyears","YLL")
   colnames(m.total_cuw) <- colnames(m.C) <- colnames(m.U) <- colnames(m.W) <- colnames(m.B) <- colnames(m.C_D) <- colnames(m.U_D) <- colnames(m.W_D) <- colnames(m.B_D) <- c(min(cohorts):(max(cohorts)+100))
   
   # Assume 2023 is the starting year for discounting purposes, calculate discount weight based on the discount rate d.c
@@ -806,13 +825,13 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
 
   # Output results as two lists: one for general population, and one for depressed population
   l.results <- list(l.model_prevs = l.model_prevs, m.cuw=m.cuw, v.lifeyears=v.lifeyears, v.SAD=v.SAD, v.yll = v.yll,v.cea=v.cea,
-                        init = p.NC, cess = p.CF, m.prev_C=m.prev_C, m.prev_F = m.prev_F, m.prev_N=m.prev_N)
+                        init = p.NC, cess = p.CF, m.prev_C=m.prev_C, m.prev_F = m.prev_F, m.prev_N=m.prev_N,  v.deathrate= v.deathrate)
     
   l.results_D <- list(l.model_prevs = l.model_prevs_D, m.cuw=m.cuw_D, v.lifeyears=v.lifeyears_D, v.SAD=v.SAD_D,  v.yll = v.yll_D, v.cea=v.cea_D,
-                        init = p.NC_D, cess = rr.CD.FD*p.CF, m.prev_C=m.prev_C_D, m.prev_F = m.prev_F_D, m.prev_N=m.prev_N_D)
+                        init = p.NC_D, cess = rr.CD.FD*p.CF, m.prev_C=m.prev_C_D, m.prev_F = m.prev_F_D, m.prev_N=m.prev_N_D, v.deathrate_D= v.deathrate_D)
   
   l.results_notD <- list(l.model_prevs=l.model_prevs_notD, m.cuw=m.cuw_notD , v.lifeyears = v.lifeyears_notD, v.SAD=v.SAD_notD, v.yll = v.yll_notD, v.cea=v.cea_notD,
-                         init = p.NC, cess = p.CF, m.prev_C=m.prev_C_notD, m.prev_F = m.prev_F_notD, m.prev_N=m.prev_N_notD)
+                         init = p.NC, cess = p.CF, m.prev_C=m.prev_C_notD, m.prev_F = m.prev_F_notD, m.prev_N=m.prev_N_notD, v.deathrate_notD= v.deathrate_notD)
   
   return(list(l.results=l.results, l.results_D = l.results_D, l.results_notD=l.results_notD))
 }
