@@ -12,14 +12,14 @@ source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE)
 source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
 
 
-whichgender="females" #"females"
-load("output/rnc_females_1000_12.14.24_11.48AM.Rda")
+
+#load("output/rnc_females_1000_12.14.24_11.48AM.Rda")
 #load("output/rnc_males_1000_12.14.24_03.06PM.Rda")
 
 # Run the model -----------------------------------------------------------
 policyyear <- 2025
 v.affected_ages <- c(0:99) # affects all ages
-
+v.years_forfigs=c(2023:2100)
 # Policy effect sizes:
 # Apelberg (2018): Experts estimate 50% (10-85%) decrease in smoking initiation https://doi.org/10.1056/NEJMsr1714617
 # Hatsukami (2024): Significantly higher 12-week CO-verified abstinence among those in VLNC vs NNC condition (OR=3.10, 95%: 1.69-5.96) https://doi.org/10.1016/j.lana.2024.100796
@@ -58,10 +58,10 @@ run_policy <- function(policy) {
 }
 
 # Run all scenarios and save results
-# allresults <- lapply(scenarios, run_policy)
+allresults <- lapply(scenarios, run_policy)
 # 
-# names(allresults) <- scenarios
-# save(allresults, file = paste0("output/rnc_",whichgender,"_",n.i,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".Rda"))
+names(allresults) <- scenarios
+save(allresults, file = paste0("output/rnc_",whichgender,"_",n.i,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".Rda"))
 
 
 
@@ -107,24 +107,24 @@ reformat_model_outputs <- function(l.results){
     policy <- l.results[[name]]
     cuw <- policy$m.cuw
     data.frame(
-      year = as.numeric(names(policy$v.lifeyears[paste0(d.year:max(cohorts))])),
+      year = as.numeric(names(policy$v.lifeyears[paste0(policyyear:max(cohorts))])),
       scenario = name,
-      aLY = policy$v.lifeyears,#[paste0(d.year:max(cohorts))],
-      cLY = cumsum(policy$v.lifeyears),#[paste0(d.year:max(cohorts))]),
-      aM_perLY= policy$v.deathrate,
-      cM_perLY= cumsum(policy$v.deathrate),
-      aSAD = policy$v.SAD,
-      cSAD = cumsum(policy$v.SAD),
-      aYLL= policy$v.yll,
-      cYLL = cumsum(policy$v.yll),
-      aCosts = cuw[paste0(d.year:max(cohorts)), 1],
-      aQALYs = cuw[paste0(d.year:max(cohorts)), 2],
-      aProd = cuw[paste0(d.year:max(cohorts)), 3],
-      aNonhealth = cuw[paste0(d.year:max(cohorts)), 4],
-      cCosts = cumsum(cuw[paste0(d.year:max(cohorts)), 1]),
-      cQALYs = cumsum(cuw[paste0(d.year:max(cohorts)), 2]),
-      cProd = cumsum(cuw[paste0(d.year:max(cohorts)), 3]),
-      cNonhealth = cumsum(cuw[paste0(d.year:max(cohorts)), 4])
+      aLY = policy$v.lifeyears[paste0(policyyear:max(cohorts))],
+      cLY = cumsum(policy$v.lifeyears[paste0(policyyear:max(cohorts))]),
+      aM_perLY= policy$v.deathrate[paste0(policyyear:max(cohorts))],
+      cM_perLY= cumsum(policy$v.deathrate[paste0(policyyear:max(cohorts))]),
+      aSAD = policy$v.SAD[paste0(policyyear:max(cohorts))],
+      cSAD = cumsum(policy$v.SAD[paste0(policyyear:max(cohorts))]),
+      aYLL= policy$v.yll[paste0(policyyear:max(cohorts))],
+      cYLL = cumsum(policy$v.yll[paste0(policyyear:max(cohorts))]),
+      aCosts = cuw[paste0(policyyear:max(cohorts)), 1],
+      aQALYs = cuw[paste0(policyyear:max(cohorts)), 2],
+      aProd = cuw[paste0(policyyear:max(cohorts)), 3],
+      aNonhealth = cuw[paste0(policyyear:max(cohorts)), 4],
+      cCosts = cumsum(cuw[paste0(policyyear:max(cohorts)), 1]),
+      cQALYs = cumsum(cuw[paste0(policyyear:max(cohorts)), 2]),
+      cProd = cumsum(cuw[paste0(policyyear:max(cohorts)), 3]),
+      cNonhealth = cumsum(cuw[paste0(policyyear:max(cohorts)), 4])
     )
   }) %>%
     bind_rows()
@@ -208,6 +208,8 @@ calc_icers <- function(cea_data) {
       inc_prod <- (cea_data[i, "avg_prod"] - cea_data[1, "avg_prod"])
       inc_effectQALY <- (cea_data[i, "avg_QALYs"] - cea_data[1, "avg_QALYs"])
       inc_effectLY <- (cea_data[i, "avg_LYs"] - cea_data[1, "avg_LYs"])
+      USSAD_avg <- (cea_data[1, "avg_SAD"] - cea_data[i, "avg_SAD"])
+      USSAD_cum <- (cea_data[1, "cum_SAD"] - cea_data[i, "cum_SAD"])
       USLYG_avg <- (cea_data[1, "avg_YLL"] - cea_data[i, "avg_YLL"])
       USLYG_cum <- (cea_data[1, "cum_YLL"] - cea_data[i, "cum_YLL"])
       cea_data[i, "inc_med_cost"] <- inc_med_cost
@@ -224,6 +226,7 @@ calc_icers <- function(cea_data) {
       cea_data[i, "icer_prodQALY"] <- round(inc_prod / inc_effectQALY,0)
       cea_data[i, "US_LYG_avg"] <- USLYG_avg
       cea_data[i, "US_LYG_cum"] <- USLYG_cum
+      cea_data[i, "US_SAD_avert"] <- USSAD_cum
     }
   } 
   return(cea_data)

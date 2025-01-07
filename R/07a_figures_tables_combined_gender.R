@@ -1,7 +1,7 @@
 #rm(list = ls()) 
 
 mainDir = "/Users/srs249/Documents/GitHub/mds-microsim/"
-
+setwd(mainDir)
 #choose scenarios of interest:
 scenariosofinterest=c("baseline", "init_0.1_cess_0.69" ,"init_0.5_cess_2.10", "init_0.85_cess_4.96")
 
@@ -9,12 +9,12 @@ scenariosofinterest=c("baseline", "init_0.1_cess_0.69" ,"init_0.5_cess_2.10", "i
 
 #choose the files you want to use for both genders here.
 
-load("output/rnc_females_1000_12.14.24_11.48AM.Rda")
+load("output/rnc_females_1000_12.23.24_09.47PM.Rda")
 rF=allresults
 dfF=reformat_model_outputs(l.results[scenariosofinterest])
 dfF_D=reformat_model_outputs(l.results_D[scenariosofinterest])
 dfF_notD=reformat_model_outputs(l.results_notD[scenariosofinterest])
-load("output/rnc_males_1000_12.14.24_03.06PM.Rda")
+load("output/rnc_males_1000_12.23.24_09.56PM.Rda")
 rM=allresults
 dfM=reformat_model_outputs(l.results[scenariosofinterest])
 dfM_D=reformat_model_outputs(l.results_D[scenariosofinterest])
@@ -74,11 +74,11 @@ write.xlsx(PrevalenceDisp, file = paste0("output/Prevlanec_Disparities_Table_all
 
 
 #Tables: I think i can just add these
-ICERST=dfM[[4]][,2:25]+dfF[[4]][,2:25]
+ICERST=dfM[[4]][,2:26]+dfF[[4]][,2:26]
 ICERST$scenario=dfM[[4]][,1]
-ICERSD=dfM_D[[4]][,2:25]+dfF_D[[4]][,2:25]
+ICERSD=dfM_D[[4]][,2:26]+dfF_D[[4]][,2:26]
 ICERSD$scenario=dfM[[4]][,1]
-ICERSND=dfM_notD[[4]][,2:25]+dfF_notD[[4]][,2:25]
+ICERSND=dfM_notD[[4]][,2:26]+dfF_notD[[4]][,2:26]
 ICERSND$scenario=dfM[[4]][,1]
 
 ICERSND$population="not derpessed"
@@ -94,9 +94,10 @@ ICERALL$icer_socQALY =ICERALL$inc_soc_cost / ICERALL$inc_effectQALY
 ICERALL$icer_prodQALY =ICERALL$inc_prod / ICERALL$inc_effectQALY
 
 
-ICERALL1<- ICERALL[c("scenario","population","cum_YLL","avg_YLL","cum_SAD","avg_SAD","icer_medQALY","icer_socQALY","icer_medLY","icer_socLY","US_LYG_avg","US_LYG_cum","MED_cost_US","SOC_cost_US","icer_prodQALY")]
+ICERALL1<- ICERALL[c("scenario","population","cum_YLL","avg_YLL","cum_SAD","avg_SAD","icer_medQALY","icer_socQALY","icer_medLY","icer_socLY","US_LYG_avg","US_LYG_cum","MED_cost_US","SOC_cost_US","icer_prodQALY","US_SAD_avert")]
 names(ICERALL1) <-c("scenario","population","Cummulative Years of Life Lost (2023-2100)","Average Years of Life Lost (2023-2100)","Cummulative Smoking Attributable Deaths (2023-2100)","Average Smoking Attributable Deaths","ICER Medical Costs per QALY",
-                    "ICER Societal Cost per QALY","ICER Medical Cost per LY","ICER Societal Cost per LY","US Life Years Gained on Average","US Cummulative LYG (2023-2100)","Cummulative US Medical Costs (2023-2100)","Cummulative US Societal Costs (2023-2100)" , "ICER productivity/QALY")
+                    "ICER Societal Cost per QALY","ICER Medical Cost per LY","ICER Societal Cost per LY","US Life Years Gained on Average","US Cummulative LYG (2023-2100)","Cummulative US Medical Costs (2023-2100)","Cummulative US Societal Costs (2023-2100)" , 
+                    "ICER productivity/QALY","SADs averted")
 library(openxlsx)
 write.xlsx(ICERALL1, file = paste0("output/COSTS_Table_allgender.xlsx"))
 
