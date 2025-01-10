@@ -1,9 +1,9 @@
 rm(list = ls())  # remove any variables in R's memory
-setwd(file.path("/Users/jt936/Dropbox/GitHub/mds-microsim/"))
-# setwd(file.path("/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/"))
+# setwd(file.path("/Users/jt936/Dropbox/GitHub/mds-microsim/"))
+setwd(file.path("/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/"))
 library(reshape2)
-
-whichgender = "males"
+library(openxlsx)
+whichgender = "females"
 
 if (whichgender=="females"){ 
   # Sex = 0 is for males, 1 for females
@@ -12,13 +12,15 @@ if (whichgender=="females"){
   # Read in latest CISNET smoking initiation and cessation parameters by age (0:99) and birth cohort (1864:2100)
   p.NX <- read.csv(paste0("data-raw/all_final_results_FEMALENever.csv"))
   p.CX <- read.csv(paste0("data-raw/all_final_results_FEMALECurrent.csv"))
-  p.FX <- read.csv(paste0("data-raw/all_final_results_FEMALEFormer.csv"))                                  
+  p.FX <- read.csv(paste0("data-raw/all_final_results_FEMALEFormer.csv"))     
+  le_N <- as.matrix(read.xlsx(paste0("data-raw/cisnet_deathrates.xlsx"),sheet = "LE_ns_females")[,-1])
 } else {
-  smk_init <- subset(read.delim("data/new_shg_initiation.txt", sep=",", skip = 5, header=TRUE),Sex==0)[,-c(1:39)] # remove unnecessary columns (race, sex, age) and birth cohorts (1864-1899)
-  smk_cess <- subset(read.delim("data/new_shg_cessation.txt", sep=",", skip = 5, header=TRUE),Sex==0)[,-c(1:39)] 
+  smk_init <- subset(read.delim("data-raw/new_shg_initiation.txt", sep=",", skip = 5, header=TRUE),Sex==0)[,-c(1:39)] # remove unnecessary columns (race, sex, age) and birth cohorts (1864-1899)
+  smk_cess <- subset(read.delim("data-raw/new_shg_cessation.txt", sep=",", skip = 5, header=TRUE),Sex==0)[,-c(1:39)] 
   p.NX <- read.csv(paste0("data-raw/all_final_results_MALENever.csv"))
   p.CX <- read.csv(paste0("data-raw/all_final_results_MALECurrent.csv"))
   p.FX <- read.csv(paste0("data-raw/all_final_results_MALEFormer.csv")) 
+  le_N <- as.matrix(read.xlsx(paste0("data-raw/cisnet_deathrates.xlsx"),sheet = "LE_ns_males")[,-1])
 }
 
 p.NX$year <- p.NX$birthyear+p.NX$age
@@ -74,7 +76,7 @@ for (j in 1:40) { # years since quitting
 }
 
 save(p.NX,p.CX,p.FX,a_p.FX.ysq,smk_init,smk_cess,
-     p.NX_cy,p.CX_cy,p.FX_cy,a_p.FX.ysq_cy, file=paste0("data/smk_precomputed_inputs_",whichgender,".RData"))
+     p.NX_cy,p.CX_cy,p.FX_cy,a_p.FX.ysq_cy,le_N, file=paste0("data/smk_precomputed_inputs_",whichgender,".RData"))
 
 # # Precompute all smoking and mortality probabilities by birth cohort, and by calendar year (cy)
 # load(paste0("data/smk_inputs_",whichgender,".RData")) # Load all smoking and mortality inputs as matrices
