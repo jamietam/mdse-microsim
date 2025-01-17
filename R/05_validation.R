@@ -4,6 +4,16 @@
 ## Run the model ---------------------------------------------------  
 l.model_prevs<-main_calib(v.params,NULL)[[2]]
 
+if(any(grepl("p.NO.NE", names(v.params)))){
+  print("E-cig calibration for ages 18-49 only (drop age 50+)")
+  # Only keep prevalence values for ages 18-49 for e-cig calibration purposes
+  l.model_prevs <- lapply(l.model_prevs, function(mat) {
+    mat[mat[, "age"] < 50, ]
+  })
+  l.calib_targets <- lapply(l.calib_targets, function(mat) {
+    mat[mat[, "age"] < 50, ]
+  })
+}
 
 v.gof <- v.ssd <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
 
@@ -54,20 +64,9 @@ p.DR <- rep(0,100)
 p.DR[13:65] <- select_param("p.DR_12.64")
 p.DR[66:99] <- select_param("p.DR_65.99")
 
-# e-cig effects
-rr.NE.CE = NULL
-rr.NE.CE[1:18] <- select_param("rr.NE.CE_1.17")
-rr.NE.CE[19:35] <- select_param("rr.NE.CE_18.34")
-rr.NE.CE[36:65] <- select_param("rr.NE.CE_35.64")
-rr.NE.CE[66:99] <- select_param("rr.NE.CE_65.99")
-rr.NE.CE[100] <- 0
-
-rr.CE.FE = NULL
-rr.CE.FE[1:18] <- select_param("rr.CE.FE_1.17")
-rr.CE.FE[19:35] <- select_param("rr.CE.FE_18.34")
-rr.CE.FE[36:65] <- select_param("rr.CE.FE_35.64")
-rr.CE.FE[66:99] <- select_param("rr.CE.FE_65.99")
-rr.CE.FE[100] <- 0
+# Vaping transition probabilities
+p.NO.NE[19:26,c("2020","2021")] <- select_param("p.NO.NE_20.21_18.25")
+p.NO.NE[19:26,paste0(2022:calib_endyear)] <- select_param("p.NO.NE_22.23_18.25")
 
 # Incidence
 s.HD_12.17 <- select_param("s.HD_12.17")
@@ -109,7 +108,7 @@ df.model_prevs$prev <- as.numeric(as.character(df.model_prevs$prev))
 column_names <- names(df.model_prevs)
 
 # Loop through years and ages
-for(y in c(2005:2100)) { # loop through years
+for(y in c(2020:calib_endyear)) { # loop through years
   for(a in c(18.25, 26.34, 35.49, 50.64, 65.99, 18.99)) { # loop through ages
     # neither
     neither <- sum(subset(df.model_prevs, year == y & age == a & (status == "NO" | status == "NQ" | status == "FO" | status == "FQ"))[,"prev"], na.rm = TRUE)
@@ -199,6 +198,16 @@ p.RD_age <- ggplot() +  geom_line( aes(x=0:99, y=p.RD,color='black')) + geom_poi
   scale_colour_manual(values =c('black'='black','red'='red'), labels = c('non smokers: p.RD','smokers: p.RD*rr.CR.CD'))+
   theme(legend.position="bottom")
 
+# Figure for e-cig transitions
+eciginit <- as.data.frame(c(p.NO.NE[,"2021"],p.NO.NE[,"2023"],p.CO.CE[,"2021"],p.CO.CE[,"2023"],p.FO.FE[,"2021"],p.FO.FE[,"2023"]))
+eciginit <- cbind(rep(seq(0:99),6),
+                  rep(c(2021, 2023), each = 100, times = 3),
+                  eciginit,c(rep("p.NO.NE",200),rep("p.CO.CE",200),rep("p.FO.FE",200)))
+names(eciginit) <- c('age', 'year', 'value','prob')
+p.OE_age <- ggplot(data=eciginit) +  geom_line(aes(x=age,y=value,color=prob,linetype = factor(year)))+
+  scale_y_continuous(name="Probability of e-cig initiation", limits=c(0,0.2)) +
+  scale_x_continuous(name="Age", limits=c(0,99), breaks=c(0,12,26,36,50,65,100)) +
+  labs(title="E-cig initiation, 2020")
 
 # Figures for mortality by smoking and dep status  
 Xprobs <- as.data.frame(cbind(c(p.NX[,100],p.CX[,100],a_p.FX.ysq[,100,5]),c(rep("Never",100),rep("Current",100),rep("Former",100)),c(rep(0:99,3))))
@@ -232,6 +241,7 @@ N_age <- generate_plot1(df.calib_targets, df.model_prevs, "N", 18.99, "Never smo
 C_age <- generate_plot1(df.calib_targets, df.model_prevs, "C", 18.99, "Current smoking", "Prevalence (%)", "National Survey on Drug Use and Health", whichgender, c(0,1), seq(0,1,0.05))
 F_age <- generate_plot1(df.calib_targets, df.model_prevs, "F", 18.99, "Former smoking", "Prevalence (%)", "National Survey on Drug Use and Health", whichgender, c(0,1), seq(0,1,0.05))
 D_age <- generate_plot1(df.calib_targets, df.model_prevs, "D", 18.99, "Current MDE", "Prevalence (%)",  "National Survey on Drug Use and Health", whichgender, c(0,1), seq(0,1,0.05))
+
 E_age <- generate_plot1(df.calib_targets, df.model_prevs, "E", 18.99, "Current vaping", "Prevalence (%)", "National Survey on Drug Use and Health", whichgender, c(0,0.5), seq(0,1,0.05))
 NE_age <- generate_plot1(df.calib_targets, df.model_prevs, "NE", 18.99, "NS, Current vaping", "Prevalence (%)", "National Survey on Drug Use and Health", whichgender, c(0,0.5), seq(0,1,0.05))
 CE_age <- generate_plot1(df.calib_targets, df.model_prevs, "CE", 18.99, "CS, Current vaping", "Prevalence (%)", "National Survey on Drug Use and Health", whichgender, c(0,0.5), seq(0,1,0.05))
@@ -247,14 +257,14 @@ NE_D_age <- generate_plot1(df.calib_targets, df.model_prevs, "NE_D", 18.99, "NS,
 CE_D_age <- generate_plot1(df.calib_targets, df.model_prevs, "CE_D", 18.99, "CS, Current vaping - MDE Pop", "Prevalence (%)", "National Survey on Drug Use and Health", whichgender, c(0,0.5), seq(0,1,0.05))
 FE_D_age <- generate_plot1(df.calib_targets, df.model_prevs, "FE_D", 18.99, "FS, Current vaping - MDE Pop", "Prevalence (%)", "National Survey on Drug Use and Health", whichgender, c(0,0.5), seq(0,1,0.05))
 
-NCF_total <- ggplot() +
-  geom_pointrange(data = subset(df.calib_targets, age == 18.99 & (status == "N" | status == "C" | status == "F")), 
+NCFE_total <- ggplot() +
+  geom_pointrange(data = subset(df.calib_targets, age == 18.99 & (status == "N" | status == "C" | status == "F" | status =="E")), 
                   aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, color = status, shape = "National Survey on Drug Use and Health")) +
-  geom_line(data = subset(df.model_prevs, age == 18.99 & (status == "N" | status == "C" | status == "F")),  
+  geom_line(data = subset(df.model_prevs, age == 18.99 & (status == "N" | status == "C" | status == "F"| status =="E")),  
             aes(x = year, y = prev, color = status)) +
   scale_y_continuous(name = "Prevalence (%)", limits = c(0, 1), breaks = seq(0, 1, 0.05)) +
   scale_x_continuous(name = "Year", limits = c(2005, calib_endyear), breaks = seq(2005, calib_endyear, 1)) +
-  labs(title = paste0("Smoking distribution - ", whichgender, " ages 18-99")) +
+  labs(title = paste0("Tobacco use - ", whichgender, " ages 18-99")) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1), legend.title = element_blank())
 
 D_total <- ggplot() +
@@ -266,10 +276,10 @@ D_total <- ggplot() +
   labs(title=paste0("MDE distribution - ",whichgender," ages 18-99"))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
 
-NCF_D_total <- ggplot() +
-  geom_pointrange(data = subset(df.calib_targets, age == 18.99 & (status == "N_D" | status == "C_D" | status == "F_D")), 
+NCFE_D_total <- ggplot() +
+  geom_pointrange(data = subset(df.calib_targets, age == 18.99 & (status == "N_D" | status == "C_D" | status == "F_D" | status == "E_D" )), 
                   aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, color = status, shape = "National Survey on Drug Use and Health")) +
-  geom_line(data = subset(df.model_prevs, age == 18.99 & (status == "N_D" | status == "C_D" | status == "F_D")),  
+  geom_line(data = subset(df.model_prevs, age == 18.99 & (status == "N_D" | status == "C_D" | status == "F_D" | status == "E_D")),  
             aes(x = year, y = prev, color = status)) +
   scale_y_continuous(name = "Prevalence (%)", limits = c(0, 1), breaks = seq(0, 1, 0.05)) +
   scale_x_continuous(name = "Year", limits = c(2005, calib_endyear), breaks = seq(2005, calib_endyear, 1)) +
@@ -281,7 +291,7 @@ E_total <- ggplot() +
   geom_line(data = subset(df.model_prevs, age==18.99 & (status == "E"| status == "NE" | status == "CE" | status == "FE") ),  aes(x=year, y= prev,color=status))+
   geom_pointrange(data = subset(df.calib_targets, age == 18.99 & (status == "E"| status == "NE" | status == "CE" | status == "FE")), 
                   aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, color = status, shape = "National Survey on Drug Use and Health")) +
-  scale_y_continuous(name="Prevalence (%)",limits=c(0,0.085),breaks=seq(0,0.085,0.005)) +
+  scale_y_continuous(name="Prevalence (%)",limits=c(0,0.1),breaks=seq(0,0.1,0.005)) +
   scale_x_continuous(name="Year",limits=c(2005,calib_endyear),breaks=seq(2005,calib_endyear,1))  +
   labs(title=paste0("Vaping distribution - ",whichgender," ages 18-99"))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
@@ -361,7 +371,8 @@ grid.table(df.calib[df.calib$calib == 1, ]) #only calibrated parameters
 grid_arrange_shared_legend(list(N_age, C_age, F_age),3,"Smoking distribution")
 grid_arrange_shared_legend(list(D_age, D_total),2,"MDE")
 grid_arrange_shared_legend(list(N_D_age, C_D_age, F_D_age),3,"Smoking distribution among people with depression")
-grid_arrange_shared_legend(list(NCF_total, NCF_D_total),2,"Smoking distribution")
+grid_arrange_shared_legend(list(NCFE_total, NCFE_D_total),2,"Smoking distribution")
+p.OE_age
 grid_arrange_shared_legend(list(E_age,E_D_age),2,"Vaping by age and Depression Status")
 grid_arrange_shared_legend(list(E_total,E_D_total),2,"Vaping by Smoking Status - all ages")
 grid_arrange_shared_legend(list(NE_age, CE_age, FE_age),3,"Smoking and Vaping Status Age Distribution in the Total Population")

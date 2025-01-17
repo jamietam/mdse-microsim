@@ -96,15 +96,15 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FOH"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOH"]]
   
   ##from NHE state
-  m.p_t["NEH", M_t == "NEH"] <- (1-p.NX[t,bc1])*(1-rr.NE.CE[t,yr]*p.NC[t,bc1]-p.NE.NQ[t,yr]-p.HD[t, bc1])
-  m.p_t["CEH", M_t == "NEH"] <- (1-p.NX[t,bc1])*(rr.NE.CE[t,yr]*p.NC[t,bc1])
+  m.p_t["NEH", M_t == "NEH"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.NE.NQ[t,yr]-p.HD[t, bc1])
+  m.p_t["CEH", M_t == "NEH"] <- (1-p.NX[t,bc1])*(p.NC[t,bc1])
   m.p_t["NQH", M_t == "NEH"] <- (1-p.NX[t,bc1])*(p.NE.NQ[t,yr])
   m.p_t["NED", M_t == "NEH"] <- (1-p.NX[t,bc1])*(p.HD[t,bc1])
   m.p_t["X" , M_t == "NEH"] <- p.NX[t,bc1]
   
   ##from CHE state
-  m.p_t["CEH", M_t == "CEH"] <- (1-p.CX[t,bc1])*(1-p.CE.CQ[t,yr]-rr.CE.FE[t,yr]*p.CF[t,bc1]-rr.CH.CD*p.HD[t,bc1])
-  m.p_t["FEH", M_t == "CEH"] <- (1-p.CX[t,bc1])*(rr.CE.FE[t,yr]*p.CF[t,bc1])
+  m.p_t["CEH", M_t == "CEH"] <- (1-p.CX[t,bc1])*(1-p.CE.CQ[t,yr]-p.CF[t,bc1]-rr.CH.CD*p.HD[t,bc1])
+  m.p_t["FEH", M_t == "CEH"] <- (1-p.CX[t,bc1])*(p.CF[t,bc1])
   m.p_t["CQH", M_t == "CEH"] <- (1-p.CX[t,bc1])*(p.CE.CQ[t,yr])
   m.p_t["CED", M_t == "CEH"] <- (1-p.CX[t,bc1])*(rr.CH.CD*p.HD[t,bc1])
   m.p_t["X", M_t == "CEH"] <- p.CX[t,bc1]
@@ -155,15 +155,15 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FOD"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]]
   
   ##from NDE state
-  m.p_t["NED", M_t == "NED"] <- (1-p.NX[t,bc1])*(1-rr.NE.CE[t,yr]*p.NC_D[t,bc1]-p.NE.NQ[t,yr]-p.DR[t])
-  m.p_t["CED", M_t == "NED"] <- (1-p.NX[t,bc1])*(rr.NE.CE[t,yr]*p.NC_D[t,bc1])
+  m.p_t["NED", M_t == "NED"] <- (1-p.NX[t,bc1])*(1-p.NC_D[t,bc1]-p.NE.NQ[t,yr]-p.DR[t])
+  m.p_t["CED", M_t == "NED"] <- (1-p.NX[t,bc1])*(p.NC_D[t,bc1])
   m.p_t["NQD", M_t == "NED"] <- (1-p.NX[t,bc1])*(p.NE.NQ[t,yr])
   m.p_t["NER", M_t == "NED"] <- (1-p.NX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "NED"] <- p.NX[t,bc1]
   
   ##from CDE state
-  m.p_t["CED", M_t == "CED"] <- (1-p.CX[t,bc1])*(1-rr.CE.FE[t,yr]*rr.CD.FD*p.CF[t,bc1]-p.CE.CQ[t,yr]-p.DR[t])
-  m.p_t["FED", M_t == "CED"] <- (1-p.CX[t,bc1])*(rr.CE.FE[t,yr]*rr.CD.FD*p.CF[t,bc1])
+  m.p_t["CED", M_t == "CED"] <- (1-p.CX[t,bc1])*(1-rr.CD.FD*p.CF[t,bc1]-p.CE.CQ[t,yr]-p.DR[t])
+  m.p_t["FED", M_t == "CED"] <- (1-p.CX[t,bc1])*(rr.CD.FD*p.CF[t,bc1])
   m.p_t["CQD", M_t == "CED"] <- (1-p.CX[t,bc1])*(p.CE.CQ[t,yr])
   m.p_t["CER", M_t == "CED"] <- (1-p.CX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "CED"] <- p.CX[t,bc1]
@@ -215,15 +215,15 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FOR"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOR"]]
   
   ##from NRE state
-  m.p_t["NER", M_t == "NER"] <- (1-p.NX[t,bc1])*(1-rr.NE.CE[t,yr]*p.NC[t,bc1]-p.NE.NQ[t,yr]-p.RD[t])
-  m.p_t["CER", M_t == "NER"] <- (1-p.NX[t,bc1])*(rr.NE.CE[t,yr]*p.NC[t,bc1])
+  m.p_t["NER", M_t == "NER"] <- (1-p.NX[t,bc1])*(1-p.NC[t,bc1]-p.NE.NQ[t,yr]-p.RD[t])
+  m.p_t["CER", M_t == "NER"] <- (1-p.NX[t,bc1])*(p.NC[t,bc1])
   m.p_t["NQR", M_t == "NER"] <- (1-p.NX[t,bc1])*(p.NE.NQ[t,yr])
   m.p_t["NED", M_t == "NER"] <- (1-p.NX[t,bc1])*(p.RD[t])
   m.p_t["X", M_t == "NER"] <- p.NX[t,bc1]
   
   ##from CRE state
-  m.p_t["CER", M_t == "CER"] <- (1-p.CX[t,bc1])*(1-rr.CE.FE[t,yr]*p.CF[t,bc1]-p.CE.CQ[t,yr]-p.RD[t])
-  m.p_t["FER", M_t == "CER"] <- (1-p.CX[t,bc1])*(rr.CE.FE[t,yr]*p.CF[t,bc1])
+  m.p_t["CER", M_t == "CER"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CE.CQ[t,yr]-p.RD[t])
+  m.p_t["FER", M_t == "CER"] <- (1-p.CX[t,bc1])*(p.CF[t,bc1])
   m.p_t["CQR", M_t == "CER"] <- (1-p.CX[t,bc1])*(p.CE.CQ[t,yr])
   m.p_t["CED", M_t == "CER"] <- (1-p.CX[t,bc1])*(p.RD[t])
   m.p_t["X", M_t == "CER"] <- p.CX[t,bc1]
@@ -416,14 +416,22 @@ gof_norm_loglike <- function(target_mean, target_sd, model_output){
 # Write goodness-of-fit function to pass to calibration algorithm
 f_gof <- function(v.params){
   
+  if(any(grepl("p.NO.NE", names(v.params)))){
+    print("E-cig calibration for ages 18-49 only (drop age 50+)")
+    # Only keep prevalence values for ages 18-49 for e-cig calibration purposes
+    l.model_prevs <- lapply(l.model_prevs, function(mat) {
+      mat[mat[, "age"] < 50, ]
+    })
+    l.calib_targets <- lapply(l.calib_targets, function(mat) {
+      mat[mat[, "age"] < 50, ]
+    })
+  }
+  
   l.model_prevs <- main_calib(v.params)[[2]]
   v.gof <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
   # Calibrate to N, C, F, D and ND/D, CD/D, FD/D prevalences
+
   for (r in 1:length(l.calib_targets)){ # use log likelihood as metric
-    # fit to 18.99 age group only
-    # gof = gof_norm_loglike(target_mean = subset(l.calib_targets[[r]],l.calib_targets[[r]][,"age"]==18.99)[,"prev"],
-    #                        model_output = subset(l.model_prevs[[r]],l.model_prevs[[r]][,"age"]==18.99 & l.model_prevs[[r]][,"year"]<=calib_endyear)[,"prev"],
-    #                        target_sd = subset(l.calib_targets[[r]],l.calib_targets[[r]][,"age"]==18.99)[,"se"])
     gof = gof_norm_loglike(target_mean = l.calib_targets[[r]][,"prev"],
                            model_output = subset(l.model_prevs[[r]],l.model_prevs[[r]][,"year"]>=calib_startyear & l.model_prevs[[r]][,"year"]<=calib_endyear)[,"prev"],
                            target_sd = l.calib_targets[[r]][,"se"])
@@ -450,25 +458,12 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   
   yearinc_p.HD <- round(yearinc_p.HD)
   
+
   # Recovery
   p.DR=NULL
   p.DR[1:12] <- p.DR[100] <- 0 # final value = 0 because mortality prob = 1
   p.DR[13:65] <- p.DR_12.64
   p.DR[66:99] <- p.DR_65.99
-  
-  rr.NE.CE = NULL
-  rr.NE.CE[1:18] <- rr.NE.CE_1.17
-  rr.NE.CE[19:35] <- rr.NE.CE_18.34
-  rr.NE.CE[36:65] <- rr.NE.CE_35.64
-  rr.NE.CE[66:99] <- rr.NE.CE_65.99
-  rr.NE.CE[100] <- 0
-  
-  rr.CE.FE = NULL
-  rr.CE.FE[1:18] <- rr.CE.FE_1.17
-  rr.CE.FE[19:35] <- rr.CE.FE_18.34
-  rr.CE.FE[36:65] <- rr.CE.FE_35.64
-  rr.CE.FE[66:99] <- rr.CE.FE_65.99
-  rr.CE.FE[100] <- 0
   
   ## Incidence
   for (bc in cohorts){   # scale up incidence by year (p.HD is in age-cohort format)
@@ -504,9 +499,10 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   }
   p.CF[p.CF > 1] <- 1 # replace any cessation probabilities that are greater than 1 with 1
   
-  # Effects of e-cigarettes on smoking initiation and cessation
-  rr.NE.CE = matrix(data=rr.NE.CE, nrow=100, ncol=201)
-  rr.CE.FE = matrix(data=rr.CE.FE, nrow=100, ncol=201)
+  # Vaping transition probabilities
+  p.NO.NE[19:26,c("2020","2021")] <- p.NO.NE_20.21_18.25
+  p.NO.NE[19:26,paste0(2022:calib_endyear)] <- p.NO.NE_22.23_18.25
+  
   
   # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
   m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
@@ -517,8 +513,7 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
                            'rr.CH.CD','rr.CR.CD','rr.CD.FD',
                            'p.NO.NE', 'p.CO.CE', 'p.FO.FE',
                            'p.NE.NQ', 'p.CE.CQ', 'p.FE.FQ',
-                           'p.NQ.NE', 'p.CQ.CE', 'p.FQ.FE',
-                           'rr.CE.FE', 'rr.NE.CE')) %dopar% {
+                           'p.NQ.NE', 'p.CQ.CE', 'p.FQ.FE')) %dopar% {
                              mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
                            }
   
@@ -530,9 +525,11 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   colnames(m.M_cy) <- c(min(cohorts):(max(cohorts)+100))
   
   # Output prevalence results as a list
-  l.model_prevs <- lapply(c("N","C","F","D","E","NE","CE","FE"), get_prevs_combined, m.cohortbyyear=m.M_cy, denom=NULL, minyear=calib_startyear, maxyear=calib_endyear) # denominator is everyone still alive
-  l.model_prevs_D <- lapply(c("N.D","C.D","F.D","ED","NED","CED","FED"), get_prevs_combined, m.cohortbyyear=m.M_cy, denom="D", minyear=calib_startyear, maxyear=calib_endyear) # denominator is everyone still alive
-  l.model_prevs <- c(l.model_prevs,l.model_prevs_D)
+  l.model_prevs <- lapply(c("N","C","F","D"), get_prevs_combined, m.cohortbyyear=m.M_cy, denom=NULL, minyear=calib_startyear, maxyear=calib_endyear) # denominator is everyone still alive
+  l.model_prevs_E <- lapply(c("E","NE","CE","FE"), get_prevs_combined, m.cohortbyyear=m.M_cy, denom=NULL, minyear=2020, maxyear=calib_endyear) # e-cig data available from 2020 onwards
+  l.model_prevs_D <- lapply(c("N.D","C.D","F.D"), get_prevs_combined, m.cohortbyyear=m.M_cy, denom="D", minyear=calib_startyear, maxyear=calib_endyear) # denominator is everyone still alive
+  l.model_prevs_D_E <- lapply(c("ED","NED","CED","FED"), get_prevs_combined, m.cohortbyyear=m.M_cy, denom="D", minyear=2020, maxyear=calib_endyear) # denominator is everyone still alive
+  l.model_prevs <- c(l.model_prevs,l.model_prevs_E, l.model_prevs_D, l.model_prevs_D_E)
   names(l.model_prevs) <- c("N","C","F","D","E","NE","CE","FE","N_D","C_D","F_D","E_D","NE_D","CE_D","FE_D")
   
   l.model_prevs <- lapply(l.model_prevs, reorder_by_age) # re-order the age groups from 18.25, 18.99, 26.34, etc
