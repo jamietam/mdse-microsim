@@ -488,11 +488,9 @@ mdseprevs$prev_lowCI=as.numeric(mdseprevs$prev_lowCI)
 mdseprevs <- rbind(mdseprevsB, mdseprevs)
 mdseprevs$group <- paste0(mdseprevs$gender,"_",mdseprevs$status,"_",mdseprevs$subpopulation)
 
-# mdseprevs$sex[mdseprevs$gender=="Women"] <-"females"
-# mdseprevs$sex[mdseprevs$gender=="Men"] <-"males"
-# mdseprevs$sex[mdseprevs$gender=="both"] <-"both"
-
-mdseprevs = subset(mdseprevs,!(survey_year<2020 & prev==0.000 & se==0.00)) # remove rows without any e-cig data pre-2020
+mdseprevs$sex[mdseprevs$gender=="Women"] <-"females"
+mdseprevs$sex[mdseprevs$gender=="Men"] <-"males"
+mdseprevs$sex[mdseprevs$gender=="both"] <-"both"
 
 save(mdseprevs,file=paste0("data/mdseprevs0523.rda"))
 
@@ -507,7 +505,7 @@ library(gridExtra)
 library(plyr)
 
 xaxisbreaks = seq(2005,2023,1) # specify the ticks on the x-axis of your results plots
-date = "Dec2024"
+date = "01.10.25"
 
 theme_set( theme_light(base_size = 17))
 
@@ -547,7 +545,22 @@ jpeg(filename = paste0("smkprevbyMD","_" ,date, ".jpg"),width=10, height=6, unit
 grid_arrange_shared_legend(list(smkprevbyMDF,smkprevbyMDM),2,"Current smoking prevalence, NSDUH 2005-2023")
 dev.off()
 
-# Current MD (Past year MD) Prevalence 1997-2020
+# Vaping prevalence
+Eprev_women <- ggplot() + 
+  geom_pointrange(data= subset(mdseprevs,subpopulation=="Total"&status=="E"&gender=="Women"), aes(x = survey_year, y = prev*100,ymin=prev_lowCI*100, ymax=prev_highCI*100,color=factor(age)))+
+  scale_y_continuous(name="Prevalence (%)",limits=c(0,30),breaks=seq(0,30,2)) +
+  labs(title="Past 30 day Vaping, Women")+
+  scale_x_continuous(name="Year",limits=c(2020,max(xaxisbreaks)),breaks=xaxisbreaks)  +
+  theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank(), text = element_text(size = 20))
+
+Eprev_men <- ggplot() + 
+  geom_pointrange(data= subset(mdseprevs,subpopulation=="Total"&status=="E"&gender=="Men"), aes(x = survey_year, y = prev*100,ymin=prev_lowCI*100, ymax=prev_highCI*100,color=factor(age)))+
+  scale_y_continuous(name="Prevalence (%)",limits=c(0,30),breaks=seq(0,30,2)) +
+  labs(title="Past 30 day Vaping, Men")+
+  scale_x_continuous(name="Year",limits=c(2020,max(xaxisbreaks)),breaks=xaxisbreaks)  +
+  theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank(), text = element_text(size = 20))
+
+# Current MD (Past year MD) Prevalence 
 MDprev <- ggplot() + 
   geom_pointrange(data= subset(mdseprevs,age==18.99&subpopulation=="Total"&status=="D"), aes(x = survey_year, y = prev*100,ymin=prev_lowCI*100, ymax=prev_highCI*100,color=gender))+
   scale_y_continuous(name="Prevalence (%)",limits=c(0,30),breaks=seq(0,30,2)) +

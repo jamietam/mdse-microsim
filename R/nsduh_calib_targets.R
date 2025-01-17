@@ -1,13 +1,12 @@
 # Create list of calibration targets
-#mainDir = "C:/Users/klx3/Dropbox/tobacco-modeling-team/kane/GitHub/mds-microsim/"
 mainDir <- "/Users/jt936/Dropbox/GitHub/mds-microsim/"
 setwd(file.path(mainDir))
 
-load("data/mdseprevs0522.rda")
+load("data/mdseprevs0523.rda")
 
 mdseprevs<-mdseprevs[order(mdseprevs$age),]
 
-whichgender = "females"
+whichgender = "males"
 
 # mds_microsim targets c("N","C","F","D","E","NE","CE","FE","N_D","C_D","F_D","E_D","NE_D","CE_D","FE_D")
 l.calib_targets <- vector(mode = "list")
