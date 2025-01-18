@@ -58,7 +58,7 @@ if (calibration == 1) { ## For calibration runs - Run this section of code
   comp_time <- Sys.time() - t_init
   
   # Arrange parameter sets in order of fit
-  m.calib_res <- m.calib_res[order(m.calib_res[,"Overall_fit"]),]
+  m.calib_res <- m.calib_res[order(m.calib_res[,"Overall_fit"],decreasing = TRUE),]
   
   v.params = m.calib_res[1,1:length(v.params)] # store best fit as v.params
   
