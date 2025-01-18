@@ -40,9 +40,16 @@ if (whichgender == "males") {
     "s.NC_D_9.17" = c(2.123080, 1.5, 4, 0), #run this
     "s.NC_D_18.25" = c(3.541852, 2, 4, 0),#run this
     "s.NC_D_26.34" = c(3.931820, 2, 4, 0),#run this
-    #re-estimate vaping initiation among never smoking
-    "p.NO.NE_20.21_18.25" <- c(0.2,0,1,1), 
-    "p.NO.NE_22.23_18.25" <- c(0.2,0,1,1),
+    #re-estimate vaping initiation
+    "p.NO.NE_20.21_18.25" = c(0.2,0,1,1), 
+    "p.NO.NE_22.23_18.25" = c(0.2,0,1,1),
+    
+    "p.CO.CE_22.23_26.34" = c(0.1, 0, 1, 1),
+    "p.CO.CE_22.23_35.49" = c(0.1, 0, 1, 1),
+    
+    "p.FO.FE_22.23_26.34" = c(0.1, 0, 1, 1),
+    "p.FO.FE_22.23_35.49" = c(0.1, 0, 1, 1),
+    
     #probability for depressed to recovered
     "p.DR_12.64" = c(0.173, 0.0, 1.0, 0),
     "p.DR_65.99" = c(0.803050446315691, 0.8, 0.85, 0),
@@ -72,15 +79,26 @@ if (whichgender == "males") {
     "s.NC_D_18.25" = c(4, 2, 4, 0),
     "s.NC_D_26.34" = c(2.759139, 2, 4, 0),
     
-    #re-estimate vaping initiation among never smoking
-    "p.NO.NE_20.21_18.25" = c(0.2, 0, 1, 1), 
-    "p.NO.NE_22.23_18.25" = c(0.2, 0, 1, 1),
+    #re-estimate vaping initiation 
+    "p.NO.NE_20.21_18.25" = c(0.1265047, 0, 1, 0), 
+    "p.NO.NE_22.23_18.25" = c(0.1079438, 0, 1, 0),
     
+    "p.CO.CE_22.23_26.34" = c(0.1, 0, 1, 1),
+    "p.CO.CE_22.23_35.49" = c(0.1, 0, 1, 1),
+    
+    "p.FO.FE_22.23_26.34" = c(0.1, 0, 1, 1),
+    "p.FO.FE_22.23_35.49" = c(0.1, 0, 1, 1),
+    
+    # recovery 
     "p.DR_12.64" = c(0.173, 0.0, 1.0, 0),
     "p.DR_65.99" = c(0.65, 0.6, 0.65, 0),
+    
+    # incidence
     "s.HD_12.17" = c(2, 1.0, 3.0, 0),
     "s.HD_18.25" = c(2.5, 2.0, 4.0, 0), 
     "s.HD_26.34" = c(2, 1.0, 3.0, 0),
+    
+    # interaction effects
     "rr.CH.CD" = c(1.577963, 1.0, 2, 0),
     "rr.CR.CD" = c(1.275544, 1.0, 2, 0),
     "rr.CD.FD" = c(1.0000000, 0, 1.0, 0),

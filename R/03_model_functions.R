@@ -416,7 +416,9 @@ gof_norm_loglike <- function(target_mean, target_sd, model_output){
 # Write goodness-of-fit function to pass to calibration algorithm
 f_gof <- function(v.params){
   
-  if(any(grepl("p.NO.NE", names(v.params)))){
+  l.model_prevs <- main_calib(v.params)[[2]]
+  
+  if( any(grepl("p.NO.NE", names(v.params))) | any(grepl("p.CO.CE", names(v.params))) | any(grepl("p.FO.FE", names(v.params))) ){
     print("E-cig calibration for ages 18-49 only (drop age 50+)")
     # Only keep prevalence values for ages 18-49 for e-cig calibration purposes
     l.model_prevs <- lapply(l.model_prevs, function(mat) {
@@ -426,8 +428,7 @@ f_gof <- function(v.params){
       mat[mat[, "age"] < 50, ]
     })
   }
-  
-  l.model_prevs <- main_calib(v.params)[[2]]
+
   v.gof <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
   # Calibrate to N, C, F, D and ND/D, CD/D, FD/D prevalences
 
@@ -503,6 +504,11 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   p.NO.NE[19:26,c("2020","2021")] <- p.NO.NE_20.21_18.25
   p.NO.NE[19:26,paste0(2022:calib_endyear)] <- p.NO.NE_22.23_18.25
   
+  p.CO.CE[27:35,paste0(2022:calib_endyear)] <- p.CO.CE_22.23_26.34
+  p.CO.CE[36:50,paste0(2022:calib_endyear)] <- p.CO.CE_22.23_35.49
+  
+  p.FO.FE[27:35,paste0(2022:calib_endyear)] <- p.FO.FE_22.23_26.34
+  p.FO.FE[36:50,paste0(2022:calib_endyear)] <- p.FO.FE_22.23_35.49
   
   # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
   m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',

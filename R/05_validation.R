@@ -207,7 +207,7 @@ names(eciginit) <- c('age', 'year', 'value','prob')
 p.OE_age <- ggplot(data=eciginit) +  geom_line(aes(x=age,y=value,color=prob,linetype = factor(year)))+
   scale_y_continuous(name="Probability of e-cig initiation", limits=c(0,0.2)) +
   scale_x_continuous(name="Age", limits=c(0,99), breaks=c(0,12,26,36,50,65,100)) +
-  labs(title="E-cig initiation, 2020")
+  labs(title="E-cig initiation, 2021 vs 2023")
 
 # Figures for mortality by smoking and dep status  
 Xprobs <- as.data.frame(cbind(c(p.NX[,100],p.CX[,100],a_p.FX.ysq[,100,5]),c(rep("Never",100),rep("Current",100),rep("Former",100)),c(rep(0:99,3))))
