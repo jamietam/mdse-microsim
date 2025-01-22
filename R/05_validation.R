@@ -291,7 +291,7 @@ E_total <- ggplot() +
   geom_line(data = subset(df.model_prevs, age==18.99 & (status == "E"| status == "NE" | status == "CE" | status == "FE") ),  aes(x=year, y= prev,color=status))+
   geom_pointrange(data = subset(df.calib_targets, age == 18.99 & (status == "E"| status == "NE" | status == "CE" | status == "FE")), 
                   aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, color = status, shape = "National Survey on Drug Use and Health")) +
-  scale_y_continuous(name="Prevalence (%)",limits=c(0,0.1),breaks=seq(0,0.1,0.005)) +
+  scale_y_continuous(name="Prevalence (%)",limits=c(0,0.12),breaks=seq(0,0.12,0.005)) +
   scale_x_continuous(name="Year",limits=c(2005,calib_endyear),breaks=seq(2005,calib_endyear,1))  +
   labs(title=paste0("Vaping distribution - ",whichgender," ages 18-99"))+
   theme(axis.text.x=element_text(angle=60, hjust=1), legend.title = element_blank())
