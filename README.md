@@ -1,4 +1,4 @@
-# How to run the Major Depression and Smoking Microsimulation Model
+# How to run the Major Depression, Smoking, and E-cigarettes (MDSE) Microsimulation Model
 
 ## R Environment:
 **01_environment.R**
