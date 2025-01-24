@@ -1,10 +1,12 @@
 # E-cigarette transitions -------------------------------------------------
-
+mainDir = "/Users/jt936/Dropbox/GitHub/mdse-microsim/"
+setwd(mainDir)
 # Data sources:
 # 2013-2014: Brouwer AF, et al. Transitions between cigarette, ENDS and dual use in adults in the PATH study (waves 1-4): multistate transition modelling accounting for complex survey design. Tob Control. 2020 Nov 16:tobaccocontrol-2020-055967. doi: 10.1136/tobaccocontrol-2020-055967. 
 # 2015-2016: Brouwer AF, et al. Changing patterns of cigarette and ENDS transitions in the USA: a multistate transition analysis of youth and adults in the PATH Study in 2015-2017 vs 2017-2019 Tobacco Control Published Online First: 28 March 2023. doi: 10.1136/tc-2022-057905
 # 2017-2021: Brouwer AF, et al. Changing patterns of cigarette and ENDS transitions in the USA: a multistate transition analysis of adults in the PATH Study in 2017–2019 vs 2019–2021  doi: 10.1136/tc-2023-058453 
 
+whichgender <- "females"
 
 ## ecig initiation 
 # never established use --> ENDS only
@@ -25,15 +27,22 @@ p.CQ.CE <- p.CO.CE <- rate_to_prob(matrix(c(0.073, 0.069, 0.102, 0.153,
                              dimnames = list(c("18.24", "25.34", "35.54", "55.90"),
                                              c("2013-2014", "2015-2016", "2017-2019", "2020-2021"))))
 
+# cig-only--> ENDS only (complete switching)
+p.CO.FE <- rate_to_prob(matrix(c(0.018, 0.019, 0.032, 0.045,
+                                 0.015, 0.013, 0.017, 0.012,
+                                 0.008, 0.006, 0.007, 0.003,
+                                 0.007, 0.006, 0.004, 0.003),
+                               nrow = 4, ncol = 4, byrow = TRUE, 
+                               dimnames = list(c("18.24", "25.34", "35.54", "55.90"),
+                                               c("2013-2014", "2015-2016", "2017-2019", "2020-2021"))))
 ##non-current --> ENDS only
 p.FQ.FE <- p.NQ.NE <- p.FO.FE <- rate_to_prob(matrix(c(0.046, 0.057, 0.118, 0.09, 
                                           0.018, 0.017, 0.019, 0.029, 
                                           0.009, 0.008, 0.004, 0.003, 
                                           0.002, 0.002, 0.004, 0.003), 
                                         nrow = 4, ncol = 4, byrow = TRUE, 
-                                        dimnames = list(c("18.24", "25.34", "35.54", "55.90"),
-                                                        c("2013-2014", "2015-2016", "2017-2019", "2020-2021"))))
-
+                                        dimnames = list(c("18.24", "25.34", "35.54", "55.90"),#rows
+                                                        c("2013-2014", "2015-2016", "2017-2019", "2020-2021"))))# columns
 
 ## ecig cessation
 # e-cig only --> non-current
@@ -126,8 +135,7 @@ expandmatrix <- function(pmatrix){
 vars <- c("p.NO.NE", "p.CO.CE", "p.FO.FE",
           "p.NE.NQ", "p.CE.CQ", "p.FE.FQ",
           "p.NQ.NE", "p.CQ.CE", "p.FQ.FE",
-          "p.NO.CO", "p.NE.CE", "p.NQ.CQ", 
-          "p.CO.FO", "p.CQ.FQ", "p.CE.FE")
+          "p.CO.FE")
           # ecig effects on smoking initiation
 
 # Loop through each transition and expand its matrix
@@ -140,14 +148,15 @@ for (v in vars) {
 
 # save e-cig transition matrices ------------------------------------------------------
 
-whichgender <- "males"
-save(p.NO.NE, p.CO.CE, p.FO.FE,
+save(p.NO.NE, p.CO.CE, p.FO.FE, 
      p.NE.NQ, p.CE.CQ, p.FE.FQ,
-     p.NQ.NE, p.CQ.CE, p.FQ.FE, 
+     p.NQ.NE, p.CQ.CE, p.FQ.FE, p.CO.FE,
      file=paste0("data/ecig_precomputed_inputs_", whichgender,".RData"))
 
 
-
+# transitions that we did not use from Brouwer
+# "p.NO.CO", "p.NE.CE", "p.NQ.CQ", 
+# "p.CO.FO", "p.CQ.FQ", "p.CE.FE", 
 
 # # ecig effects on smoking initiation
 # p.NO.CO <- matrix(c(0.017, 0.014, 0.006, 0.004, #never established use --> cig only
