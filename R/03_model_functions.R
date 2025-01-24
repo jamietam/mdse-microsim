@@ -83,8 +83,9 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "NOH"] <- p.NX[t,bc1]
   
   #from CHO state
-  m.p_t["COH", M_t == "COH"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CO.CE[t,yr]-p.HD[t,bc1])
+  m.p_t["COH", M_t == "COH"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CO.CE[t,yr]-p.HD[t,bc1]-p.CO.FE[t,bc1])
   m.p_t["FOH", M_t == "COH"] <- (1-p.CX[t,bc1])*(p.CF[t,bc1])
+  m.p_t["FEH", M_t == "COH"] <- (1-p.CX[t,bc1])*(p.CO.FE[t,bc1])
   m.p_t["CEH", M_t == "COH"] <- (1-p.CX[t,bc1])*(p.CO.CE[t,yr])
   m.p_t["COD", M_t == "COH"] <- (1-p.CX[t,bc1])*(p.HD[t,bc1])
   m.p_t["X", M_t == "COH"] <- p.CX[t,bc1]
@@ -142,8 +143,9 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "NOD"] <- p.NX[t,bc1]
   
   ##from CDO state
-  m.p_t["COD", M_t == "COD"] <- (1-p.CX[t,bc1])*(1-rr.CD.FD*p.CF[t,bc1]-p.CO.CE[t,yr]-p.DR[t])
+  m.p_t["COD", M_t == "COD"] <- (1-p.CX[t,bc1])*(1-rr.CD.FD*p.CF[t,bc1]-p.CO.CE[t,yr]-p.DR[t]-p.CO.FE[t,bc1])
   m.p_t["FOD", M_t == "COD"] <- (1-p.CX[t,bc1])*(rr.CD.FD*p.CF[t,bc1])
+  m.p_t["FED", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.CO.FE[t,bc1])
   m.p_t["CED", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.CO.CE[t,yr])
   m.p_t["COR", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "COD"] <- p.CX[t,bc1]
@@ -202,8 +204,9 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "NOR"] <- p.NX[t,bc1]
   
   ##from CRO state
-  m.p_t["COR", M_t == "COR"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CO.CE[t,yr]-rr.CR.CD*p.RD[t])
+  m.p_t["COR", M_t == "COR"] <- (1-p.CX[t,bc1])*(1-p.CF[t,bc1]-p.CO.CE[t,yr]-rr.CR.CD*p.RD[t]-p.CO.FE[t,bc1])
   m.p_t["FOR", M_t == "COR"] <- (1-p.CX[t,bc1])*(p.CF[t,bc1])
+  m.p_t["FER", M_t == "COR"] <- (1-p.CX[t,bc1])*(p.CO.FE[t,bc1])
   m.p_t["CER", M_t == "COR"] <- (1-p.CX[t,bc1])*(p.CO.CE[t,yr])
   m.p_t["COD", M_t == "COR"] <- (1-p.CX[t,bc1])*(rr.CR.CD*p.RD[t])
   m.p_t["X", M_t == "COR"] <- p.CX[t,bc1]
