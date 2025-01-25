@@ -136,23 +136,23 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FQH"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FQH"]]
   
   ##from NDO state
-  m.p_t["NOD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(1-p.NC_D[t,bc1]-p.NO.NE[t,yr]-p.DR[t])
+  m.p_t["NOD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(1-p.NC_D[t,bc1]-rr.OD.ED*p.NO.NE[t,yr]-p.DR[t])
   m.p_t["COD", M_t == "NOD"] <- (1-p.NX[t,bc1])*(p.NC_D[t,bc1])
-  m.p_t["NED", M_t == "NOD"] <- (1-p.NX[t,bc1])*(p.NO.NE[t,yr])
+  m.p_t["NED", M_t == "NOD"] <- (1-p.NX[t,bc1])*(rr.OD.ED*p.NO.NE[t,yr])
   m.p_t["NOR", M_t == "NOD"] <- (1-p.NX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "NOD"] <- p.NX[t,bc1]
   
   ##from CDO state
-  m.p_t["COD", M_t == "COD"] <- (1-p.CX[t,bc1])*(1-rr.CD.FD*p.CF[t,bc1]-p.CO.CE[t,yr]-p.DR[t]-p.CO.FE[t,bc1])
+  m.p_t["COD", M_t == "COD"] <- (1-p.CX[t,bc1])*(1-rr.CD.FD*p.CF[t,bc1]-rr.OD.ED*p.CO.CE[t,yr]-p.DR[t]-p.CO.FE[t,bc1])
   m.p_t["FOD", M_t == "COD"] <- (1-p.CX[t,bc1])*(rr.CD.FD*p.CF[t,bc1])
   m.p_t["FED", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.CO.FE[t,bc1])
-  m.p_t["CED", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.CO.CE[t,yr])
+  m.p_t["CED", M_t == "COD"] <- (1-p.CX[t,bc1])*(rr.OD.ED*p.CO.CE[t,yr])
   m.p_t["COR", M_t == "COD"] <- (1-p.CX[t,bc1])*(p.DR[t])
   m.p_t["X", M_t == "COD"] <- p.CX[t,bc1]
 
   ##from FDO state
-  m.p_t["FOD", M_t == "FOD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]])*(1-p.FO.FE[t,yr]-p.DR[t])
-  m.p_t["FED", M_t == "FOD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]])*(p.FO.FE[t,yr])
+  m.p_t["FOD", M_t == "FOD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]])*(1-rr.OD.ED*p.FO.FE[t,yr]-p.DR[t])
+  m.p_t["FED", M_t == "FOD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]])*(rr.OD.ED*p.FO.FE[t,yr])
   m.p_t["FOR", M_t == "FOD"] <- (1-a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]])*(p.DR[t])
   m.p_t["X", M_t == "FOD"] <- a_p.FX.ysq[t,bc1,v.ysq[M_t == "FOD"]]
   
@@ -522,7 +522,8 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
                            'rr.CH.CD','rr.CR.CD','rr.CD.FD',
                            'p.NO.NE', 'p.CO.CE', 'p.FO.FE',
                            'p.NE.NQ', 'p.CE.CQ', 'p.FE.FQ',
-                           'p.NQ.NE', 'p.CQ.CE', 'p.FQ.FE')) %dopar% {
+                           'p.NQ.NE', 'p.CQ.CE', 'p.FQ.FE',
+                           'p.CO.FE','rr.OD.ED')) %dopar% {
                              mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
                            }
   
