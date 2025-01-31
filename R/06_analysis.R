@@ -1,20 +1,18 @@
 ## Clean up the workspace and set main working directory
 rm(list = ls()) 
 
-mainDir = "/Users/srs249/Documents/GitHub/mds-microsim/"
+
+mainDir = "/Users/bradleydirks/Documents/GitHub/mdse-microsim/"
 # mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" # Set working directory
 hpc=0
 calibration=0 #need to set this to 0 so main_calib works and outputs proper matrix for main function
-args <- `if`(hpc == 1, commandArgs(TRUE), c("males", 1000, 2100, 40)) # Parameters for HPV vs non-HPC setup
+args <- `if`(hpc == 1, commandArgs(TRUE), c("females", 1000, 2100, 40)) # Parameters for HPV vs non-HPC setup
 
 source(paste0(mainDir,"R/01_environment.R"), echo=FALSE) #
 source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE)
 source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
 
 
-
-#load("output/rnc_females_1000_12.14.24_11.48AM.Rda")
-#load("output/rnc_males_1000_12.14.24_03.06PM.Rda")
 
 # Run the model -----------------------------------------------------------
 policyyear <- 2025
@@ -24,38 +22,49 @@ v.years_forfigs=c(2023:2100)
 # Apelberg (2018): Experts estimate 50% (10-85%) decrease in smoking initiation https://doi.org/10.1056/NEJMsr1714617
 # Hatsukami (2024): Significantly higher 12-week CO-verified abstinence among those in VLNC vs NNC condition (OR=3.10, 95%: 1.69-5.96) https://doi.org/10.1016/j.lana.2024.100796
 
+#updated policy effects code:
+#apply_policy <- function(rr.init_1,rr.init_s, cess_indicator,rr.cess_1,rr.cess_s, p.CO.CE_1,p.CO.CE_s,p.CO.FE_1,p.CO.FE_s,p.NO.NE_1,p.NO.NE_s, policyyear, v.affected_ages) {
+  
+
 params <- list(
-  baseline = c(1, 1),
-  init_0.1_cess_0.69 = c(0.9, 1.69), #worst case
-  init_0.5_cess_2.10 = c(0.5, 3.10), #expected
-  init_0.85_cess_4.96 = c(0.15, 5.96) #best case
-  # MPRPM = c(0,100000), # no initiation, everyone quits (setting it to 100000 makes all cessation probabilities set to 1)
-  # noinit_cess_1=c(0,1),
-  # init_0.1 = c(0.9,1), # 10% decrease in initiation
-  # init_0.5 = c(0.5,1), # 50% decrease to initiation
-  # init_0.85 = c(0.15,1)#, # 85% decrease in initiation
-  # cess_2.10 = c(1,3.10), # 210% increase in cessation
-  # cess_0.69 = c(1,1.69), # 69% increase in cessation
-  # cess_4.96 = c(1,5.96), # 496% increase in cessation
-  # init_0.5_cess_2.10 = c(0.5, 3.10), # 50% decrease to initiation (rr.init=0.5) , rr.cess=3.10
-  # init_0.5_cess_0.69 = c(0.5, 1.69), # rr.cess=1.69
-  # init_0.5_cess_4.96 = c(0.5, 5.96), # rr.cess=5.96
-  # init_0.1_cess_2.10 = c(0.9, 3.10), # 10% decrease to initiation (rr.init=0.9)
-  # init_0.1_cess_0.69 = c(0.9, 1.69),
-  # init_0.1_cess_4.96 = c(0.9, 5.96),
-  # init_0.85_cess_2.10 = c(0.15, 3.10), # 85% decrease to initiation (rr.init=0.15)
-  # init_0.85_cess_0.69 = c(0.15, 1.69),
-  # init_0.85_cess_4.96 = c(0.15, 5.96)
+  baseline = c(1, 1,"MDSE",1, 1, 1, 1,1, 1,1, 1),
+  init_0.1_cess_0.69 = c(0.9,0.9,"MDSE", 1.69,1.69, 1, 1, 1, 1, 1, 1), #worst case
+  init_0.5_cess_2.10 = c(0.5,0.5,"MDSE", 3.10,3.10, 1, 1, 1, 1, 1, 1), #expected
+  init_0.85_cess_4.96 = c(0.15,0.15,"MDSE", 5.96,5.96, 1, 1, 1, 1, 1, 1), #best case
+  #FDA 
+  FDA_est = c(1-0.63,1-0.65,"FDA",0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.5, 0.5), #worst case
+  #initiation (1st,subsequent): -0.63, -0.65
+  #cessation:0.36,0.34
+  #dual: 0.61, 0.51
+  #switching:0.56,0.58
+  #vape init:0.5, 0.5
+  FDA_best = c(1-0.83,1-0.85,"FDA", 0.61,0.56,0.9, 0.82, 0.84, 0.85,0.72, 0.75), #expected
+  #initiation (1st,subsequent): -0.83, -0.85
+  #cessation:0.61,0.56
+  #dual:0.9, 0.82
+  #switching:0.84, 0.85
+  #vape init: 0.72, 0.75
+  FDA_worst = c(1-0.38,1-0.39,"FDA", 0.11, 0.11, 0.25, 0.19, 0.22,0.25, 0.21, 0.2) #best case
+  #initiation (1st,subsequent): -0.38, -0.39
+  #cessation:0.11, 0.11
+  #dual:0.25, 0.19
+  #switching:0.22,0.25
+  #vape init: 0.21, 0.2
 )
 
 scenarios <- names(params)
 
 run_policy <- function(policy) {
   cat(paste0("\n  Scenario: ", policy))
-  l.policy_effects <- apply_policy(params[[policy]][1], params[[policy]][2], policyyear, v.affected_ages)
+  l.policy_effects <- apply_policy(params[[policy]][1], params[[policy]][2],params[[policy]][3], params[[policy]][4],
+                                   params[[policy]][5], params[[policy]][6],params[[policy]][7], params[[policy]][8],
+                                   params[[policy]][9], params[[policy]][10],params[[policy]][11], 
+                                   policyyear, v.affected_ages)
   output <- main(v.params, l.policy_effects)
   return(output)
 }
+
+
 
 # Run all scenarios and save results
 allresults <- lapply(scenarios, run_policy)

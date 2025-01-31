@@ -495,20 +495,53 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
         p.NC_D = smk_init*c(rep(s.NC_D_9.17,18),rep(s.NC_D_18.25,8),rep(s.NC_D_26.34,9),rep(0,65))
         ## Cessation - No cessation before 18
         
+        # Vaping transition probabilities
+        p.NO.NE[19:26,c("2020","2021")] <- p.NO.NE_20.21_18.25
+        p.NO.NE[19:26,paste0(2022:calib_endyear)] <- p.NO.NE_22.23_18.25
+        
+        p.CO.CE[27:35,paste0(2022:calib_endyear)] <- p.CO.CE_22.23_26.34
+        p.CO.CE[36:50,paste0(2022:calib_endyear)] <- p.CO.CE_22.23_35.49
+        
   } else {
+    #initiation
     p.NC = unname(l.policy_effects[["m.initeff"]])*smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
-    p.CF = unname(l.policy_effects[["m.cesseff"]])*smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
     p.NC_D = unname(l.policy_effects[["m.initeff"]])*smk_init*c(rep(s.NC_D_9.17,18),rep(s.NC_D_18.25,8),rep(0,74))
+    
+    #cessation
+    smk_cess_v=smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
+    if (l.policy_effects[["cess_indicator"]]=="MDSE"){
+      p.CF <-unname(l.policy_effects[["m.cesseff"]])*smk_cess_v
+    }else if (l.policy_effects[["cess_indicator"]]=="FDA"){
+      p.CF<-((l.policy_effects[["m.cesseff_0i"]]*smk_cess_v)+l.policy_effects[["m.cesseff_1i"]])*l.policy_effects[["m.cesseff"]]
+    }
+    # Vaping transition probabilities
+    if (l.policy_effects[["p.NO.NE_1"]]==1){
+    p.NO.NE[19:26,c("2020","2021")] <- p.NO.NE_20.21_18.25
+    p.NO.NE[19:26,paste0(2022:calib_endyear)] <- p.NO.NE_22.23_18.25
+    
+    p.CO.CE[27:35,paste0(2022:calib_endyear)] <- p.CO.CE_22.23_26.34
+    p.CO.CE[36:50,paste0(2022:calib_endyear)] <- p.CO.CE_22.23_35.49
+    
+    }else{
+      p.NO.NE[19:26,c("2020","2021")] <- p.NO.NE_20.21_18.25
+      p.NO.NE[19:26,paste0(2022:calib_endyear)] <- p.NO.NE_22.23_18.25
+      p.NO.NE[18:90,paste0(policyyear)] <- l.policy_effects[["p.NO.NE_1"]]
+      p.NO.NE[18:90,paste0((policyyear+1):2100)] <- l.policy_effects[["p.NO.NE_s"]]
+      
+      p.CO.CE[27:35,paste0(2022:calib_endyear)] <- p.CO.CE_22.23_26.34
+      p.CO.CE[36:50,paste0(2022:calib_endyear)] <- p.CO.CE_22.23_35.49
+      p.CO.CE[18:90,paste0(policyyear)] <- l.policy_effects[["p.CO.CE_1"]]
+      p.CO.CE[18:90,paste0((policyyear+1):2100)] <- l.policy_effects[["p.CO.CE_s"]]
+      
+      p.CO.FE[18:90,paste0(policyyear)] <- l.policy_effects[["p.CO.FE_1"]]
+      p.CO.FE[18:90,paste0((policyyear+1):2100)] <- l.policy_effects[["p.CO.FE_s"]]
+    }
+
     
   }
   p.CF[p.CF > 1] <- 1 # replace any cessation probabilities that are greater than 1 with 1
   
   # Vaping transition probabilities
-  p.NO.NE[19:26,c("2020","2021")] <- p.NO.NE_20.21_18.25
-  p.NO.NE[19:26,paste0(2022:calib_endyear)] <- p.NO.NE_22.23_18.25
-  
-  p.CO.CE[27:35,paste0(2022:calib_endyear)] <- p.CO.CE_22.23_26.34
-  p.CO.CE[36:50,paste0(2022:calib_endyear)] <- p.CO.CE_22.23_35.49
   
   p.FO.FE[27:35,paste0(2022:calib_endyear)] <- p.FO.FE_22.23_26.34
   p.FO.FE[36:50,paste0(2022:calib_endyear)] <- p.FO.FE_22.23_35.49
@@ -553,16 +586,33 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
 
 ## MAIN POLICY FUNCTIONS ------------------------------------------
 
-apply_policy <- function(rr.init, rr.cess, policyyear, v.affected_ages) {
+
+
+apply_policy <- function(rr.init_1,rr.init_s, cess_indicator,rr.cess_1,rr.cess_s, p.CO.CE_1,p.CO.CE_s,p.CO.FE_1,p.CO.FE_s,p.NO.NE_1,p.NO.NE_s, policyyear, v.affected_ages) {
   m.initeff <- matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2])
+  m.initeff_0i<- matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2])
+  m.initeff_1i <- matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2])
   m.cesseff <- matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])
+  m.cesseff_0i <- matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])
+  m.cesseff_1i <- matrix(0, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])
   
   for (age in v.affected_ages) {
-    m.initeff[row(m.initeff) + col(m.initeff) > (policyyear-1899) & row(m.initeff) == age] <- rr.init
-    m.cesseff[row(m.cesseff) + col(m.cesseff) > (policyyear-1899) & row(m.cesseff) == age] <- rr.cess
+    m.initeff[row(m.initeff) + col(m.initeff) > (policyyear-1899) & row(m.initeff) == age] <- as.numeric(rr.init_1)
+    m.initeff[row(m.initeff) + col(m.initeff) > ((policyyear+1)-1899) & row(m.initeff) == age] <- as.numeric(rr.init_s)
+    m.cesseff_0i[row(m.cesseff) + col(m.cesseff) > (policyyear-1899) & row(m.cesseff) == age] <- 0
+    m.cesseff_1i[row(m.cesseff) + col(m.cesseff) > (policyyear-1899) & row(m.cesseff) == age] <- 1
+    m.cesseff[row(m.cesseff) + col(m.cesseff) > (policyyear-1899) & row(m.cesseff) == age] <- as.numeric(rr.cess_1)
+    m.cesseff[row(m.cesseff) + col(m.cesseff) > ((policyyear+1)-1899) & row(m.cesseff) == age] <- as.numeric(rr.cess_s)
   }
   
-  l.policy_effects <- list(m.initeff = m.initeff, m.cesseff = m.cesseff)
+  l.policy_effects <- list(m.initeff = m.initeff,
+                           m.cesseff = m.cesseff,
+                           m.cesseff_1i= m.cesseff_1i,
+                           m.cesseff_0i= m.cesseff_0i,
+                           p.CO.CE_1=as.numeric(p.CO.CE_1),p.CO.CE_s=as.numeric(p.CO.CE_s),
+                           p.CO.FE_1=as.numeric(p.CO.FE_1),p.CO.FE_s=as.numeric(p.CO.FE_s),
+                           p.NO.NE_1=as.numeric(p.NO.NE_1),p.NO.NE_s=as.numeric(p.NO.NE_s),
+                           cess_indicator=cess_indicator)
   return(l.policy_effects)
 }
 
@@ -701,12 +751,12 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
   names(l.model_prevs) <- c("N", "C","F", "D", "NO", "CO", "FO", "O", "NE", "CE", "FE", "E", "NQ", "CQ", "FQ", "Q")
   l.model_prevs <- lapply(l.model_prevs, reorder_by_age) # re-order the age groups from 18.25, 18.99, 26.34, etc
   
-  l.model_prevs_D <- lapply(c("N.D", "C.D","F.D", "OD", "ED", "QD"), get_prevs_combined, m.cohortbyyear=m.M, denom="D", minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
-  names(l.model_prevs_D) <- c("N","C","F","O","E","Q")
+  l.model_prevs_D <- lapply(c("N", "C","F", "D", "NO", "CO", "FO", "O", "NE", "CE", "FE", "E", "NQ", "CQ", "FQ", "Q"), get_prevs_combined, m.cohortbyyear=m.M_D, denom=NULL, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
+  names(l.model_prevs_D) <- c("N", "C","F", "D", "NO", "CO", "FO", "O", "NE", "CE", "FE", "E", "NQ", "CQ", "FQ", "Q")
   l.model_prevs_D <- lapply(l.model_prevs_D, reorder_by_age) # Reorder age groups for both lists in a single lapply
   
-  l.model_prevs_notD <- lapply(c("N","C","F", "O", "E", "Q"), get_prevs_combined, m.cohortbyyear=m.M_notD, denom=NULL, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
-  names(l.model_prevs_notD) <- c("N","C","F","O","E","Q")
+  l.model_prevs_notD <- lapply(c("N", "C","F", "D", "NO", "CO", "FO", "O", "NE", "CE", "FE", "E", "NQ", "CQ", "FQ", "Q"), get_prevs_combined, m.cohortbyyear=m.M_notD, denom=NULL, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
+  names(l.model_prevs_notD) <- c("N", "C","F", "D", "NO", "CO", "FO", "O", "NE", "CE", "FE", "E", "NQ", "CQ", "FQ", "Q")
   l.model_prevs_notD <- lapply(l.model_prevs_notD, reorder_by_age) # Reorder age groups for both lists in a single lapply
 
   # by single year for general population
