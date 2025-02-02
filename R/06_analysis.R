@@ -2,7 +2,7 @@
 rm(list = ls()) 
 
 
-mainDir = "/Users/bradleydirks/Documents/GitHub/mdse-microsim/"
+mainDir = "/Users/bradleydirks/University of Michigan Dropbox/Sarah Skolnick/GitHub/mdse-microsim/"
 # mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" # Set working directory
 hpc=0
 calibration=0 #need to set this to 0 so main_calib works and outputs proper matrix for main function
@@ -28,28 +28,28 @@ v.years_forfigs=c(2023:2100)
 
 params <- list(
   baseline = c(1, 1,"MDSE",1, 1, 1, 1,1, 1,1, 1),
-  init_0.1_cess_0.69 = c(0.9,0.9,"MDSE", 1.69,1.69, 1, 1, 1, 1, 1, 1), #worst case
-  init_0.5_cess_2.10 = c(0.5,0.5,"MDSE", 3.10,3.10, 1, 1, 1, 1, 1, 1), #expected
-  init_0.85_cess_4.96 = c(0.15,0.15,"MDSE", 5.96,5.96, 1, 1, 1, 1, 1, 1), #best case
+  init_0.1_cess_0.69 = c(0.9,0.9,"MDSE", 1.69,1.69,  0.9, 0.82, 0.22,0.25, 0.72, 0.75), #worst case
+  init_0.5_cess_2.10 = c(0.5,0.5,"MDSE", 3.10,3.10, 0.61, 0.51, 0.56,0.58, 0.5, 0.5), #expected
+  init_0.85_cess_4.96 = c(0.15,0.15,"MDSE", 5.96,5.96, 0.25, 0.19, 0.84, 0.85, 0.21, 0.2), #best case
   #FDA 
-  FDA_est = c(1-0.63,1-0.65,"FDA",0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.5, 0.5), #worst case
+  FDA_est = c(1-0.63,1-0.65,"FDA",0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.5, 0.5), #expected
   #initiation (1st,subsequent): -0.63, -0.65
   #cessation:0.36,0.34
   #dual: 0.61, 0.51
   #switching:0.56,0.58
   #vape init:0.5, 0.5
-  FDA_best = c(1-0.83,1-0.85,"FDA", 0.61,0.56,0.9, 0.82, 0.84, 0.85,0.72, 0.75), #expected
+  FDA_best = c(1-0.83,1-0.85,"FDA", 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.21, 0.2), #best
   #initiation (1st,subsequent): -0.83, -0.85
   #cessation:0.61,0.56
-  #dual:0.9, 0.82
+  #dual:0.25, 0.19
   #switching:0.84, 0.85
-  #vape init: 0.72, 0.75
-  FDA_worst = c(1-0.38,1-0.39,"FDA", 0.11, 0.11, 0.25, 0.19, 0.22,0.25, 0.21, 0.2) #best case
+  #vape init: 0.21, 0.2
+  FDA_worst = c(1-0.38,1-0.39,"FDA", 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.72, 0.75) #worse case
   #initiation (1st,subsequent): -0.38, -0.39
   #cessation:0.11, 0.11
-  #dual:0.25, 0.19
+  #dual:0.9, 0.82
   #switching:0.22,0.25
-  #vape init: 0.21, 0.2
+  #vape init: 0.72, 0.75
 )
 
 scenarios <- names(params)
@@ -66,9 +66,9 @@ run_policy <- function(policy) {
 
 
 
-# Run all scenarios and save results
+#Run all scenarios and save results
 allresults <- lapply(scenarios, run_policy)
-# 
+#
 names(allresults) <- scenarios
 save(allresults, file = paste0("output/rnc_",whichgender,"_",n.i,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".Rda"))
 

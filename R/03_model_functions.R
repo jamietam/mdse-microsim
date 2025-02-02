@@ -512,6 +512,7 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
     if (l.policy_effects[["cess_indicator"]]=="MDSE"){
       p.CF <-unname(l.policy_effects[["m.cesseff"]])*smk_cess_v
     }else if (l.policy_effects[["cess_indicator"]]=="FDA"){
+      #comment here..
       p.CF<-((l.policy_effects[["m.cesseff_0i"]]*smk_cess_v)+l.policy_effects[["m.cesseff_1i"]])*l.policy_effects[["m.cesseff"]]
     }
     # Vaping transition probabilities
@@ -590,8 +591,6 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
 
 apply_policy <- function(rr.init_1,rr.init_s, cess_indicator,rr.cess_1,rr.cess_s, p.CO.CE_1,p.CO.CE_s,p.CO.FE_1,p.CO.FE_s,p.NO.NE_1,p.NO.NE_s, policyyear, v.affected_ages) {
   m.initeff <- matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2])
-  m.initeff_0i<- matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2])
-  m.initeff_1i <- matrix(1, nrow = dim(smk_init)[1], ncol = dim(smk_init)[2])
   m.cesseff <- matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])
   m.cesseff_0i <- matrix(1, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])
   m.cesseff_1i <- matrix(0, nrow = dim(smk_cess)[1], ncol = dim(smk_cess)[2])
