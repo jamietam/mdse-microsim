@@ -6,16 +6,16 @@ mainDir = "/Users/bradleydirks/University of Michigan Dropbox/Sarah Skolnick/Git
 # mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" # Set working directory
 hpc=0
 calibration=0 #need to set this to 0 so main_calib works and outputs proper matrix for main function
-args <- `if`(hpc == 1, commandArgs(TRUE), c("females", 1000, 2100, 40)) # Parameters for HPV vs non-HPC setup
+args <- `if`(hpc == 1, commandArgs(TRUE), c("females",1000, 2100, 40)) # Parameters for HPV vs non-HPC setup
 
 source(paste0(mainDir,"R/01_environment.R"), echo=FALSE) #
 source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE)
 source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
 
-
+calib_endyear=2100
 
 # Run the model -----------------------------------------------------------
-policyyear <- 2025
+policyyear <- 2027
 v.affected_ages <- c(0:99) # affects all ages
 v.years_forfigs=c(2023:2100)
 # Policy effect sizes:
@@ -28,23 +28,26 @@ v.years_forfigs=c(2023:2100)
 
 params <- list(
   baseline = c(1, 1,"MDSE",1, 1, 1, 1,1, 1,1, 1),
-  init_0.1_cess_0.69 = c(0.9,0.9,"MDSE", 1.69,1.69,  0.9, 0.82, 0.22,0.25, 0.72, 0.75), #worst case
-  init_0.5_cess_2.10 = c(0.5,0.5,"MDSE", 3.10,3.10, 0.61, 0.51, 0.56,0.58, 0.5, 0.5), #expected
-  init_0.85_cess_4.96 = c(0.15,0.15,"MDSE", 5.96,5.96, 0.25, 0.19, 0.84, 0.85, 0.21, 0.2), #best case
-  #FDA 
-  FDA_est = c(1-0.63,1-0.65,"FDA",0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.5, 0.5), #expected
+  init_0.1_cess_0.69 = c(1-0.1,1-0.1,"MDSE", 1.69,1.69,  0.9, 0.82, 0.22,0.25, 0.1*0.72,0.1*0.75), #worst case
+  init_0.5_cess_2.10 = c(1-0.5,1-0.5,"MDSE", 3.10,3.10, 0.61, 0.51, 0.56,0.58, 0.5*0.5,0.5*0.5), #expected
+  init_0.85_cess_4.96 = c(1-0.85,1-0.85,"MDSE", 5.96,5.96, 0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2), #best case
+  # init_0.1_cess_0.69 = c(1-0.1,1-0.1,"MDSE", 1,1,  1,1,1,1, 1,1), #worst case
+  # init_0.5_cess_2.10 = c(1-0.5,1-0.5,"MDSE", 1,1, 1,1,1,1, 1,1), #expected
+  # init_0.85_cess_4.96 = c(1-0.85,1-0.85,"MDSE", 1,1, 1,1,1,1, 1,1), #best case
+  #FDA
+  FDA_est = c(1-0.63,1-0.65,"FDA",0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5), #expected
   #initiation (1st,subsequent): -0.63, -0.65
   #cessation:0.36,0.34
   #dual: 0.61, 0.51
   #switching:0.56,0.58
   #vape init:0.5, 0.5
-  FDA_best = c(1-0.83,1-0.85,"FDA", 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.21, 0.2), #best
+  FDA_best = c(1-0.83,1-0.85,"FDA", 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2), #best
   #initiation (1st,subsequent): -0.83, -0.85
   #cessation:0.61,0.56
   #dual:0.25, 0.19
   #switching:0.84, 0.85
   #vape init: 0.21, 0.2
-  FDA_worst = c(1-0.38,1-0.39,"FDA", 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.72, 0.75) #worse case
+  FDA_worst = c(1-0.38,1-0.39,"FDA", 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75) #worse case
   #initiation (1st,subsequent): -0.38, -0.39
   #cessation:0.11, 0.11
   #dual:0.9, 0.82
@@ -126,14 +129,16 @@ reformat_model_outputs <- function(l.results){
       cSAD = cumsum(policy$v.SAD[paste0(policyyear:max(cohorts))]),
       aYLL= policy$v.yll[paste0(policyyear:max(cohorts))],
       cYLL = cumsum(policy$v.yll[paste0(policyyear:max(cohorts))]),
-      aCosts = cuw[paste0(policyyear:max(cohorts)), 1],
+      aCosts = cuw[paste0(policyyear:max(cohorts)), 1], #medical costs
       aQALYs = cuw[paste0(policyyear:max(cohorts)), 2],
       aProd = cuw[paste0(policyyear:max(cohorts)), 3],
       aNonhealth = cuw[paste0(policyyear:max(cohorts)), 4],
       cCosts = cumsum(cuw[paste0(policyyear:max(cohorts)), 1]),
       cQALYs = cumsum(cuw[paste0(policyyear:max(cohorts)), 2]),
       cProd = cumsum(cuw[paste0(policyyear:max(cohorts)), 3]),
-      cNonhealth = cumsum(cuw[paste0(policyyear:max(cohorts)), 4])
+      cNonhealth = cumsum(cuw[paste0(policyyear:max(cohorts)), 4]),
+      aSocCosts = cuw[paste0(policyyear:max(cohorts)), 5],
+      cSocCosts = cuw[paste0(policyyear:max(cohorts)), 5]
     )
   }) %>%
     bind_rows()
@@ -141,12 +146,12 @@ reformat_model_outputs <- function(l.results){
   # Ensure numeric columns are indeed numeric
   combined_data <- combined_data %>%
     mutate(across(c(year, aLY, cLY, aSAD, cSAD,aYLL,cYLL,cM_perLY,aM_perLY,
-                    aCosts,cCosts,aQALYs,aNonhealth, cQALYs,aProd,cProd,cNonhealth), as.numeric))
+                    aCosts,cCosts,aQALYs,aNonhealth, cQALYs,aProd,cProd,cNonhealth,aSocCosts,cSocCosts), as.numeric))
   
   # Extract baseline values
   baseline_values <- combined_data %>%
     filter(scenario == "baseline") %>%
-    select(year, aLY, cLY, cSAD, aSAD,cYLL, aYLL,cM_perLY,aM_perLY,aCosts,cCosts,aQALYs,cQALYs,aProd,cProd,aNonhealth,cNonhealth) %>%
+    select(year, aLY, cLY, cSAD, aSAD,cYLL, aYLL,cM_perLY,aM_perLY,aCosts,cCosts,aQALYs,cQALYs,aProd,cProd,aNonhealth,cNonhealth,aSocCosts) %>%
     rename(
       baseline_cLY = cLY,
       baseline_aLY = aLY,
@@ -160,6 +165,7 @@ reformat_model_outputs <- function(l.results){
       baseline_aQALYs = aQALYs,
       baseline_aProd = aProd,
       baseline_cCosts = cCosts,
+      baseline_aSocCosts = aSocCosts,
       baseline_cQALYs = cQALYs,
       baseline_cProd = cProd,
       baseline_aNonhealth = aNonhealth,
@@ -176,10 +182,24 @@ reformat_model_outputs <- function(l.results){
       aYLL_averted_LYG = baseline_aYLL - aYLL,
       cLYG = cLY - baseline_cLY,
       aLYG = aLY - baseline_aLY,
+      #Costs needed for figure here:
+      daCosts = aCosts - baseline_aCosts,
+      daSocCosts = aSocCosts - baseline_aSocCosts,
+      daProd = aProd - baseline_aProd,
+      ###
       dCosts = cCosts - baseline_cCosts,
       dCosts = cNonhealth - baseline_cNonhealth,
       dQALYs = cQALYs - baseline_cQALYs,
-      dProd = cProd - baseline_cProd
+      dProd = cProd - baseline_cProd,
+      # ###ICER for costs figure
+      # ICER_medcosts= daCosts/aLYG,
+      # ICER_soccosts= daSocCosts/aLYG,
+      # ICER_prod= daProd/aLYG,
+      # ### US costs for costs figure
+      # US_medcosts= ICER_medcosts*aYLL_averted_LYG,
+      # US_soccosts= ICER_soccosts*aYLL_averted_LYG,
+      # US_prod= ICER_prod*aYLL_averted_LYG,
+      
     ) %>%
     select(-baseline_aLY, -baseline_cLY, -baseline_cSAD, -baseline_aSAD, 
            -baseline_cCosts, -baseline_cQALYs, -baseline_cProd, -baseline_aCosts, -baseline_aQALYs, -baseline_aProd )  # Remove temporary baseline columns
@@ -231,6 +251,7 @@ calc_icers <- function(cea_data) {
       cea_data[i, "icer_socQALY"] <- round(inc_soc_cost / inc_effectQALY,0)
       cea_data[i, "icer_medLY"] <- round(inc_med_cost / inc_effectLY,0)
       cea_data[i, "icer_socLY"] <- round(inc_soc_cost / inc_effectLY,0)
+      cea_data[i, "icer_consLY"] <- round(inc_cons_exp / inc_effectLY,0)
       cea_data[i, "icer_prodLY"] <- round(inc_prod / inc_effectLY,0)
       cea_data[i, "icer_prodQALY"] <- round(inc_prod / inc_effectQALY,0)
       cea_data[i, "US_LYG_avg"] <- USLYG_avg
@@ -240,5 +261,4 @@ calc_icers <- function(cea_data) {
   } 
   return(cea_data)
 }
-
 
