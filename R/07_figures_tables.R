@@ -1,24 +1,21 @@
 #Table and Figures for analysis
-library(dplyr)
 #run this for men and women:
 load("output/rnc_females_1000_12.14.24_11.48AM.Rda")
 rF=allresults
 load("output/rnc_males_1000_12.14.24_03.06PM.Rda")
 rM=allresults
 
-
+# load NSDUH combined men/women data
+load(paste0(mainDir,"data/nsduh_calib_targets_both.RData")) 
 
 #choose scenarios of interest:
 scenariosofinterest=c("baseline", "init_0.1_cess_0.69" ,"init_0.5_cess_2.10", "init_0.85_cess_4.96")
-
 
 df=reformat_model_outputs(l.results[scenariosofinterest])
 df_D=reformat_model_outputs(l.results_D[scenariosofinterest])
 df_notD=reformat_model_outputs(l.results_notD[scenariosofinterest])
 
-
 #Table1 Prevalence disparities:
-
 
 
 
@@ -54,7 +51,6 @@ PrevalenceDisp$prevratio=PrevalenceDisp$D/PrevalenceDisp$ND
 names(PrevalenceDisp)<-c("age","year","scenario","Depressed Smoking Prevalence","Not Depressed Smoking Prevalence","Absolute Difference", "Relative Difference (abs diff/prev ND)","Prevalence Ratio")
 
 
-library(openxlsx)
 write.xlsx(PrevalenceDisp, file = paste0("output/Prevlanec_Disparities_Table",whichgender,".xlsx"))
 
 
@@ -116,7 +112,6 @@ names(df_wide_notD)=c("year","population","No-initiation scenario cSAD", "init_0
 
 table3=rbind(df_wide_D,df_wide_notD)
 
-library(openxlsx)
 write.xlsx(table3, file = paste0("output/Table3",whichgender,".xlsx"))
 
 
@@ -139,7 +134,6 @@ ICERALL$MED_cost_US=ICERALL$icer_medLY * ICERALL$US_LYG_cum
 ICERALL1<- ICERALL[c("scenario","population","cum_YLL","avg_YLL","cum_SAD","avg_SAD","icer_medQALY","icer_socQALY","icer_medLY","icer_socLY","US_LYG_avg","US_LYG_cum","MED_cost_US","SOC_cost_US" )]
 names(ICERALL1) <-c("scenario","population","Cummulative Years of Life Lost (2023-2100)","Average Years of Life Lost (2023-2100)","Cummulative Smoking Attributable Deaths (2023-2100)","Average Smoking Attributable Deaths","ICER Medical Costs per QALY",
                     "ICER Societal Cost per QALY","ICER Medical Cost per LY","ICER Societal Cost per LY","US Life Years Gained on Average","US Cummulative LYG (2023-2100)","Cummulative US Medical Costs (2023-2100)","Cummulative US Societal Costs (2023-2100)" )
-library(openxlsx)
 write.xlsx(ICERALL1, file = paste0("output/COSTS_Table",whichgender,".xlsx"))
 
 
