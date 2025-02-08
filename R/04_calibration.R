@@ -6,7 +6,7 @@ rm(list = ls())
 mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mdse-microsim/" # Set working directory
 hpc = 0# 1 = run using high performance computing clusters, 0 = run without
 calibration = 0 # 1 = run with calibration, 0 = run without calibration
-args <- `if`(hpc == 1, commandArgs(TRUE), c("females", 1000, 2023, 20)) # Parameters for HPV vs non-HPC setup
+args <- `if`(hpc == 1, commandArgs(TRUE), c("females", 1000, 2023, 20)) # Parameters for HPC vs non-HPC setup
 
 source(paste0(mainDir,"R/01_environment.R"), echo=FALSE)
 source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE)
