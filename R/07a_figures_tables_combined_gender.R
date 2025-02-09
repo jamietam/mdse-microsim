@@ -2,6 +2,45 @@
 figDir <- format(as.POSIXct(Sys.time()), "%m.%d.%y")
 dir.create(file.path(mainDir, "output", figDir), showWarnings = FALSE)
 
+#choose the files you want to use for both genders here.
+femalefile="rnc_females_1000_02.09.25_11.56AM.Rda"
+malefile= "rnc_males_1000_02.09.25_12.23PM.Rda"
+#the below files are our best estimates of 2/7
+# femalefile="rnc_females_1000_02.06.25_07.36PM.Rda"
+# malefile= "rnc_males_1000_02.06.25_07.00PM.Rda"
+
+
+#Format files for Female and Males
+#females
+load(paste0("output/",femalefile))
+l.results <- list() # total population
+l.results_D <- list() # depressed population
+l.results_ND <- list() # not depressed population
+for (s in 1:length(scenarios)){
+  l.results[[s]] <- allresults[s][[1]][[1]] # combine all scenario results for general US population into a list
+  l.results_D[[s]] <- allresults[s][[1]][[2]] # combine all scenario results for depressed (D) population into a list
+  l.results_ND[[s]] <- allresults[s][[1]][[3]] # combine all scenario results for NOT depressed (ND) population into a list
+}
+names(l.results) <- names(l.results_D) <- names(l.results_ND) <- scenarios
+dfF=reformat_model_outputs(l.results)
+dfF_D=reformat_model_outputs(l.results_D)
+dfF_ND=reformat_model_outputs(l.results_ND)
+#males
+load(paste0("output/",malefile))
+l.results <- list() # total population
+l.results_D <- list() # depressed population
+l.results_ND <- list() # not depressed population
+for (s in 1:length(scenarios)){
+  l.results[[s]] <- allresults[s][[1]][[1]] # combine all scenario results for general US population into a list
+  l.results_D[[s]] <- allresults[s][[1]][[2]] # combine all scenario results for depressed (D) population into a list
+  l.results_ND[[s]] <- allresults[s][[1]][[3]] # combine all scenario results for NOT depressed (ND) population into a list
+}
+names(l.results) <- names(l.results_D) <- names(l.results_ND) <- scenarios
+dfM=reformat_model_outputs(l.results)
+dfM_D=reformat_model_outputs(l.results_D)
+dfM_ND=reformat_model_outputs(l.results_ND)
+
+
 #Obtain table of outcomes for smoking, deaths, and disparities:
 #Combine model prevs counts, alive and dead 
 #Combine by gender
@@ -28,7 +67,7 @@ df.prevs$population="T"
 
 df.prevs_comb<-rbind(df.prevs,df.prevs_D,df.prevs_ND)
 
-years_of_interest <- c(2023, 2040, 2060, 2080, 2100)
+years_of_interest <- c(2026, 2040, 2060, 2080, 2100)
 age_filter <- "18.99" 
 statusfilter<-c("C") #Current Smoker Prevalence
 
@@ -212,9 +251,9 @@ ICERALL$icer_prodLY <- round(ICERALL$inc_prod / ICERALL$inc_effectLY,0)
 ICERALL$icer_prodQALY <- round(ICERALL$inc_prod / ICERALL$inc_effectQALY,0)
 
 #need to recalculated costs for society
-ICERALL$SOC_cost_US=round(ICERALL$icer_socLY * ICERALL$US_LYG_cum/1000000000000,1) #LYG from total/cummulative YLL across the years 
-ICERALL$MED_cost_US=round(ICERALL$icer_medLY * ICERALL$US_LYG_cum/1000000000000,1)
-ICERALL$Prod_US=round(ICERALL$icer_prodLY * ICERALL$US_LYG_cum/1000000000000,1) #LYG from total/cummulative YLL across the years 
+ICERALL$SOC_cost_US=round(ICERALL$icer_socLY * ICERALL$US_LYG_cum/1000000000,1) #LYG from total/cummulative YLL across the years 
+ICERALL$MED_cost_US=round(ICERALL$icer_medLY * ICERALL$US_LYG_cum/1000000000,1)
+ICERALL$Prod_US=round(ICERALL$icer_prodLY * ICERALL$US_LYG_cum/1000000000,1) #LYG from total/cummulative YLL across the years 
 
 
 
@@ -289,7 +328,7 @@ prev_by_status <- function(data, status_value, population_value,FDA_include_TorF
   
   if (population_value=="T"){outcomelabel="Total U.S. Population"
   dep.calib=status_value
-  }else if (population_value=="D"){outcomelabel="U.S. Population with MDE"
+  }else if (population_value=="D"){outcomelabel="Adults with MDE:"
   if (status_value=="C"){dep.calib="C_D"
   }else if (status_value=="E"){dep.calib="E_D"
   }else if (status_value=="F"){dep.calib="F_D"
@@ -297,7 +336,7 @@ prev_by_status <- function(data, status_value, population_value,FDA_include_TorF
   }else if (status_value=="CE"){dep.calib="CE_D"
   }else if (status_value=="NE"){dep.calib="NE_D"
   }else if (status_value=="FE"){dep.calib="FE_Dr"}
-  }else{outcomelabel="U.S. Population without MDE"
+  }else{outcomelabel="Adults without MDE:"
   dep.calib=status_value}
   
   if (status_value=="C"){outcomelabel2=" Smoking"
@@ -356,10 +395,10 @@ prev_by_status <- function(data, status_value, population_value,FDA_include_TorF
 
 
 # Mort_by_status(Health_comb1, "T", "cSAD",TRUE)
-# data=Health_comb1
-# population_value=""
-# outcome="cSAD"
-# FDA_include_TorF=TRUE
+data=Health_comb1
+population_value="T"
+outcome="cYLL_averted_LYG"
+FDA_include_TorF=FALSE
 #Health Outcome figures: columns of cSAD, cYLL and rows by mental health
 
 Health_comb1$cSAD_averted<-Health_comb1$cSAD_averted/1000000
@@ -371,10 +410,12 @@ Mort_by_status <- function(data, population_value, outcome,FDA_include_TorF) { #
     select(year,cYLL_averted_LYG,cSAD_averted,population, scenario) %>%
     pivot_wider(names_from = scenario, values_from = c(cYLL_averted_LYG,cSAD_averted))
   if (population_value=="T"){outcomelabel="Total U.S. Population"
-  }else if (population_value=="D"){outcomelabel="U.S. Population with MDE"
-  }else(outcomelabel="U.S. Population without MDE")
+  }else if (population_value=="D"){outcomelabel="Adults with MDE:"
+  }else(outcomelabel="Adults without MDE:")
   if (outcome=="cSAD_averted"){outcomelabel2="Cummulative SAD averted"
-  }else{outcomelabel2="Cummulative LYG"}
+  ylim=7
+  }else{outcomelabel2="Cummulative LYG"
+  ylim=110}
   
   if (FDA_include_TorF==TRUE){
     plot<-ggplot() +
@@ -407,7 +448,7 @@ Mort_by_status <- function(data, population_value, outcome,FDA_include_TorF) { #
       labs(title = paste0(outcomelabel),
            x = "Year",
            y = paste0(outcomelabel2, " (millions)")) +
-      scale_y_continuous(limits = c(0,6))+
+      scale_y_continuous(limits = c(0,ylim))+
       theme_minimal()}
   return(plot)
 }
@@ -426,9 +467,9 @@ df_filtered2 <- ICERALL%>%
   select(scenario,icer_medLY ,icer_socLY,icer_prodLY )
 
 costsfigdata=merge(df_filtered1,df_filtered2,by = "scenario", all.x = TRUE)
-costsfigdata$US_SOC<-(costsfigdata$icer_socLY*costsfigdata$cYLL_averted_LYG)/1000000000000
-costsfigdata$US_MED<-(costsfigdata$icer_medLY*costsfigdata$cYLL_averted_LYG)/1000000000000
-costsfigdata$US_PROD<-(costsfigdata$icer_prodLY*costsfigdata$cYLL_averted_LYG)/1000000000000
+costsfigdata$US_SOC<-(costsfigdata$icer_socLY*costsfigdata$cYLL_averted_LYG)/1000000000
+costsfigdata$US_MED<-(costsfigdata$icer_medLY*costsfigdata$cYLL_averted_LYG)/1000000000
+costsfigdata$US_PROD<-(costsfigdata$icer_prodLY*costsfigdata$cYLL_averted_LYG)/1000000000
 
 #plotCosts_(costsfigdata,"US_SOC")
 # data=costsfigdata
@@ -455,7 +496,7 @@ plotCosts_ <- function(data,outcome) {
     # Additional customization
     labs(title = paste0(outcomelabel),
          x = "Year",
-         y = "$ in Trillions") +
+         y = "$ in billions") +
     scale_y_continuous(limits = c(0,100))+
     theme_minimal()
   return(plot)
@@ -613,25 +654,25 @@ table1 <- tableGrob(df, theme = ttheme_minimal(base_size = 10))
 #PPT figures
 pdf(paste0("output/",figDir,"/smokingprevalence_grid.pdf"), width = 9, height = 3)
 #grid_arrange_shared_legend(list(CT, CD, CND), nrow = 1, ncol = 3,"Smoking Prevalence by Depression Status")
-grid.arrange(CT, CD, CND, ncol = 3, nrow = 1)
+grid.arrange(CD, CND, ncol = 2, nrow = 1)
 dev.off()
 pdf(paste0("output/",figDir,"/ecigprevalence_grid.pdf"), width = 9, height = 3)
 #grid_arrange_shared_legend(list(ET,ED,END), nrow = 1, ncol = 3,"Ecig Use Prevalence by Depression Status")
-grid.arrange(ET,ED,END, ncol = 3, nrow = 1)
+grid.arrange(ED,END, ncol = 2, nrow = 1)
 dev.off()
 pdf(paste0("output/",figDir,"/dualprevalence_grid.pdf"), width = 9, height = 3)
 #grid_arrange_shared_legend(list(dualT,dualD,dualND), nrow = 1, ncol = 3,"Dual Use Prevalence by Depression Status")
-grid.arrange(dualT,dualD,dualND, ncol = 3, nrow = 1)
+grid.arrange(dualD,dualND, ncol = 2, nrow = 1)
 dev.off()
 
 # Save to PDF
 pdf(paste0("output/",figDir,"/cSAD_grid.pdf"), width = 9, height = 3)
 #grid_arrange_shared_legend(list(cSADT,cSADD,cSADND), nrow = 1, ncol = 3,"cSAD averted by Depression Status")
-grid.arrange(cSADT,cSADD,cSADND, ncol = 3, nrow = 1)
+grid.arrange(cSADD,cSADND, ncol = 2, nrow = 1)
 dev.off()
 pdf(paste0("output/",figDir,"/cLYG_grid.pdf"), width = 9, height = 3)
 #grid_arrange_shared_legend(list(cYLLT,cYLLD,cYLLND), nrow = 1, ncol = 3,"cLYG by Depression Status")
-grid.arrange(cYLLT,cYLLD,cYLLND, ncol = 3, nrow = 1)
+grid.arrange(cYLLD,cYLLND, ncol = 2, nrow = 1)
 dev.off()
 
 pdf(paste0("output/",figDir,"/costs_grid.pdf"), width = 9, height = 3)
