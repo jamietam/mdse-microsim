@@ -2,8 +2,8 @@
 rm(list = ls()) 
 
 # Set working directory
-# mainDir = "/Users/bradleydirks/University of Michigan Dropbox/Sarah Skolnick/GitHub/mdse-microsim/"
-mainDir = "/Users/jt936/Dropbox/GitHub/mdse-microsim/"
+mainDir = "/Users/bradleydirks/University of Michigan Dropbox/Sarah Skolnick/GitHub/mdse-microsim/"
+# mainDir = "/Users/jt936/Dropbox/GitHub/mdse-microsim/"
 # mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" 
 
 hpc = 0

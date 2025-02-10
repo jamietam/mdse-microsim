@@ -210,17 +210,20 @@ ICERALL$icer_medLY <- round(ICERALL$inc_med_cost / ICERALL$inc_effectLY,0)
 ICERALL$icer_socLY <- round(ICERALL$inc_soc_cost / ICERALL$inc_effectLY,0)
 ICERALL$icer_prodLY <- round(ICERALL$inc_prod / ICERALL$inc_effectLY,0)
 ICERALL$icer_prodQALY <- round(ICERALL$inc_prod / ICERALL$inc_effectQALY,0)
+ICERALL$icer_consLY <- round(ICERALL$inc_cons / ICERALL$inc_effectLY,0)
+ICERALL$icer_consQALY <- round(ICERALL$inc_cons / ICERALL$inc_effectQALY,0)
 
 #need to recalculated costs for society
 ICERALL$SOC_cost_US=round(ICERALL$icer_socLY * ICERALL$US_LYG_cum/1000000000,1) #LYG from total/cummulative YLL across the years 
 ICERALL$MED_cost_US=round(ICERALL$icer_medLY * ICERALL$US_LYG_cum/1000000000,1)
 ICERALL$Prod_US=round(ICERALL$icer_prodLY * ICERALL$US_LYG_cum/1000000000,1) #LYG from total/cummulative YLL across the years 
+ICERALL$cons_US=round(ICERALL$icer_consLY * ICERALL$US_LYG_cum/1000000000,1) #LYG from total/cummulative YLL across the years 
 
 
 
-ICERALL<- ICERALL[c("scenario","population","icer_medQALY","icer_socQALY","icer_prodQALY","icer_medLY","icer_socLY","icer_prodLY","MED_cost_US","SOC_cost_US","Prod_US")]
+ICERALL<- ICERALL[c("scenario","population","icer_medQALY","icer_socQALY","icer_prodQALY","icer_consQALY","icer_medLY","icer_socLY","icer_prodLY","icer_consLY","MED_cost_US","SOC_cost_US","Prod_US","cons_US")]
 
-outcome_columns<-c("icer_medQALY","icer_socQALY","icer_prodQALY","icer_medLY","icer_socLY","icer_prodLY","MED_cost_US","SOC_cost_US","Prod_US")
+outcome_columns<-c("icer_medQALY","icer_socQALY","icer_prodQALY","icer_consQALY","icer_medLY","icer_socLY","icer_prodLY","icer_consLY","MED_cost_US","SOC_cost_US","Prod_US","cons_US")
 dataframe<-ICERALL
 
 sw<- c("init_0.5_cess_2.10", "init_0.1_cess_0.69","init_0.85_cess_4.96")
@@ -239,22 +242,7 @@ write.xlsx(resultsMDSE_fC, file = paste0(mainDir, "output/",figDir,"/COSTS_Table
 write.xlsx(resultsFDA_fC, file = paste0(mainDir, "output/",figDir,"/COSTS_Table_allgender_FDA.xlsx"))
 
 
-
-#Figures Functions#
-# grid_arrange_shared_legend <- function(plots,columns,titletext) {
-#   g <- ggplotGrob(plots[[1]] + theme(legend.position="bottom"))$grobs
-#   legend <- g[[which(sapply(g, function(x) x$name) == "guide-box")]]
-#   lheight <- sum(legend$height)
-#   grid.arrange(arrangeGrob(grobs= lapply(plots, function(x)
-#     x + theme(legend.position="none", plot.title = element_text(size = rel(0.8)))),ncol=columns),
-#     legend,
-#     ncol = 1,
-#     heights = unit.c(unit(1, "npc") - lheight, lheight),
-#     top=textGrob(titletext,just="top", vjust=1,check.overlap=TRUE,gp=gpar(fontsize=9, fontface="bold"))
-#   )
-# }
-
-
+#Figure organization function
 grid_arrange_shared_legend <- function(plots, nrow=NULL, ncol=NULL, titletext) {
   # Calculate total number of plots
   
@@ -357,14 +345,15 @@ prev_by_status <- function(data, status_value, population_value,FDA_include_TorF
 
 
 # Mort_by_status(Health_comb1, "T", "cSAD",TRUE)
-data=Health_comb1
-population_value="T"
-outcome="cYLL_averted_LYG"
-FDA_include_TorF=FALSE
+# data=Health_comb1
+# population_value="T"
+# outcome="cYLL_averted_LYG"
+# FDA_include_TorF=FALSE
 #Health Outcome figures: columns of cSAD, cYLL and rows by mental health
 
 Health_comb1$cSAD_averted<-Health_comb1$cSAD_averted/1000000
 Health_comb1$cYLL_averted_LYG<-Health_comb1$cYLL_averted_LYG/1000000
+
 Mort_by_status <- function(data, population_value, outcome,FDA_include_TorF) { #outcome = either cSAD_averted or cYLL_averted_LYG, sw is scenarios list 
   df_filtered <- subset(data,  population == population_value )
   
@@ -375,9 +364,11 @@ Mort_by_status <- function(data, population_value, outcome,FDA_include_TorF) { #
   }else if (population_value=="D"){outcomelabel="Adults with MDE"
   }else(outcomelabel="Adults without MDE")
   if (outcome=="cSAD_averted"){outcomelabel2="Cumulative SADs averted"
-  ylim=7
+    if (population_value=="D"){ylim=.4}
+    else {ylim=7}
   }else{outcomelabel2="Cumulative LYG"
-  ylim=110}
+    if (population_value=="D"){ylim=10}
+    else {ylim=110}}
 
   if (FDA_include_TorF==TRUE){
     plot<-ggplot() +
