@@ -2,45 +2,6 @@
 figDir <- format(as.POSIXct(Sys.time()), "%m.%d.%y")
 dir.create(file.path(mainDir, "output", figDir), showWarnings = FALSE)
 
-#choose the files you want to use for both genders here.
-femalefile="rnc_females_1000_02.09.25_11.56AM.Rda"
-malefile= "rnc_males_1000_02.09.25_12.23PM.Rda"
-#the below files are our best estimates of 2/7
-# femalefile="rnc_females_1000_02.06.25_07.36PM.Rda"
-# malefile= "rnc_males_1000_02.06.25_07.00PM.Rda"
-
-
-#Format files for Female and Males
-#females
-load(paste0("output/",femalefile))
-l.results <- list() # total population
-l.results_D <- list() # depressed population
-l.results_ND <- list() # not depressed population
-for (s in 1:length(scenarios)){
-  l.results[[s]] <- allresults[s][[1]][[1]] # combine all scenario results for general US population into a list
-  l.results_D[[s]] <- allresults[s][[1]][[2]] # combine all scenario results for depressed (D) population into a list
-  l.results_ND[[s]] <- allresults[s][[1]][[3]] # combine all scenario results for NOT depressed (ND) population into a list
-}
-names(l.results) <- names(l.results_D) <- names(l.results_ND) <- scenarios
-dfF=reformat_model_outputs(l.results)
-dfF_D=reformat_model_outputs(l.results_D)
-dfF_ND=reformat_model_outputs(l.results_ND)
-#males
-load(paste0("output/",malefile))
-l.results <- list() # total population
-l.results_D <- list() # depressed population
-l.results_ND <- list() # not depressed population
-for (s in 1:length(scenarios)){
-  l.results[[s]] <- allresults[s][[1]][[1]] # combine all scenario results for general US population into a list
-  l.results_D[[s]] <- allresults[s][[1]][[2]] # combine all scenario results for depressed (D) population into a list
-  l.results_ND[[s]] <- allresults[s][[1]][[3]] # combine all scenario results for NOT depressed (ND) population into a list
-}
-names(l.results) <- names(l.results_D) <- names(l.results_ND) <- scenarios
-dfM=reformat_model_outputs(l.results)
-dfM_D=reformat_model_outputs(l.results_D)
-dfM_ND=reformat_model_outputs(l.results_ND)
-
-
 #Obtain table of outcomes for smoking, deaths, and disparities:
 #Combine model prevs counts, alive and dead 
 #Combine by gender
@@ -326,7 +287,7 @@ prev_by_status <- function(data, status_value, population_value,FDA_include_TorF
     select(year,status,population, scenario, prev) %>%
     pivot_wider(names_from = scenario, values_from = prev)
   
-  if (population_value=="T"){outcomelabel="Total U.S. Population"
+  if (population_value=="T"){outcomelabel="Total adult population:"
   dep.calib=status_value
   }else if (population_value=="D"){outcomelabel="Adults with MDE:"
   if (status_value=="C"){dep.calib="C_D"
@@ -339,13 +300,13 @@ prev_by_status <- function(data, status_value, population_value,FDA_include_TorF
   }else{outcomelabel="Adults without MDE:"
   dep.calib=status_value}
   
-  if (status_value=="C"){outcomelabel2=" Smoking"
-  }else if (status_value=="E"){outcomelabel2=" E-cigarette Use"
-  }else if (status_value=="F"){outcomelabel2=" Former Smoker"
-  }else if (status_value=="N"){outcomelabel2=" Never Smoker"
-  }else if (status_value=="CE"){outcomelabel2=" Dual Use"
-  }else if (status_value=="NE"){outcomelabel2=" Never Smoker Ecig User"
-  }else if (status_value=="FE"){outcomelabel2=" Former Smoker Ecig User"
+  if (status_value=="C"){outcomelabel2=" Current smoking"
+  }else if (status_value=="E"){outcomelabel2=" E-cigarette use"
+  }else if (status_value=="F"){outcomelabel2=" Former smoking"
+  }else if (status_value=="N"){outcomelabel2=" Never smoking"
+  }else if (status_value=="CE"){outcomelabel2=" Dual use"
+  }else if (status_value=="NE"){outcomelabel2=" Never smoking, e-cig use"
+  }else if (status_value=="FE"){outcomelabel2=" Former smoking, e-cig use"
   }else{outcomelabel2=" help"}
   
   if (FDA_include_TorF==TRUE){
@@ -386,7 +347,8 @@ prev_by_status <- function(data, status_value, population_value,FDA_include_TorF
     labs(title = paste0(outcomelabel,outcomelabel2),
          x = "Year",
          y = "Prevalence") +
-    scale_y_continuous(limits = c(0,0.4))+
+    scale_x_continuous(limits = c(2005,2100),breaks = c(2005,seq(2025,2100,25)))+
+    scale_y_continuous(limits = c(0,0.5))+
     theme_minimal()
   }
   
@@ -409,14 +371,14 @@ Mort_by_status <- function(data, population_value, outcome,FDA_include_TorF) { #
   df_filtered <- df_filtered %>%
     select(year,cYLL_averted_LYG,cSAD_averted,population, scenario) %>%
     pivot_wider(names_from = scenario, values_from = c(cYLL_averted_LYG,cSAD_averted))
-  if (population_value=="T"){outcomelabel="Total U.S. Population"
-  }else if (population_value=="D"){outcomelabel="Adults with MDE:"
-  }else(outcomelabel="Adults without MDE:")
-  if (outcome=="cSAD_averted"){outcomelabel2="Cummulative SAD averted"
+  if (population_value=="T"){outcomelabel="Total adult population"
+  }else if (population_value=="D"){outcomelabel="Adults with MDE"
+  }else(outcomelabel="Adults without MDE")
+  if (outcome=="cSAD_averted"){outcomelabel2="Cumulative SADs averted"
   ylim=7
-  }else{outcomelabel2="Cummulative LYG"
+  }else{outcomelabel2="Cumulative LYG"
   ylim=110}
-  
+
   if (FDA_include_TorF==TRUE){
     plot<-ggplot() +
       # Scenario 1 line
@@ -649,39 +611,30 @@ table1 <- tableGrob(df, theme = ttheme_minimal(base_size = 10))
 
 # Combine title and table for the first plot
 # table1_with_titles <- arrangeGrob(grobs = list(title1, subtitle1, table1), 
-#                                   nrow = 3, heights = c(0.3, 0.3, 1))
+#                                   nrow = 3, heights = c(0.3, 0.3, 1)
 
 #PPT figures
-pdf(paste0("output/",figDir,"/smokingprevalence_grid.pdf"), width = 9, height = 3)
-#grid_arrange_shared_legend(list(CT, CD, CND), nrow = 1, ncol = 3,"Smoking Prevalence by Depression Status")
+jpeg(paste0("output/",figDir,"/smokingprevalence_grid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
 grid.arrange(CD, CND, ncol = 2, nrow = 1)
 dev.off()
-pdf(paste0("output/",figDir,"/ecigprevalence_grid.pdf"), width = 9, height = 3)
-#grid_arrange_shared_legend(list(ET,ED,END), nrow = 1, ncol = 3,"Ecig Use Prevalence by Depression Status")
-grid.arrange(ED,END, ncol = 2, nrow = 1)
-dev.off()
-pdf(paste0("output/",figDir,"/dualprevalence_grid.pdf"), width = 9, height = 3)
-#grid_arrange_shared_legend(list(dualT,dualD,dualND), nrow = 1, ncol = 3,"Dual Use Prevalence by Depression Status")
-grid.arrange(dualD,dualND, ncol = 2, nrow = 1)
+
+jpeg(paste0("output/",figDir,"/ecigprevalence_grid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
+grid.arrange(ED, END, ncol = 2, nrow = 1)
 dev.off()
 
-# Save to PDF
-pdf(paste0("output/",figDir,"/cSAD_grid.pdf"), width = 9, height = 3)
-#grid_arrange_shared_legend(list(cSADT,cSADD,cSADND), nrow = 1, ncol = 3,"cSAD averted by Depression Status")
-grid.arrange(cSADD,cSADND, ncol = 2, nrow = 1)
-dev.off()
-pdf(paste0("output/",figDir,"/cLYG_grid.pdf"), width = 9, height = 3)
-#grid_arrange_shared_legend(list(cYLLT,cYLLD,cYLLND), nrow = 1, ncol = 3,"cLYG by Depression Status")
-grid.arrange(cYLLD,cYLLND, ncol = 2, nrow = 1)
+jpeg(paste0("output/",figDir,"/dualprevalence_grid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
+grid.arrange(dualD, dualND, ncol = 2, nrow = 1)
 dev.off()
 
-pdf(paste0("output/",figDir,"/costs_grid.pdf"), width = 9, height = 3)
-grid_arrange_shared_legend(list(Cost_SOC,Cost_MED,Cost_PROD), nrow = 1, ncol = 3,"Costs for Total Population")
+jpeg(paste0("output/",figDir,"/cSADgrid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
+grid.arrange(cSADT,cSADD, ncol = 2, nrow = 1)
 dev.off()
 
+jpeg(paste0("output/",figDir,"/cLYGgrid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
+grid.arrange(cYLLT,cYLLD, ncol = 2, nrow = 1)
+dev.off()
 
-
-#Inidividual figures
+#Individual figures
 pdf(paste0("output/",figDir,"/prevalence_grid.pdf"), width = 9, height = 9)
 grid_arrange_shared_legend(list(CT_FDA, CD_FDA, CND_FDA, ET_FDA,ED_FDA,END_FDA,dualT_FDA,dualD_FDA,dualND_FDA), nrow = 3, ncol = 3,"Product Use Prevalence by Depression Status")
 dev.off()
