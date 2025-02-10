@@ -1,4 +1,4 @@
-mainDir <- "/Users/jt936/Dropbox/GitHub/mds-microsim/"
+mainDir <- "/Users/jt936/Dropbox/GitHub/mdse-microsim/"
 setwd(file.path(mainDir))
 
 library(openxlsx)
@@ -48,7 +48,30 @@ save(c.NH, c.NR, c.ND, c.CH, c.CR, c.CD, c.FH, c.FR, c.FD, c.nonhealth,
      u.NH, u.NR, u.ND, u.CH, u.CR, u.CD, u.FH, u.FR, u.FD, 
      w, file=paste0("data/cuw_inputs_",whichgender,".RData"))
 
+utilities <- as.data.frame(rbind(cbind(0:99,u.NH,"N",whichgender,"HR"),cbind(0:99,u.CH,"C",whichgender,"HR"),cbind(0:99,u.FH,"F",whichgender,"HR"), cbind(0:99,u.ND,"N",whichgender,"D"),cbind(0:99,u.CD,"C",whichgender,"D"),cbind(0:99,u.FD,"F",whichgender,"D")))
+names(utilities) <- c("age","utility","smoking_status","gender","depression_status")
+utilities$age <- as.numeric(utilities$age)
+utilities$utility <- as.numeric(utilities$utility)
+utilities$smoking_status <- factor(utilities$smoking_status,levels = c("C","N","F"))
+utilities$depression_status <- factor(utilities$depression_status,levels = c("HR","D"))
 
+jpeg(paste0("output/utilities.jpeg"), width = 5, height = 3.5, units = "in", res = 500)
+ggplot(data=utilities)+geom_line(aes(x=age,y=utility,colour = smoking_status,linetype = depression_status)) +
+  scale_y_continuous(limits = c(0,1))+
+  labs(title="Utilities by smoking and depression status")
+dev.off()
+
+healthcarecosts<- as.data.frame(rbind(cbind(0:99,c.NH,"N",whichgender),cbind(0:99,c.CH,"C",whichgender),cbind(0:99,c.FH,"F",whichgender)))
+names(healthcarecosts) <- c("age","cost","smoking_status","gender")
+healthcarecosts$age <- as.numeric(healthcarecosts$age)
+healthcarecosts$cost <- as.numeric(healthcarecosts$cost)
+healthcarecosts$smoking_status <- factor(healthcarecosts$smoking_status,levels = c("C","N","F"))
+
+jpeg(paste0("output/healthcarecosts.jpeg"), width = 5, height = 3.5, units = "in", res = 500)
+ggplot(data=healthcarecosts)+geom_line(aes(x=age,y=cost,colour = smoking_status)) +
+  labs(title="Healthcare costs by smoking status")+
+  ylab("Costs ($)")
+dev.off()
 # Sources:
 ## Costs
 # Swedler DI, Miller TR, Ali B, Waeher G, Bernstein SL. National medical expenditures by smoking status in American adults: an application of Manning's two-stage model to nationally representative data. BMJ Open. 2019 Jul 16;9(7):e026592. doi: 10.1136/bmjopen-2018-026592. PMID: 31315859; PMCID: PMC6661572.
