@@ -9,7 +9,7 @@ mainDir = "/Users/jt936/Dropbox/GitHub/mdse-microsim/"
 hpc = 0
 calibration = 0 # need to set this to 0 so main_calib works and outputs proper matrix for main function
 args <- c("females",1000, 2100) # Run with female population first
-run_scenarios = 1 # set to 0 if you want to use pre-generated results, set to 1 to simulate all scenarios
+run_scenarios = 0 # set to 0 if you want to use pre-generated results, set to 1 to simulate all scenarios
 
 policyyear <- 2027
 v.affected_ages <- c(0:99) # affects all ages
@@ -30,12 +30,12 @@ load(paste0(mainDir,"data/nsduh_calib_targets_both.RData")) # Load NSDUH data
 
 params <- list(
   baseline = c(1, 1,"MDSE",1, 1, 1, 1,1, 1,1, 1),
-  init_0.1_cess_0.69 = c(1-0.1,1-0.1,"MDSE", 1.69,1.69,  0.9, 0.82, 0.22,0.25, 0.1*0.72,0.1*0.75), #worst case
-  init_0.5_cess_2.10 = c(1-0.5,1-0.5,"MDSE", 3.10,3.10, 0.61, 0.51, 0.56,0.58, 0.5*0.5,0.5*0.5), #expected
-  init_0.85_cess_4.96 = c(1-0.85,1-0.85,"MDSE", 5.96,5.96, 0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2), #best case
-  # init_0.1_cess_0.69 = c(1-0.1,1-0.1,"MDSE", 1,1,  1,1,1,1, 1,1), #worst case
-  # init_0.5_cess_2.10 = c(1-0.5,1-0.5,"MDSE", 1,1, 1,1,1,1, 1,1), #expected
-  # init_0.85_cess_4.96 = c(1-0.85,1-0.85,"MDSE", 1,1, 1,1,1,1, 1,1), #best case
+  # init_0.1_cess_0.69 = c(1-0.1,1-0.1,"MDSE", 1.69,1.69,  0.9, 0.82, 0.22,0.25, 0.1*0.72,0.1*0.75), #worst case
+  # init_0.5_cess_2.10 = c(1-0.5,1-0.5,"MDSE", 3.10,3.10, 0.61, 0.51, 0.56,0.58, 0.5*0.5,0.5*0.5), #expected
+  # init_0.85_cess_4.96 = c(1-0.85,1-0.85,"MDSE", 5.96,5.96, 0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2), #best case
+  init_0.1_cess_0.69 = c(1-0.38,1-0.39,"FDA", 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75), #worst case
+  init_0.5_cess_2.10 = c(1-0.63,1-0.65,"FDA",0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5), #expected
+  init_0.85_cess_4.96 = c(1-0.83,1-0.85,"FDA", 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2), #best case
   #FDA
   FDA_est = c(1-0.63,1-0.65,"FDA",0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5), #expected
   #initiation (1st,subsequent): -0.63, -0.65
@@ -56,6 +56,7 @@ params <- list(
   #switching:0.22,0.25
   #vape init: 0.72, 0.75
 )
+
 scenarios <- names(params)
 
 # NSDUH prevalence data
@@ -65,8 +66,8 @@ df.calib_targets <- do.call(rbind, lapply(names(l.calib_targets), function(statu
 
 # run all scenarios and save results OR use pre-generated results
 if (run_scenarios == 0) {  # choose the files you want to use for both genders here:
-  femalefile="rnc_females_1000_02.07.25_07.17PM.RData"
-  malefile= "rnc_males_1000_02.07.25_07.18PM.RData"
+  femalefile="rnc_females_1000_02.10.25_10.37AM.RData"
+  malefile= "rnc_males_1000_02.10.25_10.37AM.RData"
   # the below files are our best estimates of 2/7
   # femalefile="rnc_females_1000_02.06.25_07.36PM.Rda"
   
