@@ -95,11 +95,11 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FOH"] <- a_p.FX.ysq[t,yr,v.ysq[M_t == "FOH"]]
   
   ##from NHE state
-  m.p_t["NEH", M_t == "NEH"] <- (1-p.NX[t,yr])*(1-p.NC[t,yr]-p.NE.NQ[t,yr]-p.HD[t,yr])
-  m.p_t["CEH", M_t == "NEH"] <- (1-p.NX[t,yr])*(p.NC[t,yr])
-  m.p_t["NQH", M_t == "NEH"] <- (1-p.NX[t,yr])*(p.NE.NQ[t,yr])
-  m.p_t["NED", M_t == "NEH"] <- (1-p.NX[t,yr])*(p.HD[t,yr])
-  m.p_t["X" , M_t == "NEH"] <- p.NX[t,yr]
+  m.p_t["NEH", M_t == "NEH"] <- (1-p.EX[t,yr])*(1-p.NC[t,yr]-p.NE.NQ[t,yr]-p.HD[t,yr])
+  m.p_t["CEH", M_t == "NEH"] <- (1-p.EX[t,yr])*(p.NC[t,yr])
+  m.p_t["NQH", M_t == "NEH"] <- (1-p.EX[t,yr])*(p.NE.NQ[t,yr])
+  m.p_t["NED", M_t == "NEH"] <- (1-p.EX[t,yr])*(p.HD[t,yr])
+  m.p_t["X" , M_t == "NEH"] <- p.EX[t,yr]
   
   ##from CHE state
   m.p_t["CEH", M_t == "CEH"] <- (1-p.CX[t,yr])*(1-p.CE.CQ[t,yr]-p.CF[t,yr]-rr.CH.CD*p.HD[t,yr])
@@ -155,11 +155,11 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FOD"] <- a_p.FX.ysq[t,yr,v.ysq[M_t == "FOD"]]
   
   ##from NDE state
-  m.p_t["NED", M_t == "NED"] <- (1-p.NX[t,yr])*(1-p.NC_D[t,yr]-p.NE.NQ[t,yr]-p.DR[t])
-  m.p_t["CED", M_t == "NED"] <- (1-p.NX[t,yr])*(p.NC_D[t,yr])
-  m.p_t["NQD", M_t == "NED"] <- (1-p.NX[t,yr])*(p.NE.NQ[t,yr])
-  m.p_t["NER", M_t == "NED"] <- (1-p.NX[t,yr])*(p.DR[t])
-  m.p_t["X", M_t == "NED"] <- p.NX[t,yr]
+  m.p_t["NED", M_t == "NED"] <- (1-p.EX[t,yr])*(1-p.NC_D[t,yr]-p.NE.NQ[t,yr]-p.DR[t])
+  m.p_t["CED", M_t == "NED"] <- (1-p.EX[t,yr])*(p.NC_D[t,yr])
+  m.p_t["NQD", M_t == "NED"] <- (1-p.EX[t,yr])*(p.NE.NQ[t,yr])
+  m.p_t["NER", M_t == "NED"] <- (1-p.EX[t,yr])*(p.DR[t])
+  m.p_t["X", M_t == "NED"] <- p.EX[t,yr]
   
   ##from CDE state
   m.p_t["CED", M_t == "CED"] <- (1-p.CX[t,yr])*(1-rr.CD.FD*p.CF[t,yr]-p.CE.CQ[t,yr]-p.DR[t])
@@ -216,11 +216,11 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X", M_t == "FOR"] <- a_p.FX.ysq[t,yr,v.ysq[M_t == "FOR"]]
   
   ##from NRE state
-  m.p_t["NER", M_t == "NER"] <- (1-p.NX[t,yr])*(1-p.NC[t,yr]-p.NE.NQ[t,yr]-p.RD[t])
-  m.p_t["CER", M_t == "NER"] <- (1-p.NX[t,yr])*(p.NC[t,yr])
-  m.p_t["NQR", M_t == "NER"] <- (1-p.NX[t,yr])*(p.NE.NQ[t,yr])
-  m.p_t["NED", M_t == "NER"] <- (1-p.NX[t,yr])*(p.RD[t])
-  m.p_t["X", M_t == "NER"] <- p.NX[t,yr]
+  m.p_t["NER", M_t == "NER"] <- (1-p.EX[t,yr])*(1-p.NC[t,yr]-p.NE.NQ[t,yr]-p.RD[t])
+  m.p_t["CER", M_t == "NER"] <- (1-p.EX[t,yr])*(p.NC[t,yr])
+  m.p_t["NQR", M_t == "NER"] <- (1-p.EX[t,yr])*(p.NE.NQ[t,yr])
+  m.p_t["NED", M_t == "NER"] <- (1-p.EX[t,yr])*(p.RD[t])
+  m.p_t["X", M_t == "NER"] <- p.EX[t,yr]
   
   ##from CRE state
   m.p_t["CER", M_t == "CER"] <- (1-p.CX[t,yr])*(1-p.CF[t,yr]-p.CE.CQ[t,yr]-p.RD[t])
@@ -522,11 +522,15 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   p.FO.FE[27:35,paste0(2022:endyear)] <- p.FO.FE_22.23_26.34
   p.FO.FE[36:50,paste0(2022:endyear)] <- p.FO.FE_22.23_35.49
   
+  #non smoker vaping mortality
+  p.EX<-p.NX+((p.NX-p.CX)*vaping_mort_effect)
+  p.EX1<-p.NX+((p.NX-p.CX)*vaping_mort_effect)
+  
   # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
   m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
                  .export=c('mds_microsim','probs','get_prevs_combined',
                            'n.i','n.t','v.n','n.s','v.M_1',
-                           'p.NC','p.CF','p.NC_D','p.NX','p.CX','a_p.FX.ysq',
+                           'p.NC','p.CF','p.NC_D','p.NX','p.EX','p.CX','a_p.FX.ysq',
                            'p.HD', 'p.DR', 'p.RD',
                            'rr.CH.CD','rr.CR.CD','rr.CD.FD',
                            'p.NO.NE', 'p.CO.CE', 'p.FO.FE',
@@ -761,9 +765,9 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
   l.prev_fs.ysq <- lapply(paste0("q", sprintf("%02d", 1:40)), function(state) extract_prevalence(l.model_prevs1, state, v.age_range, v.year_range))
   
   # Calculate smoking-attributable deaths for current smokers
-  m.SADcs <- pop[, as.character(v.year_range)] * (m.prev_C * (p.CX_cy[v.age_range + 1, v.year_range - 1899] - p.NX_cy[v.age_range + 1, v.year_range - 1899]))
+  m.SADcs <- pop[, as.character(v.year_range)] * (m.prev_C * (p.CX[v.age_range + 1, v.year_range - 1899] - p.NX[v.age_range + 1, v.year_range - 1899]))
   m.SADcs_D <- pop[, as.character(v.year_range)] * m.prev_D *
-    (m.prev_C_D * (p.CX_cy[v.age_range + 1, v.year_range - 1899] - p.NX_cy[v.age_range + 1, v.year_range - 1899]))
+    (m.prev_C_D * (p.CX[v.age_range + 1, v.year_range - 1899] - p.NX[v.age_range + 1, v.year_range - 1899]))
   
   v.SADcs <- colSums(m.SADcs)
   v.SADcs_D <- colSums(m.SADcs_D)
@@ -771,10 +775,10 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
   # Calculate smoking-attributable deaths for former smokers
   m.SADfs.ysq <- pop[, as.character(v.year_range)] * m.prev_F *
                            Reduce(`+`, lapply(1:40, function(i) l.prev_fs.ysq[[i]] * 
-                                                (a_p.FX.ysq_cy[, , i][v.age_range + 1, v.year_range - 1899] - p.NX_cy[v.age_range + 1, v.year_range - 1899])))
+                                                (a_p.FX.ysq[, , i][v.age_range + 1, v.year_range - 1899] - p.NX[v.age_range + 1, v.year_range - 1899])))
   m.SADfs.ysq_D <- pop[, as.character(v.year_range)] * m.prev_D * m.prev_F_D *
     Reduce(`+`, lapply(1:40, function(i) l.prev_fs.ysq[[i]] * 
-                         (a_p.FX.ysq_cy[, , i][v.age_range + 1, v.year_range - 1899] - p.NX_cy[v.age_range + 1, v.year_range - 1899])))
+                         (a_p.FX.ysq[, , i][v.age_range + 1, v.year_range - 1899] - p.NX[v.age_range + 1, v.year_range - 1899])))
   v.SADfs.ysq <- colSums(m.SADfs.ysq)
   v.SADfs.ysq_D <- colSums(m.SADfs.ysq_D)
   
@@ -815,26 +819,26 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
   m.cuw_notD <- t(m.d_total_cuw_notD[,as.character(v.year_range)])
   
   # Get average discounted costs and effects to calculate cost-effectiveness ratio
-  v.cea = c(avg_med_costs = mean(m.d_total_cuw["med_costs",as.character(v.year_range)]),
-            avg_cons_exp = mean(m.d_total_cuw["consumer_exp",as.character(v.year_range)]),
-            avg_prod = mean(m.d_total_cuw["productivity",as.character(v.year_range)]),
-            avg_soc_costs = mean(m.d_total_cuw["soc_costs",as.character(v.year_range)]),            
-            avg_QALYs = mean(m.d_total_cuw["QALYs",as.character(v.year_range)]),
-            avg_LYs= mean(m.d_total_cuw["lifeyears",as.character(v.year_range)]))
+  v.cea = c(avg_med_costs = mean(m.d_total_cuw["med_costs",as.character(policyyear:max(cohorts))]),
+            avg_cons_exp = mean(m.d_total_cuw["consumer_exp",as.character(policyyear:max(cohorts))]),
+            avg_prod = mean(m.d_total_cuw["productivity",as.character(policyyear:max(cohorts))]),
+            avg_soc_costs = mean(m.d_total_cuw["soc_costs",as.character(policyyear:max(cohorts))]),            
+            avg_QALYs = mean(m.d_total_cuw["QALYs",as.character(policyyear:max(cohorts))]),
+            avg_LYs= mean(m.d_total_cuw["lifeyears",as.character(policyyear:max(cohorts))]))
   
-  v.cea_D = c(avg_med_costs = mean(m.d_total_cuw_D["med_costs",as.character(v.year_range)]),
-            avg_cons_exp = mean(m.d_total_cuw_D["consumer_exp",as.character(v.year_range)]),
-            avg_prod = mean(m.d_total_cuw_D["productivity",as.character(v.year_range)]),
-            avg_soc_costs = mean(m.d_total_cuw_D["soc_costs",as.character(v.year_range)]),            
-            avg_QALYs = mean(m.d_total_cuw_D["QALYs",as.character(v.year_range)]),
-            avg_LYs= mean(m.d_total_cuw_D["lifeyears",as.character(v.year_range)]))
+  v.cea_D = c(avg_med_costs = mean(m.d_total_cuw_D["med_costs",as.character(policyyear:max(cohorts))]),
+            avg_cons_exp = mean(m.d_total_cuw_D["consumer_exp",as.character(policyyear:max(cohorts))]),
+            avg_prod = mean(m.d_total_cuw_D["productivity",as.character(policyyear:max(cohorts))]),
+            avg_soc_costs = mean(m.d_total_cuw_D["soc_costs",as.character(policyyear:max(cohorts))]),            
+            avg_QALYs = mean(m.d_total_cuw_D["QALYs",as.character(policyyear:max(cohorts))]),
+            avg_LYs= mean(m.d_total_cuw_D["lifeyears",as.character(policyyear:max(cohorts))]))
   
-  v.cea_notD = c(avg_med_costs = mean(m.d_total_cuw_notD["med_costs",as.character(v.year_range)]),
-              avg_cons_exp = mean(m.d_total_cuw_notD["consumer_exp",as.character(v.year_range)]),
-              avg_prod = mean(m.d_total_cuw_notD["productivity",as.character(v.year_range)]),
-              avg_soc_costs = mean(m.d_total_cuw_notD["soc_costs",as.character(v.year_range)]),            
-              avg_QALYs = mean(m.d_total_cuw_notD["QALYs",as.character(v.year_range)]),
-              avg_LYs= mean(m.d_total_cuw_notD["lifeyears",as.character(v.year_range)]))
+  v.cea_notD = c(avg_med_costs = mean(m.d_total_cuw_notD["med_costs",as.character(policyyear:max(cohorts))]),
+              avg_cons_exp = mean(m.d_total_cuw_notD["consumer_exp",as.character(policyyear:max(cohorts))]),
+              avg_prod = mean(m.d_total_cuw_notD["productivity",as.character(policyyear:max(cohorts))]),
+              avg_soc_costs = mean(m.d_total_cuw_notD["soc_costs",as.character(policyyear:max(cohorts))]),            
+              avg_QALYs = mean(m.d_total_cuw_notD["QALYs",as.character(policyyear:max(cohorts))]),
+              avg_LYs= mean(m.d_total_cuw_notD["lifeyears",as.character(policyyear:max(cohorts))]))
   
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer
@@ -984,10 +988,10 @@ reformat_model_outputs <- function(l.results){
                avg_soc_costs = policy$v.cea["avg_soc_costs"],
                avg_QALYs = policy$v.cea["avg_QALYs"],
                avg_LYs = policy$v.cea["avg_LYs"],
-               avg_YLL = mean(policy$v.yll),
-               cum_YLL = sum(policy$v.yll), 
-               avg_SAD = mean(policy$v.SAD),
-               cum_SAD = sum(policy$v.SAD)
+               avg_YLL = mean(policy$v.yll[paste0(policyyear:max(cohorts))]),
+               cum_YLL = sum(policy$v.yll[paste0(policyyear:max(cohorts))]), 
+               avg_SAD = mean(policy$v.SAD[paste0(policyyear:max(cohorts))]),
+               cum_SAD = sum(policy$v.SAD[paste0(policyyear:max(cohorts))])
     )
     
   }) %>%
