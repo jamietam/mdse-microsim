@@ -67,8 +67,8 @@ p.DR[13:65] <- select_param("p.DR_12.64")
 p.DR[66:99] <- select_param("p.DR_65.99")
 
 # Vaping transition probabilities
-p.NO.NE[19:26,c("2020","2021")] <- select_param("p.NO.NE_20.21_18.25")
-p.NO.NE[19:26,paste0(2022:endyear)] <- select_param("p.NO.NE_22.23_18.25")
+p.NO.NE[13:18,c("2020","2021")] <- select_param("p.NO.NE_20.21_12.17")
+p.NO.NE[13:18,paste0(2022:endyear)] <- select_param("p.NO.NE_22.23_12.17")
 
 # Incidence
 s.HD_12.17 <- select_param("s.HD_12.17")

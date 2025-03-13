@@ -472,14 +472,14 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
   p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
   ## Cessation - No cessation before 18
-  p.NC[,122:201] = smk_init[,122:201]*c(rep(s.NC_21.23_9.17,18),rep(s.NC_21.23_18.25,8),rep(0,74))
-  p.CF[,122:201] = smk_cess[,122:201]*c(rep(0,16),rep(s.CF_21.23_18.25,10), rep(s.CF_21.23_26.34,9),rep(s.CF_21.23_35.49,15),rep(s.CF_21.23_50.64,15),rep(s.CF_21.23_65.99,35))
+  p.NC[,119:201] = smk_init[,119:201]*c(rep(s.NC_18.23_9.17,18),rep(s.NC_18.23_18.25,8),rep(0,74))
+  p.CF[,119:201] = smk_cess[,119:201]*c(rep(0,16),rep(s.CF_18.23_18.25,10), rep(s.CF_18.23_26.34,9),rep(s.CF_18.23_35.49,15),rep(s.CF_18.23_50.64,15),rep(s.CF_18.23_65.99,35))
   ## Initiation and Cessation for Depressed scaling factors - No initiation after 25 
   ## Cessation - No cessation before 18
   p.NC_D = smk_init*c(rep(s.NC_D_9.17,18),rep(s.NC_D_18.25,8),rep(s.NC_D_26.34,9),rep(0,65))
   # Vaping transition probabilities
-  p.NO.NE[19:26,c("2020","2021")] <- p.NO.NE_20.21_18.25
-  p.NO.NE[19:26,paste0(2022:endyear)] <- p.NO.NE_22.23_18.25
+  p.NO.NE[13:18,c("2020","2021")] <- p.NO.NE_20.21_12.17
+  p.NO.NE[13:18,paste0(2022:endyear)] <- p.NO.NE_22.23_12.17
   
   p.CO.CE[27:35,paste0(2022:endyear)] <- p.CO.CE_22.23_26.34
   p.CO.CE[36:50,paste0(2022:endyear)] <- p.CO.CE_22.23_35.49
