@@ -140,5 +140,6 @@ save(c.NH, c.NR, c.ND, c.CH, c.CR, c.CD, c.FH, c.FR, c.FD, c.nonhealth,
 
 ## Productivity
 # Source: U.S. Census Bureau, Current Population Survey, 2023 Annual Social and Economic Supplement (CPS ASEC).
-# Total mean income by age group, both sexes combined
+# Total wages by age group, both sexes combined
 # https://www.census.gov/data/datasets/time-series/demo/cps/cps-asec.2023.html#list-tab-165711867
+# Fringe rate in 2023: 31% among civilian workers https://www.bls.gov/news.release/archives/ecec_06162023.pdf
