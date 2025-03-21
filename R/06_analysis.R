@@ -3,6 +3,7 @@ rm(list = ls())
 
 # Set working directory
 mainDir = "/Users/srs249/University of Michigan Dropbox/Sarah Skolnick/GitHub/mdse-microsim/"
+setwd(mainDir)
 # mainDir = "/Users/jt936/Dropbox/GitHub/mdse-microsim/"
 # mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" 
 
@@ -36,31 +37,39 @@ load(paste0(mainDir,"data/nsduh_calib_targets_both.RData")) # Load NSDUH data
 
 params <- list(
   baseline = NULL,
-  # init_0.1_cess_0.69 = c(1-0.1,1-0.1,"MDSE", 1.69,1.69,  0.9, 0.82, 0.22,0.25, 0.1*0.72,0.1*0.75), #worst case
-  # init_0.5_cess_2.10 = c(1-0.5,1-0.5,"MDSE", 3.10,3.10, 0.61, 0.51, 0.56,0.58, 0.5*0.5,0.5*0.5), #expected
-  # init_0.85_cess_4.96 = c(1-0.85,1-0.85,"MDSE", 5.96,5.96, 0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2), #best case
-  init_0.1_cess_0.69 = c(1-0.38,1-0.39,"FDA", 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75), #worst case
-  init_0.5_cess_2.10 = c(1-0.63,1-0.65,"FDA",0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5), #expected
-  init_0.85_cess_4.96 = c(1-0.83,1-0.85,"FDA", 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2), #best case
+  init_0.1_cess_0.69 = c(1-0.38,1-0.39, 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75,0), #worst case
+  init_0.5_cess_2.10 = c(1-0.63,1-0.65,0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5,0), #expected
+  init_0.85_cess_4.96 = c(1-0.83,1-0.85, 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2,0) #best case
+  #One way Sensitivity analysis (Policy effects and vaping mortality)
+  #  = c(1-0.38,1-0.39, 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75,0), #worst case
+  #  = c(1-0.63,1-0.65,0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5,0), #expected
+  # init_0.85_cess_4.96 = c(1-0.83,1-0.85, 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2,0)
+  
+  #Sensitivity analysis (Depression)
+  
+  
   #FDA
-  FDA_est = c(1-0.63,1-0.65,"FDA",0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5), #expected
+  #FDA_est = c(1-0.63,1-0.65,"FDA",0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5), #expected
   #initiation (1st,subsequent): -0.63, -0.65
   #cessation:0.36,0.34
   #dual: 0.61, 0.51
   #switching:0.56,0.58
   #vape init:0.5, 0.5
-  FDA_best = c(1-0.83,1-0.85,"FDA", 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2), #best
+  #FDA_best = c(1-0.83,1-0.85,"FDA", 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2), #best
   #initiation (1st,subsequent): -0.83, -0.85
   #cessation:0.61,0.56
   #dual:0.25, 0.19
   #switching:0.84, 0.85
   #vape init: 0.21, 0.2
-  FDA_worst = c(1-0.38,1-0.39,"FDA", 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75) #worse case
+  #FDA_worst = c(1-0.38,1-0.39,"FDA", 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75) #worse case
   #initiation (1st,subsequent): -0.38, -0.39
   #cessation:0.11, 0.11
   #dual:0.9, 0.82
   #switching:0.22,0.25
   #vape init: 0.72, 0.75
+  #Sensitivity analysis
+  
+  
 )
 
 scenarios <- names(params)
@@ -97,10 +106,11 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   # Run the model -----------------------------------------------------------
   t.init = Sys.time()
   # SIMULATE FEMALE POPULATION
-  args <- c("females",500, 2100) # Parameters for HPC vs non-HPC setup
+  args <- c("females",100, 2100) # Parameters for HPC vs non-HPC setup
   source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE) 
   source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
   
+
   allresults <- lapply(scenarios, run_policy)
   names(allresults) <- scenarios
   
@@ -121,7 +131,7 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   dfF_ND=reformat_model_outputs(l.results_ND)
   
   # SIMULATE MALE POPULATION
-  args <- c("males",500, 2100) # Parameters for HPC vs non-HPC setup
+  args <- c("males",100, 2100) # Parameters for HPC vs non-HPC setup
   source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE) 
   source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
 
@@ -146,6 +156,6 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   dfM_ND=reformat_model_outputs(l.results_ND)
   
   ## GENERATE FIGURES AND TABLES
-  source(paste0(mainDir,"R/07_figures_tables_combined_gender.R"), echo=TRUE)
+  source(paste0(mainDir,"R/07a_figures_tables_combined_gender.R"), echo=TRUE)
   print(Sys.time() - t.init)
 }

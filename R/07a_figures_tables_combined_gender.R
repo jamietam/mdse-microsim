@@ -64,6 +64,7 @@ process_prevalence <- function(column_name) {
     unnest(cols = c(scenario1, prevalence1)) %>%
     mutate(prevalence_type = column_name) # Add a column to identify the prevalence type
 }
+
 # List of prevalence columns to process
 outcome_columns<-c("T", "D", "ND", "absdiff","prevratio", "reldiff")
 # Apply the function to each prevalence column and combine the results
@@ -90,6 +91,7 @@ df.FDA<-df.FDA[c("year", "scenario1","B_D", "D","B_ND", "ND", "B_T","T","B_absdi
 
 write.xlsx(df.MDSE, file = paste0(mainDir, "output/",figDir,"/Prevalance_allgender_MDSE.xlsx"))
 write.xlsx(df.FDA, file = paste0(mainDir, "output/",figDir,"/Prevalance_allgender_FDA.xlsx"))
+write.xlsx(df.prevs, file = paste0(mainDir, "output/",figDir,"/Prevalance_sensitivity.xlsx"))
 
 
 #Health outcomes
@@ -184,17 +186,19 @@ resultsFDA_fH<-resultsFDA_fH1[c("scenario1","prevalence_type","B_D","D","B_ND","
 
 write.xlsx(resultsMDSE_fH , file = paste0(mainDir, "output/",figDir,"/HealthOutcomes_allgender_MDSE.xlsx"))
 write.xlsx(resultsFDA_fH , file = paste0(mainDir, "output/",figDir,"/HealthOutcomes_allgender_FDA.xlsx"))
+write.xlsx(dataframe , file = paste0(mainDir, "output/",figDir,"/HealthOutcomes_sensitivity.xlsx"))
+
 
 
 #Cost Effectiveness
 
 
 #Tables: I think i can just add these but i will have to recalculate ICER ratios and societal costs. 
-ICERST=dfM[[4]][,2:27]+dfF[[4]][,2:27]
+ICERST=dfM[[4]][,2:32]+dfF[[4]][,2:32]
 ICERST$scenario=dfM[[4]][,1]
-ICERSD=dfM_D[[4]][,2:27]+dfF_D[[4]][,2:27]
+ICERSD=dfM_D[[4]][,2:32]+dfF_D[[4]][,2:32]
 ICERSD$scenario=dfM[[4]][,1]
-ICERSND=dfM_ND[[4]][,2:27]+dfF_ND[[4]][,2:27]
+ICERSND=dfM_ND[[4]][,2:32]+dfF_ND[[4]][,2:32]
 ICERSND$scenario=dfM[[4]][,1]
 
 ICERSND$population="not depressed"
@@ -214,10 +218,10 @@ ICERALL$icer_consLY <- round(ICERALL$inc_cons / ICERALL$inc_effectLY,0)
 ICERALL$icer_consQALY <- round(ICERALL$inc_cons / ICERALL$inc_effectQALY,0)
 
 #need to recalculated costs for society
-ICERALL$SOC_cost_US=round(ICERALL$icer_socLY * ICERALL$US_LYG_cum/1000000000,1) #LYG from total/cummulative YLL across the years 
-ICERALL$MED_cost_US=round(ICERALL$icer_medLY * ICERALL$US_LYG_cum/1000000000,1)
-ICERALL$Prod_US=round(ICERALL$icer_prodLY * ICERALL$US_LYG_cum/1000000000,1) #LYG from total/cummulative YLL across the years 
-ICERALL$cons_US=round(ICERALL$icer_consLY * ICERALL$US_LYG_cum/1000000000,1) #LYG from total/cummulative YLL across the years 
+ICERALL$SOC_cost_US=round(ICERALL$icer_socLY * ICERALL$US_LYG_cum_disc/1000000000,1) #LYG from total/cummulative YLL across the years 
+ICERALL$MED_cost_US=round(ICERALL$icer_medLY * ICERALL$US_LYG_cum_disc/1000000000,1)
+ICERALL$Prod_US=round(ICERALL$icer_prodLY * ICERALL$US_LYG_cum_disc/1000000000,1) #LYG from total/cummulative YLL across the years 
+ICERALL$cons_US=round(ICERALL$icer_consLY * ICERALL$US_LYG_cum_disc/1000000000,1) #LYG from total/cummulative YLL across the years 
 
 
 
@@ -417,15 +421,15 @@ ICERALL$icer_prodLY
 
 df_filtered1 <- Health_combcostfigure%>%
   filter(year %in% c(2050:2100), population == "T")%>%
-  select(year,scenario,cYLL_averted_LYG)
+  select(year,scenario,cYLL_averted_LYG_disc)
 df_filtered2 <- ICERALL%>%
   filter( population == "total")%>%
   select(scenario,icer_medLY ,icer_socLY,icer_prodLY,icer_consLY )
 
 costsfigdata=merge(df_filtered1,df_filtered2,by = "scenario", all.x = TRUE)
-costsfigdata$US_Cons<-(costsfigdata$icer_consLY *costsfigdata$cYLL_averted_LYG)/1000000000 #billions
-costsfigdata$US_MED<-(costsfigdata$icer_medLY*costsfigdata$cYLL_averted_LYG)/1000000000
-costsfigdata$US_PROD<-(costsfigdata$icer_prodLY*costsfigdata$cYLL_averted_LYG)/1000000000
+costsfigdata$US_Cons<-(costsfigdata$icer_consLY *costsfigdata$cYLL_averted_LYG_disc)/1000000000 #billions
+costsfigdata$US_MED<-(costsfigdata$icer_medLY*costsfigdata$cYLL_averted_LYG_disc)/1000000000
+costsfigdata$US_PROD<-(costsfigdata$icer_prodLY*costsfigdata$cYLL_averted_LYG_disc)/1000000000
 
 #plotCosts_(costsfigdata,"US_SOC")
 data=costsfigdata
@@ -471,6 +475,14 @@ CND<-prev_by_status(df.prevs_comb, "C", "ND",FALSE,"18.99",0.5) + theme(legend.p
 END<-prev_by_status(df.prevs_comb, "E", "ND",FALSE,"18.99",0.3) + theme(legend.position = "none")
 dualND<-prev_by_status(df.prevs_comb, "CE", "ND",FALSE,"18.99",0.11) + theme(legend.position = "none")
 
+#ecig only figures
+NET<-prev_by_status(df.prevs_comb, "NE", "T",FALSE,"18.99",0.5) + theme(legend.position = "none")
+FET<-prev_by_status(df.prevs_comb, "FE", "T",FALSE,"18.99",0.5) + theme(legend.position = "none")
+NED<-prev_by_status(df.prevs_comb, "NE", "D",FALSE,"18.99",0.5) + theme(legend.position = "none")
+FED<-prev_by_status(df.prevs_comb, "FE", "D",FALSE,"18.99",0.5) + theme(legend.position = "none")
+NEND<-prev_by_status(df.prevs_comb, "NE", "ND",FALSE,"18.99",0.5) + theme(legend.position = "none")
+FEND<-prev_by_status(df.prevs_comb, "FE", "ND",FALSE,"18.99",0.5) + theme(legend.position = "none")
+
 CT_FDA<-prev_by_status(df.prevs_comb, "C", "T",TRUE,"18.99",0.5) 
 ET_FDA<-prev_by_status(df.prevs_comb, "E", "T",TRUE,"18.99",0.5) 
 dualT_FDA<-prev_by_status(df.prevs_comb, "CE", "T",TRUE,"18.99",0.5) 
@@ -504,26 +516,26 @@ Cost_PROD <- plotCosts_(costsfigdata,"US_PROD")
 
 
 
-# Distribution in total population
-N_age <- prev_by_status(df.prevs_comb, "N", "T",TRUE,"18.99") 
-C_age <- prev_by_status(df.prevs_comb, "C", "T",TRUE,"18.99") 
-F_age <- prev_by_status(df.prevs_comb, "F", "T",TRUE,"18.99") 
-D_age <- prev_by_status(df.prevs_comb, "C", "T",TRUE,"18.99") 
+# Distribution in total population #prev_by_status(df.prevs_comb, "C", "T",FALSE,"18.99",0.5) 
+N_age <- prev_by_status(df.prevs_comb, "N", "T",FALSE,"18.99",0.5) 
+C_age <- prev_by_status(df.prevs_comb, "C", "T",FALSE,"18.99",0.5) 
+F_age <- prev_by_status(df.prevs_comb, "F", "T",FALSE,"18.99",0.5) 
+D_age <- prev_by_status(df.prevs_comb, "C", "T",FALSE,"18.99",0.5) 
 
-E_age <- prev_by_status(df.prevs_comb, "E", "T",TRUE,"18.99") 
-NE_age <- prev_by_status(df.prevs_comb, "NE", "T",TRUE,"18.99") 
-CE_age <- prev_by_status(df.prevs_comb, "CE", "T",TRUE,"18.99") 
-FE_age <- prev_by_status(df.prevs_comb, "CE", "T",TRUE,"18.99") 
+E_age <- prev_by_status(df.prevs_comb, "E", "T",FALSE,"18.99",0.5) 
+NE_age <- prev_by_status(df.prevs_comb, "NE", "T",FALSE,"18.99",0.5) 
+CE_age <- prev_by_status(df.prevs_comb, "CE", "T",FALSE,"18.99",0.5) 
+FE_age <- prev_by_status(df.prevs_comb, "CE", "T",FALSE,"18.99",0.5) 
 
 # Distribution in MDE population
-N_D_age <- prev_by_status(df.prevs_comb, "N", "D",TRUE,"18.99") 
-C_D_age <-  prev_by_status(df.prevs_comb, "C", "D",TRUE,"18.99") 
-F_D_age <-  prev_by_status(df.prevs_comb, "F", "D",TRUE,"18.99") 
-E_D_age <-  prev_by_status(df.prevs_comb, "E", "D",TRUE,"18.99") 
+N_D_age <- prev_by_status(df.prevs_comb, "N", "D",FALSE,"18.99",0.5) 
+C_D_age <-  prev_by_status(df.prevs_comb, "C", "D",FALSE,"18.99",0.5) 
+F_D_age <-  prev_by_status(df.prevs_comb, "F", "D",FALSE,"18.99",0.5) 
+E_D_age <-  prev_by_status(df.prevs_comb, "E", "D",FALSE,"18.99",0.5) 
 
-NE_D_age <-  prev_by_status(df.prevs_comb, "NE", "D",TRUE,"18.99") 
-CE_D_age <-  prev_by_status(df.prevs_comb, "CE", "D",TRUE,"18.99") 
-FE_D_age <-  prev_by_status(df.prevs_comb, "FE", "D",TRUE,"18.99") 
+NE_D_age <-  prev_by_status(df.prevs_comb, "NE", "D",FALSE,"18.99",0.5) 
+CE_D_age <-  prev_by_status(df.prevs_comb, "CE", "D",FALSE,"18.99",0.5) 
+FE_D_age <-  prev_by_status(df.prevs_comb, "FE", "D",FALSE,"18.99",0.5) 
 
 
 NCFE_total_B <- ggplot() +
@@ -646,6 +658,12 @@ grid.arrange(arrangeGrob(CD, CND,CT,ED,END,ET,dualD,dualND,dualT, ncol = 3,nrow=
   ncol = 1, heights = c(4, 0.5) )
 dev.off()
 
+pdf(paste0("output/",figDir,"/ECIGONLY.pdf"), width = 10, height = 10)
+#grid_arrange_shared_legend(list(CD, CND,CT,ED,END,ET,dualD,dualND,dualT), nrow = 3, ncol = 3,"Product Use Prevalence by Depression Status")
+grid.arrange(arrangeGrob(NET,FET,NED,FED,NEND,FEND, ncol = 2,nrow=3), shared_legend,  # Add shared legend
+             ncol = 1, heights = c(4, 0.5) )
+dev.off()
+
 # Save to PDF
 pdf(paste0("output/",figDir,"/HealthOutcomes_grid.pdf"), width = 9, height = 9)
 grid_arrange_shared_legend(list(cSADT_FDA,cSADD_FDA,cSADND_FDA,cYLLT_FDA,cYLLD_FDA,cYLLND_FDA), nrow = 2, ncol = 3,"cYLL and cSAD by Depression Status")
@@ -668,8 +686,8 @@ p.OE_age
 grid_arrange_shared_legend(list(E_age,E_D_age),1,2,"Vaping by age and Depression Status")
 grid_arrange_shared_legend(list(NE_age, CE_age, FE_age),1,3,"Smoking and Vaping Status Age Distribution in the Total Population")
 grid_arrange_shared_legend(list(NE_D_age, CE_D_age, FE_D_age),1,3,"Smoking and Vaping Status Age Distribution in the Depressed Population")
-grid_arrange_shared_legend(list(CT_FDA, CD_FDA, CND_FDA, ET_FDA,ED_FDA,END_FDA,dualT_FDA,dualD_FDA,dualND_FDA), nrow = 3, ncol = 3,"Product Use Prevalence by Depression Status")
-grid_arrange_shared_legend(list(cSADT_FDA,cSADD_FDA,cSADND_FDA,cYLLT_FDA,cYLLD_FDA,cYLLND_FDA), nrow = 2, ncol = 3,"cYLL and cSAD by Depression Status")
+#grid_arrange_shared_legend(list(CT_FDA, CD_FDA, CND_FDA, ET_FDA,ED_FDA,END_FDA,dualT_FDA,dualD_FDA,dualND_FDA), nrow = 3, ncol = 3,"Product Use Prevalence by Depression Status")
+#grid_arrange_shared_legend(list(cSADT_FDA,cSADD_FDA,cSADND_FDA,cYLLT_FDA,cYLLD_FDA,cYLLND_FDA), nrow = 2, ncol = 3,"cYLL and cSAD by Depression Status")
 grid.arrange(Cost_MED, Cost_Cons, Cost_PROD, nrow = 1, ncol = 3)# inputs
 # grid_arrange_shared_legend(list(p.NC_age,p.CF_age),2,"Smoking inputs")
 # grid_arrange_shared_legend(list(p.HD_age,p.HD_ageC),2,"Incidence by smoking status")
