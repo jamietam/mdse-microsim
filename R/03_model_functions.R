@@ -462,10 +462,16 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   p.DR[66:99] <- p.DR_65.99
   
   ## Incidence
-  # scale up incidence by year for youth and young adults ages 12-34
-  p.HD[1:18,117:201] <- s.HD_12.17*p.HD[1:18,116] # ages <18, apply increase from 2016 (col 117) onwards 
-  p.HD[19:26,117:201] <- s.HD_18.25*p.HD[19:26,116] # ages 18-25, apply increase from 2016 (col 117) onwards 
-  p.HD[27:35,117:201] <- s.HD_26.34*p.HD[27:35,116] # ages 26-34, apply increase from 2016 (col 117) onwards 
+  # scale up incidence by year for youth and young adults ages 12-34 from 2016-2100 vs 2016-2022
+  if (s.HD_2100 == 1) {
+    p.HD[1:18,117:201] <- s.HD_12.17*p.HD[1:18,116] # ages <18, apply increase from 2016 (col 117) onwards
+    p.HD[19:26,117:201] <- s.HD_18.25*p.HD[19:26,116] # ages 18-25, apply increase from 2016 (col 117) onwards
+    p.HD[27:35,117:201] <- s.HD_26.34*p.HD[27:35,116] # ages 26-34, apply increase from 2016 (col 117) onwards
+  } else {
+    p.HD[1:18,117:123] <- s.HD_12.17*p.HD[1:18,116] # ages <18, apply increase from 2016-2022 (col 117 to 123) onwards 
+    p.HD[19:26,117:123] <- s.HD_18.25*p.HD[19:26,116] # ages 18-25, apply increase from 2016 (col 117) onwards 
+    p.HD[27:35,117:123] <- s.HD_26.34*p.HD[27:35,116] # ages 26-34, apply increase from 2016 (col 117) onwards 
+  }
   
   #Apply policy effects here
   #Initiation and Cessation for Healthy

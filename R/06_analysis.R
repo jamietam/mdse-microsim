@@ -12,7 +12,7 @@ calibration = 0 # need to set this to 0 so main_calib works and outputs proper m
 run_scenarios = 1 # set to 0 if you want to use pre-generated results, set to 1 to simulate all scenarios
 
 vaping_mort_effect=0
-
+s.HD_2100 <- 1
 
 
 policyyear <- 2028
