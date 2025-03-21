@@ -467,6 +467,7 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   p.HD[19:26,117:201] <- s.HD_18.25*p.HD[19:26,116] # ages 18-25, apply increase from 2016 (col 117) onwards 
   p.HD[27:35,117:201] <- s.HD_26.34*p.HD[27:35,116] # ages 26-34, apply increase from 2016 (col 117) onwards 
   
+  #Apply policy effects here
   #Initiation and Cessation for Healthy
   ## Initiation - No initiation after 25
   p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
@@ -483,48 +484,51 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   
   p.CO.CE[27:35,paste0(2022:endyear)] <- p.CO.CE_22.23_26.34
   p.CO.CE[36:50,paste0(2022:endyear)] <- p.CO.CE_22.23_35.49
-  if (!is.null(l.policy_effects)){
-    #convert dataframes to age period to apply policy affects
-    p.NC_nopolicy=p.NC #need to keep a version that is no policy for vaping initiation calculation below
-    
-    #initiation policy effects
+  
+  #need to keep a version that is no policy for vaping initiation calculation below
+  p.NC_nopolicy=p.NC 
+  
+  #initiation policy effects
+  if (!is.null(l.policy_effects) && l.policy_effects[["rr.init_1"]]!=1){ 
     p.NC[,paste0(policyyear)] <- p.NC[,paste0(policyyear)]*l.policy_effects[["rr.init_1"]]
     p.NC[,paste0((policyyear+1):2100)] <- p.NC[,paste0((policyyear+1):2100)]*l.policy_effects[["rr.init_s"]]
     p.NC_D[,paste0(policyyear)] <- p.NC_D[,paste0(policyyear)]*l.policy_effects[["rr.init_1"]]
     p.NC_D[,paste0((policyyear+1):2100)] <- p.NC_D[,paste0((policyyear+1):2100)]*l.policy_effects[["rr.init_s"]]
-    
-    #cessation policy effects
-    if (l.policy_effects[["cess_indicator"]]=="MDSE"){ #MDSE applies policy effect as odds ratio
-      p.CF[,paste0(policyyear)] <- p.CF[,paste0(policyyear)]*l.policy_effects[["rr.cess_1"]]
-      p.CF[,paste0((policyyear+1):2100)] <- p.CF[,paste0((policyyear+1):2100)]*l.policy_effects[["rr.cess_s"]]
-    }else if (l.policy_effects[["cess_indicator"]]=="FDA"){ #FDA applies it as what cessation rate will change to be
-      p.CF[17:100,paste0(policyyear)] <- l.policy_effects[["rr.cess_1"]]
-      p.CF[,paste0((policyyear+1):2100)] <- l.policy_effects[["rr.cess_s"]]
-    }
-    
-    #if there are no vaping effects (aka baseline)
-    
-    # Vaping transition probabilities
-    #policy effect is applied as the percentage of those deterrred from smoking that engage in vaping. 
-    #to calculate (p.NC(difference in baseline and scenario effect)= those deterred from smoking)
-    p.NO.NE[18:90,paste0(policyyear)] <- p.NO.NE[18:90,paste0(policyyear)]+(l.policy_effects[["p.NO.NE_1"]]* p.NC_nopolicy[18:90,paste0(policyyear)])
-    p.NO.NE[18:90,paste0((policyyear+1):endyear)] <- as.matrix(p.NO.NE[18:90,paste0((policyyear+1):endyear)]+(l.policy_effects[["p.NO.NE_s"]]* p.NC_nopolicy[18:90,paste0((policyyear+1):endyear)]))
-    
-    p.CO.CE[18:90,paste0(policyyear)] <- l.policy_effects[["p.CO.CE_1"]]
-    p.CO.CE[18:90,paste0((policyyear+1):endyear)] <- l.policy_effects[["p.CO.CE_s"]]
-    
-    p.CO.FE[18:90,paste0(policyyear)] <- l.policy_effects[["p.CO.FE_1"]]
-    p.CO.FE[18:90,paste0((policyyear+1):endyear)] <- l.policy_effects[["p.CO.FE_s"]]
   }
+  #cessation policy effects
+  if (!is.null(l.policy_effects) && l.policy_effects[["rr.cess_1"]]!=1){
+    p.CF[17:100,paste0(policyyear)] <- l.policy_effects[["rr.cess_1"]]
+    p.CF[,paste0((policyyear+1):2100)] <- l.policy_effects[["rr.cess_s"]]
+  }
+  #Vaping initiation
+  if (!is.null(l.policy_effects) && l.policy_effects[["p.NO.NE_1"]]!=1){
+  p.NO.NE[18:90,paste0(policyyear)] <- p.NO.NE[18:90,paste0(policyyear)]+(l.policy_effects[["p.NO.NE_1"]]* p.NC_nopolicy[18:90,paste0(policyyear)])
+  p.NO.NE[18:90,paste0((policyyear+1):endyear)] <- as.matrix(p.NO.NE[18:90,paste0((policyyear+1):endyear)]+(l.policy_effects[["p.NO.NE_s"]]* p.NC_nopolicy[18:90,paste0((policyyear+1):endyear)]))
+  }
+  #Smokers taking up vaping
+  if (!is.null(l.policy_effects) && l.policy_effects[["p.CO.CE_1"]]!=1){
+  p.CO.CE[18:90,paste0(policyyear)] <- l.policy_effects[["p.CO.CE_1"]]
+  p.CO.CE[18:90,paste0((policyyear+1):endyear)] <- l.policy_effects[["p.CO.CE_s"]]
+  }
+  #Switching products
+  if (!is.null(l.policy_effects) && l.policy_effects[["p.CO.FE_1"]]!=1){
+  p.CO.FE[18:90,paste0(policyyear)] <- l.policy_effects[["p.CO.FE_1"]]
+  p.CO.FE[18:90,paste0((policyyear+1):endyear)] <- l.policy_effects[["p.CO.FE_s"]]
+  }
+  
+  if (!is.null(l.policy_effects) && l.policy_effects[["p.EX"]]!=1){
+    p.EX<-p.NX+((p.NX-p.CX)*l.policy_effects[["p.EX"]])
+  }else{
+    #non smoker vaping mortality
+    p.EX<-p.NX
+  }  
   p.CF[p.CF > 1] <- 1 # replace any cessation probabilities that are greater than 1 with 1
   
   # Vaping transition probabilities
   p.FO.FE[27:35,paste0(2022:endyear)] <- p.FO.FE_22.23_26.34
   p.FO.FE[36:50,paste0(2022:endyear)] <- p.FO.FE_22.23_35.49
   
-  #non smoker vaping mortality
-  p.EX<-p.NX+((p.NX-p.CX)*vaping_mort_effect)
-  p.EX1<-p.NX+((p.NX-p.CX)*vaping_mort_effect)
+
   
   # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
   m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
@@ -567,18 +571,6 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
 ## MAIN POLICY FUNCTIONS ------------------------------------------
 
 
-
-apply_policy <- function(rr.init_1,rr.init_s, cess_indicator,rr.cess_1,rr.cess_s, p.CO.CE_1,p.CO.CE_s,p.CO.FE_1,p.CO.FE_s,p.NO.NE_1,p.NO.NE_s, policyyear, v.affected_ages) {
-  
-  l.policy_effects <- list(rr.init_1=as.numeric(rr.init_1),rr.init_s=as.numeric(rr.init_s),
-                           rr.cess_1=as.numeric(rr.cess_1),rr.cess_s=as.numeric(rr.cess_s),
-                           p.CO.CE_1=as.numeric(p.CO.CE_1),p.CO.CE_s=as.numeric(p.CO.CE_s),
-                           p.CO.FE_1=as.numeric(p.CO.FE_1),p.CO.FE_s=as.numeric(p.CO.FE_s),
-                           p.NO.NE_1=as.numeric(p.NO.NE_1),p.NO.NE_s=as.numeric(p.NO.NE_s),
-                           cess_indicator=cess_indicator)
-  return(l.policy_effects)
-}
-
 # Function to extract and format prevalence data
 extract_prevalence <- function(l.model_prevs1, state,v.age_range, v.year_range) {
   prev <- xtabs(prev ~ age + year, data = l.model_prevs1[[state]])
@@ -599,7 +591,7 @@ reorder_by_age <- function(data) {
   data[order(data[,"age"], decreasing = FALSE),]
 }
 
-main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for parameter calibration; l.policy_effects: policy effects
+main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run model for parameter calibration; l.policy_effects: policy effects
   t_init <- Sys.time() 
   l.main_calib_outputs<-main_calib(v.params,l.policy_effects)
   m.M<-l.main_calib_outputs[[1]]
@@ -795,50 +787,53 @@ main <- function(v.params, l.policy_effects=NULL) { # v.params: run model for pa
   # Economic outcomes -------------------------------------------------------
   
   # Calculate costs, utilities, and productivity for each health state by age in the population
-  m.total_cuw <- rbind(colSums(m.C,na.rm=TRUE),colSums(m.U,na.rm=TRUE),colSums(m.W,na.rm=TRUE),colSums(m.B,na.rm=TRUE),
-                     colSums(m.C,na.rm=TRUE)+colSums(m.B,na.rm=TRUE)-colSums(m.W,na.rm=TRUE),v.lifeyears,v.yll) # societal costs = medical costs + consumer expenditures (non-medical) -  productivity 
+  m.total_cuw <- rbind(colSums(m.C[,paste0(v.year_range)],na.rm=TRUE),colSums(m.U[,paste0(v.year_range)],na.rm=TRUE),colSums(m.W[,paste0(v.year_range)],na.rm=TRUE),colSums(m.B[,paste0(v.year_range)],na.rm=TRUE),
+                     colSums(m.C[,paste0(v.year_range)],na.rm=TRUE)+colSums(m.B[,paste0(v.year_range)],na.rm=TRUE)-colSums(m.W[,paste0(v.year_range)],na.rm=TRUE),v.lifeyears,v.yll) # societal costs = medical costs + consumer expenditures (non-medical) -  productivity 
   
-  m.total_cuw_D <- rbind(colSums(m.C_D,na.rm=TRUE),colSums(m.U_D,na.rm=TRUE),colSums(m.W_D,na.rm=TRUE),colSums(m.B_D,na.rm=TRUE),
-                     colSums(m.C_D,na.rm=TRUE)+colSums(m.B_D,na.rm=TRUE)-colSums(m.W_D,na.rm=TRUE),v.lifeyears_D,v.yll_D) # societal costs = medical costs + consumer expenditures (non-medical) -  productivity 
+  m.total_cuw_D <- rbind(colSums(m.C_D[,paste0(v.year_range)],na.rm=TRUE),colSums(m.U_D[,paste0(v.year_range)],na.rm=TRUE),colSums(m.W_D[,paste0(v.year_range)],na.rm=TRUE),colSums(m.B_D[,paste0(v.year_range)],na.rm=TRUE),
+                     colSums(m.C_D[,paste0(v.year_range)],na.rm=TRUE)+colSums(m.B_D[,paste0(v.year_range)],na.rm=TRUE)-colSums(m.W_D[,paste0(v.year_range)],na.rm=TRUE),v.lifeyears_D,v.yll_D) # societal costs = medical costs + consumer expenditures (non-medical) -  productivity 
   
   m.total_cuw_notD <- m.total_cuw - m.total_cuw_D
   rownames(m.total_cuw) <- rownames(m.total_cuw_D) <- rownames(m.total_cuw_notD) <- c("med_costs","QALYs","productivity","consumer_exp","soc_costs","lifeyears","YLL")
-  colnames(m.total_cuw) <- colnames(m.C) <- colnames(m.U) <- colnames(m.W) <- colnames(m.B) <- colnames(m.C_D) <- colnames(m.U_D) <- colnames(m.W_D) <- colnames(m.B_D) <- c(min(cohorts):(max(cohorts)+100))
+  #colnames(m.total_cuw) <- colnames(m.C) <- colnames(m.U) <- colnames(m.W) <- colnames(m.B) <- colnames(m.C_D) <- colnames(m.U_D) <- colnames(m.W_D) <- colnames(m.B_D) <- c(min(cohorts):(max(cohorts)+100))
   
   # Assume 2023 is the starting year for discounting purposes, calculate discount weight based on the discount rate d.c
-  v.d = c(rep(1,d.year-1900), c(1 / (1 + d.c) ^ (0:(ncol(m.C)-(d.year-1899))))) # vector of discount weights
+  v.d = c( c(1 / (1 + d.c) ^ (0:(ncol(m.total_cuw)-1)))) # vector of discount weights
   
   # Total discounted costs, QALYs, and productivity
   m.d_total_cuw <- m.total_cuw %*% diag(v.d) # multiple each row of the cuw matrix by the discounting vector
   #we wouldn't want dicsounting vector for qaly or life years right?
   m.d_total_cuw_D <- m.total_cuw_D %*% diag(v.d) # depressed pop
   m.d_total_cuw_notD <- m.total_cuw_notD %*% diag(v.d) # not depressed pop
-  colnames(m.d_total_cuw) <- colnames(m.d_total_cuw_D)  <- colnames(m.d_total_cuw_notD) <- min(cohorts):(max(cohorts)+100)
+  colnames(m.d_total_cuw) <- colnames(m.d_total_cuw_D)  <- colnames(m.d_total_cuw_notD) <- d.year:(max(cohorts))
   m.cuw <- t(m.d_total_cuw[,as.character(v.year_range)])
   m.cuw_D <- t(m.d_total_cuw_D[,as.character(v.year_range)])
   m.cuw_notD <- t(m.d_total_cuw_notD[,as.character(v.year_range)])
-  
+  save(m.cuw, file = paste0("mCUW_",policy,".RData"))
   # Get average discounted costs and effects to calculate cost-effectiveness ratio
   v.cea = c(avg_med_costs = mean(m.d_total_cuw["med_costs",as.character(policyyear:max(cohorts))]),
             avg_cons_exp = mean(m.d_total_cuw["consumer_exp",as.character(policyyear:max(cohorts))]),
             avg_prod = mean(m.d_total_cuw["productivity",as.character(policyyear:max(cohorts))]),
             avg_soc_costs = mean(m.d_total_cuw["soc_costs",as.character(policyyear:max(cohorts))]),            
             avg_QALYs = mean(m.d_total_cuw["QALYs",as.character(policyyear:max(cohorts))]),
-            avg_LYs= mean(m.d_total_cuw["lifeyears",as.character(policyyear:max(cohorts))]))
+            avg_LYs= mean(m.d_total_cuw["lifeyears",as.character(policyyear:max(cohorts))]),
+            avg_YLLdisc= mean(m.d_total_cuw["YLL",as.character(policyyear:max(cohorts))]))
   
   v.cea_D = c(avg_med_costs = mean(m.d_total_cuw_D["med_costs",as.character(policyyear:max(cohorts))]),
             avg_cons_exp = mean(m.d_total_cuw_D["consumer_exp",as.character(policyyear:max(cohorts))]),
             avg_prod = mean(m.d_total_cuw_D["productivity",as.character(policyyear:max(cohorts))]),
             avg_soc_costs = mean(m.d_total_cuw_D["soc_costs",as.character(policyyear:max(cohorts))]),            
             avg_QALYs = mean(m.d_total_cuw_D["QALYs",as.character(policyyear:max(cohorts))]),
-            avg_LYs= mean(m.d_total_cuw_D["lifeyears",as.character(policyyear:max(cohorts))]))
+            avg_LYs= mean(m.d_total_cuw_D["lifeyears",as.character(policyyear:max(cohorts))]),
+            avg_YLLdisc= mean(m.d_total_cuw_D["YLL",as.character(policyyear:max(cohorts))]))
   
   v.cea_notD = c(avg_med_costs = mean(m.d_total_cuw_notD["med_costs",as.character(policyyear:max(cohorts))]),
               avg_cons_exp = mean(m.d_total_cuw_notD["consumer_exp",as.character(policyyear:max(cohorts))]),
               avg_prod = mean(m.d_total_cuw_notD["productivity",as.character(policyyear:max(cohorts))]),
               avg_soc_costs = mean(m.d_total_cuw_notD["soc_costs",as.character(policyyear:max(cohorts))]),            
               avg_QALYs = mean(m.d_total_cuw_notD["QALYs",as.character(policyyear:max(cohorts))]),
-              avg_LYs= mean(m.d_total_cuw_notD["lifeyears",as.character(policyyear:max(cohorts))]))
+              avg_LYs= mean(m.d_total_cuw_notD["lifeyears",as.character(policyyear:max(cohorts))]),
+              avg_YLLdisc= mean(m.d_total_cuw_notD["YLL",as.character(policyyear:max(cohorts))]))
   
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer
@@ -864,9 +859,21 @@ run_policy <- function(policy) {
                                      params[[policy]][5], params[[policy]][6],params[[policy]][7], params[[policy]][8],
                                      params[[policy]][9], params[[policy]][10],params[[policy]][11], 
                                      policyyear, v.affected_ages)}
-  output <- main(v.params, l.policy_effects)
+  output <- main(v.params, l.policy_effects, policy)
   return(output)
 }
+
+apply_policy <- function(rr.init_1,rr.init_s,rr.cess_1,rr.cess_s, p.CO.CE_1,p.CO.CE_s,p.CO.FE_1,p.CO.FE_s,p.NO.NE_1,p.NO.NE_s,p.EX, policyyear, v.affected_ages) {
+  
+  l.policy_effects <- list(rr.init_1=as.numeric(rr.init_1),rr.init_s=as.numeric(rr.init_s),
+                           rr.cess_1=as.numeric(rr.cess_1),rr.cess_s=as.numeric(rr.cess_s),
+                           p.CO.CE_1=as.numeric(p.CO.CE_1),p.CO.CE_s=as.numeric(p.CO.CE_s),
+                           p.CO.FE_1=as.numeric(p.CO.FE_1),p.CO.FE_s=as.numeric(p.CO.FE_s),
+                           p.NO.NE_1=as.numeric(p.NO.NE_1),p.NO.NE_s=as.numeric(p.NO.NE_s),
+                           p.EX=as.numeric(p.EX))
+  return(l.policy_effects)
+}
+
 # Reformat data for data visualization ------------------------------------
 
 reformat_model_outputs <- function(l.results){
@@ -881,6 +888,7 @@ reformat_model_outputs <- function(l.results){
   }))
   
   # Smoking initiation and cessation
+  #this is just smoking init and cessation for the year 2100
   smkprobs <- do.call(rbind, lapply(names(l.results), function(name) {
     policy <- l.results[[name]]
     data.frame(cbind(policy$init[, endyear - 1899], policy$cess[, endyear - 1899], 0:99, name))
@@ -903,6 +911,8 @@ reformat_model_outputs <- function(l.results){
       cSAD = cumsum(policy$v.SAD[paste0(policyyear:max(cohorts))]),
       aYLL= policy$v.yll[paste0(policyyear:max(cohorts))],
       cYLL = cumsum(policy$v.yll[paste0(policyyear:max(cohorts))]),
+      aYLL_disc= cuw[paste0(policyyear:max(cohorts)), "YLL"],
+      cYLL_disc = cumsum(cuw[paste0(policyyear:max(cohorts)), "YLL"]),
       aCosts = cuw[paste0(policyyear:max(cohorts)), 1], #medical costs
       aQALYs = cuw[paste0(policyyear:max(cohorts)), 2],
       aProd = cuw[paste0(policyyear:max(cohorts)), 3],
@@ -919,13 +929,13 @@ reformat_model_outputs <- function(l.results){
   
   # Ensure numeric columns are indeed numeric
   combined_data <- combined_data %>%
-    mutate(across(c(year, aLY, cLY, aSAD, cSAD,aYLL,cYLL,cM_perLY,aM_perLY,
+    mutate(across(c(year, aLY, cLY, aSAD, cSAD,aYLL,cYLL,aYLL_disc,cYLL_disc,cM_perLY,aM_perLY,
                     aCosts,cCosts,aQALYs,aNonhealth, cQALYs,aProd,cProd,cNonhealth,aSocCosts,cSocCosts), as.numeric))
   
   # Extract baseline values
   baseline_values <- combined_data %>%
     filter(scenario == "baseline") %>%
-    select(year, aLY, cLY, cSAD, aSAD,cYLL, aYLL,cM_perLY,aM_perLY,aCosts,cCosts,aQALYs,cQALYs,aProd,cProd,aNonhealth,cNonhealth,aSocCosts) %>%
+    select(year, aLY, cLY, cSAD, aSAD,cYLL, aYLL,cM_perLY,aM_perLY,aCosts,cCosts,aYLL_disc,cYLL_disc,aQALYs,cQALYs,aProd,cProd,aNonhealth,cNonhealth,aSocCosts) %>%
     rename(
       baseline_cLY = cLY,
       baseline_aLY = aLY,
@@ -935,6 +945,8 @@ reformat_model_outputs <- function(l.results){
       baseline_aSAD = aSAD,
       baseline_cYLL = cYLL, 
       baseline_aYLL = aYLL,
+      baseline_cYLL_disc = cYLL_disc, 
+      baseline_aYLL_disc = aYLL_disc,
       baseline_aCosts = aCosts,
       baseline_aQALYs = aQALYs,
       baseline_aProd = aProd,
@@ -954,6 +966,9 @@ reformat_model_outputs <- function(l.results){
       aSAD_averted = baseline_aSAD - aSAD,
       cYLL_averted_LYG = baseline_cYLL - cYLL,
       aYLL_averted_LYG = baseline_aYLL - aYLL,
+      #discounted lyg to calculate for costs figures
+      cYLL_averted_LYG_disc = baseline_cYLL_disc - cYLL_disc,
+      aYLL_averted_LYG_disc = baseline_aYLL_disc - aYLL_disc,
       cLYG = cLY - baseline_cLY,
       aLYG = aLY - baseline_aLY,
       #Costs needed for figure here:
@@ -981,6 +996,7 @@ reformat_model_outputs <- function(l.results){
   # Calculate ICER
   cea_data <- lapply(names(l.results), function(name) {
     policy <- l.results[[name]]
+    cuw <- policy$m.cuw
     data.frame(scenario = name,
                avg_med_costs = policy$v.cea["avg_med_costs"],
                avg_cons_exp = policy$v.cea["avg_cons_exp"],
@@ -988,7 +1004,10 @@ reformat_model_outputs <- function(l.results){
                avg_soc_costs = policy$v.cea["avg_soc_costs"],
                avg_QALYs = policy$v.cea["avg_QALYs"],
                avg_LYs = policy$v.cea["avg_LYs"],
-               avg_YLL = mean(policy$v.yll[paste0(policyyear:max(cohorts))]),
+               avg_YLLdisc = policy$v.cea["avg_YLLdisc"], #YLL discounted
+               avg_YLL_disc2 = mean(cuw[paste0(policyyear:max(cohorts)), "YLL"]),
+               cum_YLL_disc = sum(cuw[paste0(policyyear:max(cohorts)), "YLL"]),
+               avg_YLL = mean(policy$v.yll[paste0(policyyear:max(cohorts))]), 
                cum_YLL = sum(policy$v.yll[paste0(policyyear:max(cohorts))]), 
                avg_SAD = mean(policy$v.SAD[paste0(policyyear:max(cohorts))]),
                cum_SAD = sum(policy$v.SAD[paste0(policyyear:max(cohorts))])
@@ -1011,11 +1030,15 @@ calc_icers <- function(cea_data) {
       inc_cons_exp <- (cea_data[i, "avg_cons_exp"] - cea_data[1, "avg_cons_exp"])
       inc_prod <- (cea_data[i, "avg_prod"] - cea_data[1, "avg_prod"])
       inc_effectQALY <- (cea_data[i, "avg_QALYs"] - cea_data[1, "avg_QALYs"])
-      inc_effectLY <- (cea_data[i, "avg_LYs"] - cea_data[1, "avg_LYs"])
+      inc_effectLY <- (cea_data[i, "avg_LYs"] - cea_data[1, "avg_LYs"]) #these are discounted life years
       USSAD_avg <- (cea_data[1, "avg_SAD"] - cea_data[i, "avg_SAD"])
       USSAD_cum <- (cea_data[1, "cum_SAD"] - cea_data[i, "cum_SAD"])
-      USLYG_avg <- (cea_data[1, "avg_YLL"] - cea_data[i, "avg_YLL"])
+      USLYG_avg_disc <- (cea_data[1, "avg_YLLdisc"] - cea_data[i, "avg_YLLdisc"])
+      USLYG_avg_disc2 <- (cea_data[1, "avg_YLL_disc2 "] - cea_data[i, "avg_YLL_disc2 "])
+      USLYG_cum_disc <- (cea_data[1, "cum_YLL_disc"] - cea_data[i, "cum_YLL_disc"])
       USLYG_cum <- (cea_data[1, "cum_YLL"] - cea_data[i, "cum_YLL"])
+      USLYG_avg <- (cea_data[1, "avg_YLL"] - cea_data[i, "avg_YLL"])
+      
       cea_data[i, "inc_med_cost"] <- inc_med_cost
       cea_data[i, "inc_cons_exp"] <- inc_cons_exp
       cea_data[i, "inc_prod"] <- inc_prod
@@ -1031,6 +1054,8 @@ calc_icers <- function(cea_data) {
       cea_data[i, "icer_prodQALY"] <- round(inc_prod / inc_effectQALY,0)
       cea_data[i, "US_LYG_avg"] <- USLYG_avg
       cea_data[i, "US_LYG_cum"] <- USLYG_cum
+      cea_data[i, "US_LYG_avg_disc"] <- USLYG_avg_disc
+      cea_data[i, "US_LYG_cum_disc"] <- USLYG_cum_disc
       cea_data[i, "US_SAD_avert"] <- USSAD_cum
     }
   } 
