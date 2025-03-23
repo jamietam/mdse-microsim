@@ -7,102 +7,142 @@ load(paste0(mainDir,"data/cuw_inputs_",whichgender,".RData"))
 load(paste0(mainDir,"data/pop_",whichgender,".RData")) # Read in Census population for SAD calculation
 load(paste0(mainDir,"data/ecig_precomputed_inputs_",whichgender,".RData"))
 
-
-cohorts <- 1900:as.numeric(args[3])           # Change from 2016 to 2022 or 2100
 calib_startyear <-2005
-calib_endyear <- 2023
+endyear <- as.numeric(args[3]) 
+cohorts <- 1900:as.numeric(args[3])            # last cohort is the last calendar year
 n.i   <- as.numeric(args[2])                   # number of simulated individuals per run (cohort) - eventually want to run 10,000
 n.t   <- 100                    # time horizon per person, number of years
 v.n <- c("NOH","COH","FOH","NOD","COD","FOD","NOR","COR","FOR","NEH","CEH","FEH","NED","CED","FED","NER","CER","FER","NQH","CQH","FQH","NQD","CQD","FQD","NQR","CQR","FQR", "X")
 n.s   <- length(v.n)            # the number of health states
 v.M_1 <- rep("NOH", n.i)         # everyone begins in the Never smoker Never MD state
 
-d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by 3%
-d.year <- 2023 # which year to start discounting from
+
 # CALIBRATION TARGETS
 load(paste0(mainDir,"data/nsduh_calib_targets_",whichgender,".RData")) 
 
 #l.calib_targets <-l.calib_targets[c("N","C","F","D","N_D","C_D","F_D")]
-l.calib_targets <- lapply(l.calib_targets,function(x) x[x[,"survey_year"]<=calib_endyear & x[,"survey_year"]>=calib_startyear,]) # keep survey years for calibration targets only
+l.calib_targets <- lapply(l.calib_targets,function(x) x[x[,"survey_year"]<=endyear & x[,"survey_year"]>=calib_startyear,]) # keep survey years for calibration targets only
 
 ## CALIBRATION PARAMETERS - Specify which parameters you want to calibrate (0 vs 1 in column 4), and provide upper and lower bounds for the search algorithm
 if (whichgender == "males") {
   m.calib_inputs <-rbind( 
     #scaling for smoking for non depressed
-    "s.NC_9.17" = c(1.826712, 1, 3, 0),#run this
-    "s.NC_18.25" = c(0.03747093, 0, 0.1, 0),#run this
+    "s.NC_18.23_9.17" = c(0.65, 1.5, 3, 1),
+    "s.NC_18.23_18.25" = c(0.3, 0, 0.1, 1),
+    "s.CF_18.23_18.25" = c(0.533356384, 0.30, 1.0, 1),
+    "s.CF_18.23_26.34" = c(0.343975183, 0.30, 1.0, 1),
+    "s.CF_18.23_35.49" = c(0.3, 0.30, 1.0, 0),  
+    "s.CF_18.23_50.64" = c(0.429631986, 0.30, 1.0, 0), 
+    "s.CF_18.23_65.99" = c(0.259055186, 0.30, 1.0, 0), 
+    "s.NC_9.17" = c(1.826712, 1.5, 3, 0),
+    "s.NC_18.25" = c(0.03747093, 0, 0.1, 0),
     "s.CF_18.25" = c(0.483608280971776, 0.30, 1.0, 0),
     "s.CF_26.34" = c(0.456131185046594, 0.30, 1.0, 0),
     "s.CF_35.49" = c(0.852501801853833, 0.30, 1.0, 0),  
     "s.CF_50.64" = c(0.583999477054824, 0.30, 1.0, 0), 
     "s.CF_65.99" = c(0.503133126398933, 0.30, 1.0, 0), 
     #scaling for smoking for depressed
-    "s.NC_D_9.17" = c(2.123080, 1.5, 4, 0), #run this
-    "s.NC_D_18.25" = c(3.541852, 2, 4, 0),#run this
-    "s.NC_D_26.34" = c(3.931820, 2, 4, 0),#run this
+    "s.NC_D_9.17" = c(4, 1.5, 4, 1), 
+    "s.NC_D_18.25" = c(4, 2, 4, 1),
+    "s.NC_D_26.34" = c(2.027556398, 2, 4, 1),
     #re-estimate vaping initiation
-    "p.NO.NE_20.21_18.25" = c(0.08299481, 0, 1, 1),
-    "p.NO.NE_22.23_18.25" = c(0.12738219, 0, 1, 1),
-
-    "p.CO.CE_22.23_26.34" = c(0.49080347, 0, 1, 1),
-    "p.CO.CE_22.23_35.49" = c(0.31303133, 0, 1, 1),
-
-    "p.FO.FE_22.23_26.34" = c(0.83404205, 0, 1, 1),
-    "p.FO.FE_22.23_35.49" = c(0.12059995, 0, 1, 1),
+    # "p.NO.NE_20.21_18.25" = c(0.054671431, 0.05, 0.1, 1), 
+    # "p.NO.NE_22.23_18.25" = c(0.121997686, 0.05, 0.2, 1),
+    
+    # "p.NO.NE_20.21_12.17" = c(, 0.05, 0.4, 1), 
+    # "p.NO.NE_22.23_12.17" = c(, 0.05, 0.5, 1),
+    
+    # "p.CO.CE_22.23_26.34" = c(0.90000000, 0.3, 1, 1),
+    # "p.CO.CE_22.23_35.49" = c(0.17239039, 0.1, 0.5, 1),
+    # 
+    # "p.FO.FE_22.23_26.34" = c(0.65460774, 0.7, 1, 1),
+    # "p.FO.FE_22.23_35.49" = c(0.05000000, 0.0, 0.2, 1),
+    
+    "p.NO.NE_20.21_12.17" = c(0.02, 0.05, 0.1, 1), 
+    "p.NO.NE_22.23_12.17" = c(0.10, 0.05, 0.3, 1), 
+    
+    "p.NO.NE_20.21_18.25" = c(0.02, 0.05, 0.1, 1),
+    "p.NO.NE_22.23_18.25" = c(0.10, 0.05, 0.2, 1),
+    
+    "p.CO.CE_22.23_18.25" = c(0.95, 0.2, 0.5, 1),
+    "p.CO.CE_22.23_26.34" = c(0.6, 0.2, 0.5, 1),
+    "p.CO.CE_22.23_35.49" = c(0.15, 0.1, 0.5, 1),
+    "p.CO.CE_22.23_50.64" = c(0.05, 0.1, 0.5, 1),
+    
+    "p.FO.FE_22.23_26.34" = c(0.3, 0.7, 1, 1),
+    "p.FO.FE_22.23_35.49" = c(0.05, 0.05, 0.2, 1),
 
     #probability for depressed to recovered
     "p.DR_12.64" = c(0.173, 0.0, 1.0, 0),
     "p.DR_65.99" = c(0.803050446315691, 0.8, 0.85, 0),
-    #scaling for healthy to depressed
+    
+    #scaling for happy to depressed
     "s.HD_12.17" = c(2.75964326462325, 1, 3, 0),
     "s.HD_18.25" = c(2.6749967677134, 2.5, 4, 0), 
     "s.HD_26.34" = c(3.40799465951787, 2, 4, 0),
+    "calib.HD_2005_2015" = c(-0.0005,0,0.1,1),
+    
     #rr of depression and recovery among smokers
     "rr.CH.CD" = c(1.842347, 1.0, 2, 0),
     "rr.CR.CD" = c(1.079901 , 1.0, 2, 0),
     "rr.CD.FD" = c(0.90922571 , 0, 1.0, 0),
-    
+    "rr.OD.ED" = c(1.78941321, 1, 2, 0),
     "yearinc_p.HD" = c(2016, 2012.5, 2018.5, 0))
+  
 } else if (whichgender == "females") {
   m.calib_inputs <-rbind( 
-    #healthy (not depressed) scaling
-    "s.NC_9.17" = c(1.677217, 1, 2, 0),
+    #scaling for smoking for non depressed
+    "s.NC_18.23_9.17" = c(0.5, 1.5, 2, 1),
+    "s.NC_18.23_18.25" = c(0.0014241223, 0, 0.1, 1),
+    "s.CF_18.23_18.25" = c(0.533405964435913, 0.50, 1.0, 0),
+    "s.CF_18.23_26.34" = c(0.6715885419285, 0.50, 1.0, 0),
+    "s.CF_18.23_35.49" = c(0.769270653272708, 0.50, 1.0, 0),
+    "s.CF_18.23_50.64" = c(0.492565705660546, 0.50, 1.0, 0),
+    "s.CF_18.23_65.99" = c(0.451643230463244, 0.50, 1.0, 0),
+    #scaling for smoking for depressed
+    "s.NC_9.17" = c(1.677217, 1.5, 2, 0),
     "s.NC_18.25" = c(0.0014241223, 0, 0.1, 0),
     "s.CF_18.25" = c(0.533405964435913, 0.50, 1.0, 0),
     "s.CF_26.34" = c(0.6715885419285, 0.50, 1.0, 0),
     "s.CF_35.49" = c(0.769270653272708, 0.50, 1.0, 0),
     "s.CF_50.64" = c(0.592565705660546, 0.50, 1.0, 0),
-    "s.CF_65.99" = c(0.701643230463244, 0.50, 1.0, 0),
+    "s.CF_65.99" = c(0.651643230463244, 0.50, 1.0, 0),
     
     #depressed scaling factors
-    "s.NC_D_9.17" = c(3.273167 , 1.5, 4, 0), 
-    "s.NC_D_18.25" = c(4, 2, 4, 0),
-    "s.NC_D_26.34" = c(2.759139, 2, 4, 0),
-    
+    "s.NC_D_9.17" = c(3.273167 , 2.5, 4, 1), 
+    "s.NC_D_18.25" = c(4, 3, 5.5, 1),
+    "s.NC_D_26.34" = c(2.759139, 2, 4, 1),
+              
     #re-estimate vaping initiation 
-    "p.NO.NE_20.21_18.25" = c(0.078457391, 0, 1, 1), 
-    "p.NO.NE_22.23_18.25" = c(0.135252089, 0, 1, 1),
+    "p.NO.NE_20.21_12.17" = c(0.02, 0.05, 0.1, 0), 
+    "p.NO.NE_22.23_12.17" = c(0.10, 0.05, 0.3, 0), 
     
-    "p.CO.CE_22.23_26.34" = c(0.454358191, 0, 1, 1),
-    "p.CO.CE_22.23_35.49" = c(0.277771473, 0, 1, 1),
+    "p.NO.NE_20.21_18.25" = c(0.02, 0.05, 0.1, 0),
+    "p.NO.NE_22.23_18.25" = c(0.10, 0.05, 0.2, 0),
     
-    "p.FO.FE_22.23_26.34" = c(0.910573202, 0, 1, 1),
-    "p.FO.FE_22.23_35.49" = c(0.127543372480057, 0, 1, 1),
+    "p.CO.CE_22.23_18.25" = c(0.41232274, 0.2, 0.5, 0),
+    "p.CO.CE_22.23_26.34" = c(0.41232274, 0.2, 0.5, 0),
+    "p.CO.CE_22.23_35.49" = c(0.20463309, 0.1, 0.5, 0),
+    "p.CO.CE_22.23_50.64" = c(0.08, 0.1, 0.5, 0),
+    
+    "p.FO.FE_22.23_26.34" = c(0.13, 0.7, 1, 0),
+    "p.FO.FE_22.23_35.49" = c(0.05, 0.05, 0.2, 0),
     
     # recovery 
     "p.DR_12.64" = c(0.173, 0.0, 1.0, 0),
     "p.DR_65.99" = c(0.65, 0.6, 0.65, 0),
     
     # incidence
-    "s.HD_12.17" = c(2, 1.0, 3.0, 0),
+    "s.HD_12.17" = c(1.5, 1.0, 3.0, 0), 
     "s.HD_18.25" = c(2.5, 2.0, 4.0, 0), 
     "s.HD_26.34" = c(2, 1.0, 3.0, 0),
+    "calib.HD_2005_2015" = c(0.002,0,0.1,0),
     
     # interaction effects
     "rr.CH.CD" = c(1.577963, 1.0, 2, 0),
     "rr.CR.CD" = c(1.275544, 1.0, 2, 0),
     "rr.CD.FD" = c(1.0000000, 0, 1.0, 0),
-    
+    "rr.OD.ED" = c(1.62982605, 1, 2, 0),
     "yearinc_p.HD" = c(2016, 2012.5, 2018.5, 0))
 } 
 colnames(m.calib_inputs) =c("value","lower","upper","calib")  
