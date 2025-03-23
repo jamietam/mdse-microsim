@@ -7,7 +7,7 @@ setwd(mainDir)
 # 2015-2016: Brouwer AF, et al. Changing patterns of cigarette and ENDS transitions in the USA: a multistate transition analysis of youth and adults in the PATH Study in 2015-2017 vs 2017-2019 Tobacco Control Published Online First: 28 March 2023. doi: 10.1136/tc-2022-057905
 # 2017-2021: Brouwer AF, et al. Changing patterns of cigarette and ENDS transitions in the USA: a multistate transition analysis of adults in the PATH Study in 2017–2019 vs 2019–2021  doi: 10.1136/tc-2023-058453 
 
-whichgender <- "males"
+whichgender <- "females"
 
 ## ecig initiation 
 # never established use --> ENDS only
@@ -172,11 +172,11 @@ expandmatrix <- function(pmatrix){
       }
       ## Ages 55-90
       ##if individual is 55.90 and adult2013-14
-      else if(r>55 & r<=90 & c >= (2013-1899) & c <= (2014-1899)){
+      else if(r>=55 & r<=90 & c >= (2013-1899) & c <= (2014-1899)){
         expmatrix[r+1,c] <- pmatrix[6,1]
       }
       ##if individual is 55.90 and adult2015-16
-      else if(r>55 & r<=90 & c >= (2015-1899) & c <= (2016-1899)){
+      else if(r>=55 & r<=90 & c >= (2015-1899) & c <= (2016-1899)){
         expmatrix[r+1,c] <- pmatrix[6,2]
       }
     }
