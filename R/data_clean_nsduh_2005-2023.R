@@ -1,5 +1,5 @@
 # Set directory where data will be saved
-mainDir <- "/Users/jt936/Dropbox/GitHub/mds-microsim/"
+mainDir <- "/Users/jt936/Dropbox/GitHub/mdse-microsim/"
 setwd(file.path(mainDir))
 
 library(plyr)
@@ -42,67 +42,68 @@ options(survey.lonely.psu="adjust")
 # nsduh19 <- PUF2019_100920
 # nsduh19$year <- 2019
 # nsduh19$ANALWC1 <- nsduh19$ANALWT_C
-
-load("data-raw/nsduhvars_2005-2022.rda")
-nsduh0519 <- subset(nsduh0522,year<=2019)
-
-# load("data-raw/NSDUH_2002_2019.RData")
-
-# Add NSDUH 2020
-load("data-raw/NSDUH_2020.RData")
-nsduh20 <- NSDUH_2020
-nsduh20$year <- 2020
-nsduh20$vestr <- nsduh20$VESTRQ1Q4_C
-nsduh20$ANALWC1 <- nsduh20$ANALWTQ1Q4_C
-nsduh20<- nsduh20 %>% select(starts_with(c("cig","AD","CAT","year","ve","ANALWC","ajam","ir","ahlt","yod","yol","nic")),contains(c("vap", "preg","K6","SPD","smi","ami","mde","race","edu","mj")))
-
-# Add NSDUH 2021
-load("data-raw/NSDUH_2021.RData")
-nsduh21 <- PUF2021_121323
-nsduh21$year <- 2021
-nsduh21$vestr <- nsduh21$VESTR_C
-nsduh21$ANALWC1 <- nsduh21$ANALWT2_C
-nsduh21 <- nsduh21 %>% select(starts_with(c("cig","AD","CAT","year","ve","ANALWC","ajam","ir","ahlt","yod","yol","nic")),contains(c("vap", "preg","K6","SPD","smi","ami","mde","race","edu","mj")))
-
-load("data-raw/NSDUH_2022.Rdata")
-nsduh22 <- NSDUH_2022
-nsduh22$year <- 2022
-nsduh22$vestr <- nsduh22$VESTR_C
-nsduh22$ANALWC1 <- nsduh22$ANALWT2_C
-nsduh22$vapnicevr <- nsduh22$nicvapever
-nsduh22$vapnicrec <- nsduh22$nicvaprec
-nsduh22$vapnicflag <- nsduh22$nicvapflag
-nsduh22$vapnicmon <- nsduh22$nicvapmon
-nsduh22$vapnicyr <- nsduh22$nicvapyr
-
-nsduh22$nicvap30n <- nsduh22$NICVAP30N
-nsduh22$nicvap30n[nsduh22$nicvap30n>30] <- NA
-nsduh22 <- nsduh22 %>% select(starts_with(c("cig","AD","CAT","year","ve","ANALWC","ajam","ir","ahlt","yod","yol","nic")),contains(c("vap", "preg","K6","SPD","smi","ami","mde","race","edu","mj")))
-
-load("data-raw/NSDUH_2023.Rdata")
-nsduh23 <- puf2023_102124
-nsduh23$year <- 2023
-nsduh23$vestr <- nsduh23$VESTR_C
-nsduh23$verep <- nsduh23$VEREP
-nsduh23$ANALWC1 <- nsduh23$ANALWT2_C
-nsduh23$vapnicevr <- nsduh23$NICVAPEVER
-nsduh23$vapnicrec <- nsduh23$NICVAPREC
-nsduh23$vapnicflag <- nsduh23$NICVAPFLAG
-nsduh23$vapnicmon <- nsduh23$NICVAPMON
-nsduh23$vapnicyr <- nsduh23$NICVAPYR
-nsduh23$cigyr <- nsduh23$CIGYR
-nsduh23$amdeyr <- nsduh23$AMDEYR
-nsduh23$amdelt <- nsduh23$AMDELT
-nsduh23$irsex <- nsduh23$IRSEX
-
-nsduh23$nicvap30n <- nsduh23$NICVAP30N
-nsduh23$nicvap30n[nsduh23$nicvap30n>30] <- NA
-nsduh23 <- nsduh23 %>% select(starts_with(c("cig","AD","CAT","year","ve","ANALWC","ajam","ir","ahlt","yod","yol","nic")),contains(c("vap", "preg","K6","SPD","smi","ami","mde","race","edu")))
-
-nsduh0523 <- rbind.fill(nsduh0519, nsduh20, nsduh21, nsduh22, nsduh23)
-rm(nsduh20, nsduh21, nsduh22, nsduh23, puf2023_102124, NSDUH_2020, NSDUH_2022,
-   PUF2021_121323, nsduh0519, nsduh0522)
-save(nsduh0523, file="data-raw/nsduhvars_2005-2023.rda")
+# 
+# load("data-raw/nsduhvars_2005-2022.rda")
+# nsduh0519 <- subset(nsduh0522,year<=2019)
+# 
+# # load("data-raw/NSDUH_2002_2019.RData")
+# 
+# # Add NSDUH 2020
+# load("data-raw/NSDUH_2020.RData")
+# nsduh20 <- NSDUH_2020
+# nsduh20$year <- 2020
+# nsduh20$vestr <- nsduh20$VESTRQ1Q4_C
+# nsduh20$ANALWC1 <- nsduh20$ANALWTQ1Q4_C
+# nsduh20<- nsduh20 %>% select(starts_with(c("cig","AD","CAT","year","ve","ANALWC","ajam","ir","ahlt","yod","yol","nic")),contains(c("vap", "preg","K6","SPD","smi","ami","mde","race","edu","mj")))
+# 
+# # Add NSDUH 2021
+# load("data-raw/NSDUH_2021.RData")
+# nsduh21 <- PUF2021_121323
+# nsduh21$year <- 2021
+# nsduh21$vestr <- nsduh21$VESTR_C
+# nsduh21$ANALWC1 <- nsduh21$ANALWT2_C
+# nsduh21 <- nsduh21 %>% select(starts_with(c("cig","AD","CAT","year","ve","ANALWC","ajam","ir","ahlt","yod","yol","nic")),contains(c("vap", "preg","K6","SPD","smi","ami","mde","race","edu","mj")))
+# 
+# load("data-raw/NSDUH_2022.Rdata")
+# nsduh22 <- NSDUH_2022
+# nsduh22$year <- 2022
+# nsduh22$vestr <- nsduh22$VESTR_C
+# nsduh22$ANALWC1 <- nsduh22$ANALWT2_C
+# nsduh22$vapnicevr <- nsduh22$nicvapever
+# nsduh22$vapnicrec <- nsduh22$nicvaprec
+# nsduh22$vapnicflag <- nsduh22$nicvapflag
+# nsduh22$vapnicmon <- nsduh22$nicvapmon
+# nsduh22$vapnicyr <- nsduh22$nicvapyr
+# 
+# nsduh22$nicvap30n <- nsduh22$NICVAP30N
+# nsduh22$nicvap30n[nsduh22$nicvap30n>30] <- NA
+# nsduh22 <- nsduh22 %>% select(starts_with(c("cig","AD","CAT","year","ve","ANALWC","ajam","ir","ahlt","yod","yol","nic")),contains(c("vap", "preg","K6","SPD","smi","ami","mde","race","edu","mj")))
+# 
+# load("data-raw/NSDUH_2023.Rdata")
+# nsduh23 <- puf2023_102124
+# nsduh23$year <- 2023
+# nsduh23$vestr <- nsduh23$VESTR_C
+# nsduh23$verep <- nsduh23$VEREP
+# nsduh23$ANALWC1 <- nsduh23$ANALWT2_C
+# nsduh23$vapnicevr <- nsduh23$NICVAPEVER
+# nsduh23$vapnicrec <- nsduh23$NICVAPREC
+# nsduh23$vapnicflag <- nsduh23$NICVAPFLAG
+# nsduh23$vapnicmon <- nsduh23$NICVAPMON
+# nsduh23$vapnicyr <- nsduh23$NICVAPYR
+# nsduh23$cigyr <- nsduh23$CIGYR
+# nsduh23$amdeyr <- nsduh23$AMDEYR
+# nsduh23$amdelt <- nsduh23$AMDELT
+# nsduh23$irsex <- nsduh23$IRSEX
+# nsduh23$cigmon <- nsduh23$CIGMON
+# 
+# nsduh23$nicvap30n <- nsduh23$NICVAP30N
+# nsduh23$nicvap30n[nsduh23$nicvap30n>30] <- NA
+# nsduh23 <- nsduh23 %>% select(starts_with(c("cig","AD","CAT","year","ve","ANALWC","ajam","ir","ahlt","yod","yol","nic")),contains(c("vap", "preg","K6","SPD","smi","ami","mde","race","edu")))
+# 
+# nsduh0523 <- rbind.fill(nsduh0519, nsduh20, nsduh21, nsduh22, nsduh23)
+# rm(nsduh20, nsduh21, nsduh22, nsduh23, puf2023_102124, NSDUH_2020, NSDUH_2022,
+#    PUF2021_121323, nsduh0519, nsduh0522)
+# save(nsduh0523, file="data-raw/nsduhvars_2005-2023.rda")
 
 # Clean data --------------------------------------------------------------
 
@@ -197,6 +198,12 @@ nsduh0523$CQ[nsduh0523$C==0 | nsduh0523$Q==0] <- 0
 nsduh0523$FQ[nsduh0523$F==1 & nsduh0523$Q==1] <- 1
 nsduh0523$FQ[nsduh0523$F==0 | nsduh0523$Q==0] <- 0
 
+# exclusive vaping in past 30 days, not currently smoking based on past year and 100 cigs threshold
+nsduh0523$NEFE[nsduh0523$N==1 & nsduh0523$E==1] <- 1
+nsduh0523$NEFE[nsduh0523$F==1 & nsduh0523$E==1] <- 1
+nsduh0523$NEFE[nsduh0523$C==1 & nsduh0523$E==1] <- 0
+nsduh0523$NEFE[nsduh0523$E==0] <- 0
+
 # # cigmon = cigarette smoked within the past 30 days
 # 
 # # dual cig and e-cig(nicotine) within past 30 days
@@ -284,6 +291,8 @@ mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("FQ",totalpop)))
 # mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("exclcig",totalpop)))
 # mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("dual",totalpop)))
 
+mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("NEFE",totalpop)))
+
 # mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("vap5",totalpop)))
 # mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("vap7",totalpop)))
 # mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("vap10",totalpop)))
@@ -314,6 +323,8 @@ mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("FQ",Dpop)))
 # mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("exclcig",Dpop)))
 # mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("dual",Dpop)))
 
+mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("NEFE",Dpop)))
+
 # mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("vap5",Dpop)))
 # mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("vap7",Dpop)))
 # mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("vap10",Dpop)))
@@ -339,10 +350,12 @@ mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("NQ",notDpop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("CQ",notDpop)))
 mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("FQ",notDpop)))
 
-# mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("neither",notDpop)))
-# mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("exclvap",notDpop)))
-# mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("exclcig",notDpop)))
-# mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("dual",notDpop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("neither",notDpop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("exclvap",notDpop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("exclcig",notDpop)))
+mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("dual",notDpop)))
+
+mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("NEFE",notDpop)))
 
 # mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("vap5",notDpop)))
 # mdseprevsB<-rbind(mdseprevsB,cbind("both",getprevsbyage("vap7",notDpop)))
@@ -466,17 +479,20 @@ for (x in 1:2){# irsex: 1 = males, 2 = females
   # mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("exclvap",totalpop)))
   # mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("exclcig",totalpop)))
   # mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("dual",totalpop)))
-  # 
+
   # mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("neither",Dpop)))
   # mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("exclvap",Dpop)))
   # mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("exclcig",Dpop)))
   # mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("dual",Dpop)))
-  # 
+  
   # mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("neither",notDpop)))
   # mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("exclvap",notDpop)))
   # mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("exclcig",notDpop)))
   # mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("dual",notDpop)))
-  
+
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("NEFE",totalpop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("NEFE",Dpop)))
+  mdseprevs <- rbind(mdseprevs, cbind(gender[x], getprevsbyage("NEFE",notDpop)))
 } 
 
 colnames(mdseprevs)[1] <- "gender"
@@ -492,6 +508,7 @@ mdseprevs$sex[mdseprevs$gender=="Women"] <-"females"
 mdseprevs$sex[mdseprevs$gender=="Men"] <-"males"
 mdseprevs$sex[mdseprevs$gender=="both"] <-"both"
 
+# NEFE <- subset(mdseprevs, status=="NEFE" & survey_year>=2020) # exclusive vaping data available from 2020
 save(mdseprevs,file=paste0("data/mdseprevs0523.rda"))
 
 load("data/mdseprevs0523.rda")
@@ -648,25 +665,26 @@ jpeg(filename = paste0("smkprevbyMD","_" ,date, ".jpg"),width=16, height=6, unit
 grid_arrange_shared_legend(list(smkprevF,smkprevM),2,"")
 dev.off()
 
-# # Past 30 day tobacco use by MD status, 2020-2022
-# bardata <- subset(mdseprevs, age==18.99 & survey_year >=2020 & (status=="dual" | status=="exclcig" | status=="exclvap" | status=="neither") & (subpopulation=="Current MDE" | subpopulation=="Never MDE" | subpopulation=="Total"))
+# # # Past 30 day tobacco use by MD status
+# bardata <- subset(mdseprevsB, age==18.99 & survey_year ==2023 & (status=="dual" | status=="exclcig" | status=="exclvap" | status=="neither") & (subpopulation=="Dpop" | subpopulation=="notDpop" | subpopulation=="totalpop"))
 # bardata$subpopulation=as.factor(bardata$subpopulation)
-# levels(bardata$subpopulation) <- c("Current MDE","Never MDE", "Total")
+# levels(bardata$subpopulation) <- c("Current MDE","No MDE", "Total")
 # bardata$status=as.factor(bardata$status)
 # levels(bardata$status) <- c("Dual use","Exclusive cig", "Exclusive e-cig", "Neither")
 # bardata$status = factor(bardata$status, levels=c("Neither","Exclusive e-cig","Exclusive cig","Dual use")) # reorder factor levels
 # group.colors <- c("Dual use" = "#0000FF", "Exclusive cig" = "#000000", "Exclusive e-cig" ="#00CCFF", "Neither" = "#CCCCCC")
 # bardata$prev = round(bardata$prev*100,1)
 # 
-# tobaccostat<-ggplot(data=subset(bardata,gender=="both")) + 
+# tobaccostat<-ggplot(data=subset(bardata,gender=="both")) +
 #   geom_col(aes(x=as.factor(survey_year),y=prev,fill=status))+
 #   facet_wrap(~subpopulation)+
 #   scale_fill_manual(values=group.colors)+
 #   scale_y_continuous(name="Prevalence (%)",limits=c(0,101),breaks=seq(0,100,5)) +
-#   labs(title="Past 30 day tobacco use, NSDUH 2020-2022")+xlab("Population")+
+#   labs(title="Past 30 day tobacco use, NSDUH 2023")+xlab("Population")+
 #   theme(axis.title.x = element_blank(),legend.title = element_blank(), text = element_text(size = 15))+
+#   theme_light()+
 #   geom_label(position=position_stack(vjust=0.5), aes(x=as.factor(survey_year),y=prev, group=status, label=prev))
 # 
-# jpeg(filename = paste0("tobstatbyMDE","_" ,date, ".jpg"),width=6, height=6, units ="in", res=1000)
+# jpeg(filename = paste0("output/tobstatbyMDE_2023.jpg"),width=6, height=6, units ="in", res=1000)
 # tobaccostat
 # dev.off()       
