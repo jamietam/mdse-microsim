@@ -472,7 +472,12 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
     p.HD[19:26,117:123] <- s.HD_18.25*p.HD[19:26,116] # ages 18-25, apply increase from 2016 (col 117) onwards 
     p.HD[27:35,117:123] <- s.HD_26.34*p.HD[27:35,116] # ages 26-34, apply increase from 2016 (col 117) onwards 
   }
-  
+  if (whichgender=="females") {
+    p.HD[13:22,1:116] <-p.HD[13:22,1:116]+calib.HD_2005_2015 #minor adjustment to incidence pre-2016
+  } else {
+    p.HD[13:29,1:116] <-p.HD[13:29,1:116]+calib.HD_2005_2015
+  }
+  "calib.HD_2005_2015"
   #Apply policy effects here
   #Initiation and Cessation for Healthy
   ## Initiation - No initiation after 25
@@ -488,8 +493,16 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   p.NO.NE[13:18,c("2020","2021")] <- p.NO.NE_20.21_12.17
   p.NO.NE[13:18,paste0(2022:endyear)] <- p.NO.NE_22.23_12.17
   
+  p.NO.NE[19:26,c("2020","2021")] <- p.NO.NE_20.21_18.25
+  p.NO.NE[19:26,paste0(2022:endyear)] <- p.NO.NE_22.23_18.25
+  
+  p.CO.CE[19:26,paste0(2022:endyear)] <- p.CO.CE_22.23_18.25
   p.CO.CE[27:35,paste0(2022:endyear)] <- p.CO.CE_22.23_26.34
   p.CO.CE[36:50,paste0(2022:endyear)] <- p.CO.CE_22.23_35.49
+  p.CO.CE[51:65,paste0(2022:endyear)] <- p.CO.CE_22.23_50.64
+  
+  p.FO.FE[27:35,paste0(2022:endyear)] <- p.FO.FE_22.23_26.34
+  p.FO.FE[36:50,paste0(2022:endyear)] <- p.FO.FE_22.23_35.49
   
   #need to keep a version that is no policy for vaping initiation calculation below
   p.NC_nopolicy=p.NC 
@@ -529,13 +542,7 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
     p.EX<-p.NX
   }  
   p.CF[p.CF > 1] <- 1 # replace any cessation probabilities that are greater than 1 with 1
-  
-  # Vaping transition probabilities
-  p.FO.FE[27:35,paste0(2022:endyear)] <- p.FO.FE_22.23_26.34
-  p.FO.FE[36:50,paste0(2022:endyear)] <- p.FO.FE_22.23_35.49
-  
 
-  
   # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
   m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
                  .export=c('mds_microsim','probs','get_prevs_combined',
