@@ -11,7 +11,7 @@ hpc = 0
 calibration = 0 # need to set this to 0 so main_calib works and outputs proper matrix for main function
 run_scenarios = 1 # set to 0 if you want to use pre-generated results, set to 1 to simulate all scenarios
 
-vaping_mort_effect=0
+#depression effect, 1 is incidence as fit and 0 is back to pre-2016 levels
 s.HD_2100 <- 1
 
 
@@ -33,20 +33,22 @@ load(paste0(mainDir,"data/nsduh_calib_targets_both.RData")) # Load NSDUH data
 # Hatsukami (2024): Significantly higher 12-week CO-verified abstinence among those in VLNC vs NNC condition (OR=3.10, 95%: 1.69-5.96) https://doi.org/10.1016/j.lana.2024.100796
 
 # updated policy effects code:
-# apply_policy <- function(rr.init_1,rr.init_s, cess_indicator,rr.cess_1,rr.cess_s, p.CO.CE_1,p.CO.CE_s,p.CO.FE_1,p.CO.FE_s,p.NO.NE_1,p.NO.NE_s, policyyear, v.affected_ages) {
+# apply_policy <- function(rr.init_1,rr.init_s, rr.cess_1,rr.cess_s, p.CO.CE_1,p.CO.CE_s,p.CO.FE_1,p.CO.FE_s,p.NO.NE_1,p.NO.NE_s, policyyear, v.affected_ages) {
 
 params <- list(
   baseline = NULL,
-  init_0.1_cess_0.69 = c(1-0.38,1-0.39, 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75,0), #worst case
-  init_0.5_cess_2.10 = c(1-0.63,1-0.65,0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5,0), #expected
-  init_0.85_cess_4.96 = c(1-0.83,1-0.85, 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2,0) #best case
-  #One way Sensitivity analysis (Policy effects and vaping mortality)
-  #  = c(1-0.38,1-0.39, 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75,0), #worst case
-  #  = c(1-0.63,1-0.65,0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5,0), #expected
-  # init_0.85_cess_4.96 = c(1-0.83,1-0.85, 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2,0)
-  
+  baseline2 =  c(1,1, 1, 1, 1, 1, 1,1, 1,1,0),
+  worst = c(1-0.38,1-0.39, 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75,0.1), #worst case
+  main = c(1-0.63,1-0.65,0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5,0.1), #expected
+  best = c(1-0.83,1-0.85, 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2,0.1), #best case
+  MPRPM = c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0),
+  #One way Sensitivity analysis (of MPRPM)
+  Init_Sens= c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0),
+  Cess_Sens= c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0),
+  CO.CE_Sens= c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0),
+  CO.FE_Sens= c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0),
+  NO.NE_Sens= c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0)
   #Sensitivity analysis (Depression)
-  
   
   #FDA
   #FDA_est = c(1-0.63,1-0.65,"FDA",0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5), #expected
@@ -106,7 +108,7 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   # Run the model -----------------------------------------------------------
   t.init = Sys.time()
   # SIMULATE FEMALE POPULATION
-  args <- c("females",100, 2100) # Parameters for HPC vs non-HPC setup
+  args <- c("females",500, 2100) # Parameters for HPC vs non-HPC setup
   source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE) 
   source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
   
@@ -125,13 +127,13 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   }
   names(l.results) <- names(l.results_D) <- names(l.results_ND) <- scenarios
   
-  save(l.results, l.results_D, l.results_ND, file = paste0("output/mort_",vaping_mort_effect,"_rnc_",whichgender,"_",n.i,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".RData"))
+  save(l.results, l.results_D, l.results_ND, file = paste0("output/_rnc_",whichgender,"_",n.i,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".RData"))
   dfF=reformat_model_outputs(l.results)
   dfF_D=reformat_model_outputs(l.results_D)
   dfF_ND=reformat_model_outputs(l.results_ND)
   
   # SIMULATE MALE POPULATION
-  args <- c("males",100, 2100) # Parameters for HPC vs non-HPC setup
+  args <- c("males",500, 2100) # Parameters for HPC vs non-HPC setup
   source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE) 
   source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
 
@@ -149,8 +151,7 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   }
   names(l.results) <- names(l.results_D) <- names(l.results_ND) <- scenarios
   
-  save(l.results, l.results_D, l.results_ND, file = paste0("output/mort_",vaping_mort_effect,"_rnc_",whichgender,"_",n.i,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".RData"))
-  
+  save(l.results, l.results_D, l.results_ND, file = paste0("output/_rnc_",whichgender,"_",n.i,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".RData"))
   dfM=reformat_model_outputs(l.results)
   dfM_D=reformat_model_outputs(l.results_D)
   dfM_ND=reformat_model_outputs(l.results_ND)

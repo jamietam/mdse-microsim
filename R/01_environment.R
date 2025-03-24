@@ -4,7 +4,7 @@ setwd(file.path(mainDir))
 # install CRAN packages
 packages <- c('stringr','splines','foreach','doParallel','ggplot2','gridBase','gridExtra','grid','ggrepel',
               'lhs','matrixStats','backports','devtools','ellipse','tidyr','dplyr','reshape2','ggnewscale',
-              'purrr','openxlsx','tibble')
+              'purrr','openxlsx','tibble','cowplot') 
 installed_packages <- packages %in% rownames(installed.packages())
 if (any(installed_packages == FALSE)) {
   install.packages(packages[!installed_packages])
