@@ -2,10 +2,10 @@
 rm(list = ls()) 
 
 # Set working directory
-mainDir = "/Users/srs249/University of Michigan Dropbox/Sarah Skolnick/GitHub/mdse-microsim/"
-setwd(mainDir)
-# mainDir = "/Users/jt936/Dropbox/GitHub/mdse-microsim/"
+# mainDir = "/Users/srs249/University of Michigan Dropbox/Sarah Skolnick/GitHub/mdse-microsim/"
+mainDir = "/Users/jt936/Dropbox/GitHub/mdse-microsim/"
 # mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" 
+setwd(mainDir)
 
 hpc = 0
 calibration = 0 # need to set this to 0 so main_calib works and outputs proper matrix for main function
@@ -14,15 +14,15 @@ run_scenarios = 1 # set to 0 if you want to use pre-generated results, set to 1 
 #depression effect, 1 is incidence as fit and 0 is back to pre-2016 levels
 s.HD_2100 <- 1
 
-
+n.i <- 1000 # number of people per birth cohort
 policyyear <- 2028
 v.affected_ages <- c(0:99) # affects all ages
 d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by 3%
-d.year <- 2023 # which year to start discounting from
+d.year <- 2025 # which year to start discounting from
 
 
 
-args <- c("females",500, 2100) #no need to change this for now
+args <- c("females",n.i, 2100) #no need to change this for now
 source(paste0(mainDir,"R/01_environment.R"), echo=FALSE) #
 source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE)
 source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
@@ -108,7 +108,7 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   # Run the model -----------------------------------------------------------
   t.init = Sys.time()
   # SIMULATE FEMALE POPULATION
-  args <- c("females",500, 2100) # Parameters for HPC vs non-HPC setup
+  args <- c("females",n.i, 2100) # Parameters for HPC vs non-HPC setup
   source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE) 
   source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
   
@@ -133,7 +133,7 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   dfF_ND=reformat_model_outputs(l.results_ND)
   
   # SIMULATE MALE POPULATION
-  args <- c("males",500, 2100) # Parameters for HPC vs non-HPC setup
+  args <- c("males",n.i, 2100) # Parameters for HPC vs non-HPC setup
   source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE) 
   source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
 
