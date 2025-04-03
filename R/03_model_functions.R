@@ -682,30 +682,50 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   m.B_notD <- cohortage_to_cohortyear(m.B_notD)
   m.F_notD <- cohortage_to_cohortyear(m.F_notD)
   
-  # Get mortality counts by year
-   n.X = apply(m.M,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
-   n.X_D = apply(m.M_D,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
-   n.X_notD = apply(m.M_notD,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
-   
-   n.X =  n.X [paste0(d.year:max(cohorts))]
-   n.X_D = n.X_D[paste0(d.year:max(cohorts))]
-   n.X_notD=n.X_notD[paste0(d.year:max(cohorts))]
-   
-  # Get total person life-years by year
-  v.lifeyears = apply(m.M,2,function(x) sum(x!="X",na.rm=TRUE))
-  v.lifeyears_D = apply(m.M_D,2,function(x) sum(x!="X",na.rm=TRUE))
-  v.lifeyears_notD = apply(m.M_notD,2,function(x) sum(x!="X",na.rm=TRUE))
+  ## Get mortality counts by year, scaled to US population estimates of mortality
+  v.X = apply(m.M,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
+  s.X = (3279857 / v.X["2022"]) # Total number of US deaths in 2022: 3,279,857, so scale up the number of deaths by the 2022 ratio to reflect all US deaths. Each X = 4298.644 deaths
+  v.X_totalpop = v.X * s.X
+  v.X_D = apply(keep_X_with_left_D(m.M),2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's just among people who are depressed
+  v.X_Dpop = v.X_D * s.X
+  v.X_notDpop = v.X_totalpop - v.X_Dpop
+  v.X_totalpop =  v.X_totalpop[paste0(d.year:max(cohorts))]  # keep only years of interest
+  v.X_Dpop = v.X_Dpop[paste0(d.year:max(cohorts))]
+  v.X_notDpop=v.X_notDpop[paste0(d.year:max(cohorts))]
   
-  v.lifeyears <- v.lifeyears[paste0(d.year:max(cohorts))]
-  v.lifeyears_D <- v.lifeyears_D[paste0(d.year:max(cohorts))]
-  v.lifeyears_notD <- v.lifeyears_notD[paste0(d.year:max(cohorts))]
+  ## Get total person life-years by year, scaled to US population estimates of annual births 
+  m.personyears <- m.M[,paste0(cohorts)]
+  m.personyears[!is.na(m.personyears)] <- 1
+  m.personyears <- apply(m.personyears, 2, as.numeric)
   
+  m.personyears_D <- m.M_D[,paste0(cohorts)]
+  m.personyears_D[!is.na(m.personyears_D)] <- 1
+  m.personyears_D <- apply(m.personyears_D, 2, as.numeric)
+  
+  row_groups <- rep(1:length(cohorts), each=n.i) # group rows for each birth cohort
+  
+  # get number of personyears for each birth cohort as a row
+  m.personyears_bc <- rowsum(m.personyears, group=row_groups,na.rm=TRUE)
+  m.personyears_totalpop = m.personyears_bc * births[paste0(cohorts),] / n.i # scale up personyears for each birth cohort based on the number of actual births
+  
+  m.personyears_bc_D <- rowsum(m.personyears_D, group=row_groups,na.rm=TRUE)
+  m.personyears_Dpop <- m.personyears_bc_D* births[paste0(cohorts),] / n.i 
+  m.personyears_notDpop <- m.personyears_totalpop-m.personyears_Dpop
+  
+  # Person life-years scaled to US population estimates
+  v.lifeyears_totalpop = colSums(m.personyears_totalpop)[paste0(d.year:max(cohorts))]
+  v.lifeyears_Dpop = colSums(m.personyears_Dpop)[paste0(d.year:max(cohorts))]
+  v.lifeyears_notDpop = colSums(m.personyears_notDpop)[paste0(d.year:max(cohorts))]
+  
+  # Person life-years, NOT scaled
+  v.lifeyears = apply(m.M,2,function(x) sum(x!="X",na.rm=TRUE))[paste0(d.year:max(cohorts))]
+  v.lifeyears_D = apply(m.M_D,2,function(x) sum(x!="X",na.rm=TRUE))[paste0(d.year:max(cohorts))]
+  v.lifeyears_notD = apply(m.M_notD,2,function(x) sum(x!="X",na.rm=TRUE))[paste0(d.year:max(cohorts))]
   
   #Get mortality rate by year for each state.Check this with Jamie
-  v.deathrate=n.X/v.lifeyears
-  v.deathrate_D=n.X_D/v.lifeyears_D
-  v.deathrate_notD=n.X_notD/v.lifeyears_notD
-  
+  v.deathrate=v.X/v.lifeyears
+  v.deathrate_D=v.X_D/v.lifeyears_D
+  v.deathrate_notD=(v.X - v.X_D)/v.lifeyears_notD
   
   
   # Output prevalence results as a list -------------------------------------
@@ -805,7 +825,7 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   m.total_cuw_notD <- m.total_cuw - m.total_cuw_D
   rownames(m.total_cuw) <- rownames(m.total_cuw_D) <- rownames(m.total_cuw_notD) <- c("med_costs","QALYs","productivity","consumer_exp","soc_costs","lifeyears","YLL")
   
-  # Assume 2023 is the starting year for discounting purposes, calculate discount weight based on the discount rate d.c
+  # Assume d.year is the starting year for discounting purposes, calculate discount weight based on the discount rate d.c
   v.d = c( c(1 / (1 + d.c) ^ (0:(ncol(m.total_cuw)-1)))) # vector of discount weights
   
   # Total discounted costs, QALYs, and productivity
@@ -818,20 +838,49 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   m.cuw_D <- t(m.d_total_cuw_D[,as.character(v.year_range)])
   m.cuw_notD <- t(m.d_total_cuw_notD[,as.character(v.year_range)])
   
+  # discounted lifeyears
+  v.d_lifeyears_totalpop <- v.lifeyears_totalpop*v.d
+  v.d_lifeyears_Dpop <- v.lifeyears_Dpop*v.d
+  v.d_lifeyears_notDpop <- v.lifeyears_notDpop*v.d
+  
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer
 
   # Output results as two lists: one for general population, and one for depressed population
-  l.results <- list(l.model_prevs = l.model_prevs, m.cuw=m.cuw, v.lifeyears=v.lifeyears, v.SAD=v.SAD, v.yll = v.yll,
-                        init = p.NC, cess = p.CF, m.prev_C=m.prev_C, m.prev_F = m.prev_F, m.prev_N=m.prev_N,  v.deathrate= v.deathrate)
+  l.results <- list(l.model_prevs = l.model_prevs, m.cuw=m.cuw, 
+                    v.lifeyears=v.lifeyears, v.lifeyears_pop = v.lifeyears_totalpop, v.d_lifeyears_pop = v.d_lifeyears_totalpop, 
+                    v.SAD=v.SAD, v.yll = v.yll,
+                    init = p.NC, cess = p.CF, m.prev_C=m.prev_C, m.prev_F = m.prev_F, m.prev_N=m.prev_N,  v.X=v.X_totalpop, v.deathrate= v.deathrate)
     
-  l.results_D <- list(l.model_prevs = l.model_prevs_D, m.cuw=m.cuw_D, v.lifeyears=v.lifeyears_D, v.SAD=v.SAD_D,  v.yll = v.yll_D,
-                        init = p.NC_D, cess = rr.CD.FD*p.CF, m.prev_C=m.prev_C_D, m.prev_F = m.prev_F_D, m.prev_N=m.prev_N_D, v.deathrate_D= v.deathrate_D)
+  l.results_D <- list(l.model_prevs = l.model_prevs_D, m.cuw=m.cuw_D, 
+                      v.lifeyears=v.lifeyears_D, v.lifeyears_pop = v.lifeyears_Dpop, v.d_lifeyears_pop = v.d_lifeyears_Dpop, 
+                      v.SAD=v.SAD_D,  v.yll = v.yll_D,
+                      init = p.NC_D, cess = rr.CD.FD*p.CF, m.prev_C=m.prev_C_D, m.prev_F = m.prev_F_D, m.prev_N=m.prev_N_D, v.X=v.X_Dpop, v.deathrate_D= v.deathrate_D)
   
-  l.results_notD <- list(l.model_prevs=l.model_prevs_notD, m.cuw=m.cuw_notD , v.lifeyears = v.lifeyears_notD, v.SAD=v.SAD_notD, v.yll = v.yll_notD,
-                         init = p.NC, cess = p.CF, m.prev_C=m.prev_C_notD, m.prev_F = m.prev_F_notD, m.prev_N=m.prev_N_notD, v.deathrate_notD= v.deathrate_notD)
+  l.results_notD <- list(l.model_prevs=l.model_prevs_notD, m.cuw=m.cuw_notD , 
+                         v.lifeyears = v.lifeyears_notD, v.lifeyears_pop = v.lifeyears_notDpop, v.d_lifeyears_pop = v.d_lifeyears_notDpop, 
+                         v.SAD=v.SAD_notD, v.yll = v.yll_notD,
+                         init = p.NC, cess = p.CF, m.prev_C=m.prev_C_notD, m.prev_F = m.prev_F_notD, m.prev_N=m.prev_N_notD, v.X=v.X_notDpop, v.deathrate_notD= v.deathrate_notD)
   
   return(list(l.results=l.results, l.results_D = l.results_D, l.results_notD=l.results_notD))
+}
+
+# Keep only deaths among people who were depressed at the previous time step
+keep_X_with_left_D <- function(mat) {
+  # Get matrix dimensions
+  nrow_mat <- nrow(mat)
+  ncol_mat <- ncol(mat)
+  # Create a matrix of NAs to store the result
+  result <- matrix(NA, nrow = nrow_mat, ncol = ncol_mat)
+  # Identify positions where mat == "X"
+  X_positions <- which(mat == "X", arr.ind = TRUE)
+  # Check if the left-adjacent cell contains "D" in its string
+  valid_positions <- X_positions[X_positions[, 2] > 1 & grepl("D", mat[cbind(X_positions[, 1], X_positions[, 2] - 1)]), ]
+  # Retain only valid "X" positions
+  if (nrow(valid_positions) > 0) {
+    result[cbind(valid_positions[, 1], valid_positions[, 2])] <- "X"
+  }
+  return(result)
 }
 
 run_policy <- function(policy) {
