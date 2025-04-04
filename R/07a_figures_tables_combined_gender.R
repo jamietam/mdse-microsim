@@ -1,6 +1,7 @@
 # create subdirectory for figures based on today's date
 figDir <- format(as.POSIXct(Sys.time()), "%m.%d.%y")
 dir.create(file.path(mainDir, "output", figDir), showWarnings = FALSE)
+wb <- createWorkbook()
 
 
 
@@ -78,9 +79,12 @@ df.MDSE <-df.MDSE %>%
 df.MDSE<-cbind(df.MDSE,df.baseline)
 df.MDSE<-df.MDSE[c("year", "scenario1","B_D", "D","B_ND", "ND", "B_T","T","B_absdiff" , "absdiff" ,"B_prevratio", "prevratio", "B_reldiff", "reldiff")]
 
-write.xlsx(df.MDSE, file = paste0(mainDir, "output/",figDir,"/Prevalance_allgender_MDSE.xlsx"))
-write.xlsx(df.prevs, file = paste0(mainDir, "output/",figDir,"/Prevalance_sensitivity.xlsx"))
+# add first sheet and write the data
+addWorksheet(wb, "Prevalance_allgender_MDSE")
+writeData(wb, "Prevalance_allgender_MDSE", df.MDSE)
 
+addWorksheet(wb, "Prevalance_sensitivity")
+writeData(wb, "Prevalance_sensitivity", df.prevs)
 
 
 # HEALTH OUTCOMES ---------------------------------------------------------
@@ -165,9 +169,11 @@ resultsMDSE_fH <-resultsMDSE_H %>%
 resultsMDSE_fH1<-cbind(resultsMDSE_fH,resultsbaseline_fH)
 resultsMDSE_fH<-resultsMDSE_fH1[c("scenario1","prevalence_type","B_D","D","B_ND","ND","B_T","T")]
 
+addWorksheet(wb, "HealthOutcomes_allgender_MDSE")
+writeData(wb, "HealthOutcomes_allgender_MDSE", resultsMDSE_fH)
 
-write.xlsx(resultsMDSE_fH , file = paste0(mainDir, "output/",figDir,"/HealthOutcomes_allgender_MDSE.xlsx"))
-write.xlsx(dataframe , file = paste0(mainDir, "output/",figDir,"/HealthOutcomes_sensitivity.xlsx"))
+addWorksheet(wb, "HealthOutcomes_sensitivity")
+writeData(wb, "HealthOutcomes_sensitivity", dataframe)
 
 
 # COST OUTCOMES -----------------------------------------------------------
@@ -218,8 +224,13 @@ resultsMDSE_C <- map_dfr(outcome_columns, process_prevalence_H)
 resultsMDSE_fC <-resultsMDSE_C %>%
   pivot_wider(names_from = population, values_from = prevalence1)
 
-write.xlsx(resultsMDSE_fC, file = paste0(mainDir, "output/",figDir,"/COSTS_Table_allgender_MDSE.xlsx"))
-write.xlsx(COSTS, file = paste0(mainDir, "output/",figDir,"/COSTS_Table_sensitivity.xlsx"))
+addWorksheet(wb, "COSTS_Table_allgender_MDSE")
+writeData(wb, "COSTS_Table_allgender_MDSE", resultsMDSE_fC)
+
+addWorksheet(wb, "COSTS_Table_sensitivity")
+writeData(wb, "COSTS_Table_sensitivity", COSTS)
+
+saveWorkbook(wb, file = paste0(mainDir, "output/",figDir,"/Tables.xlsx"), overwrite=TRUE)
 
 
 # FIGURE FUNCTIONS --------------------------------------------------------
@@ -251,7 +262,7 @@ grid_arrange_shared_legend <- function(plots, nrow=NULL, ncol=NULL, titletext) {
 #Prevalence Figures functions: columns of smoking prev, ecig prev, dual use prev and rows by mental health
 
 
-prev_by_status <- function(data, status_value, population_value, age_filter, ylim) {
+prev_by_status <- function(data, status_value, population_value, age_filter, ylim, ybreaks=NULL) {
   df_filtered <- subset(data, status == status_value &  population == population_value & age==age_filter)
   
   df_filtered <- df_filtered %>%
@@ -268,7 +279,7 @@ prev_by_status <- function(data, status_value, population_value, age_filter, yli
   }else if (status_value=="CE"){dep.calib="CE_D"
   }else if (status_value=="NE"){dep.calib="NE_D"
   }else if (status_value=="FE"){dep.calib="FE_Dr"}
-  }else{outcomelabel="Never MD"
+  }else{outcomelabel="No MD"
   dep.calib=status_value}
   
   if (status_value=="C"){outcomelabel2=" Current Smoking"
@@ -278,7 +289,8 @@ prev_by_status <- function(data, status_value, population_value, age_filter, yli
   }else if (status_value=="CE"){outcomelabel2=" Dual Use"
   }else if (status_value=="NE"){outcomelabel2=" Never smoking, e-cig use"
   }else if (status_value=="FE"){outcomelabel2=" Former smoking, e-cig use"
-  }else{outcomelabel2=" help"}
+  }else if (status_value=="D"){outcomelabel2=" Current MD"
+  } else {outcomelabel2=" help"}
   
   plot<- ggplot() +
     geom_pointrange(data = subset(df.calib_targets, status == dep.calib& age==as.numeric(age_filter)), 
@@ -292,12 +304,12 @@ prev_by_status <- function(data, status_value, population_value, age_filter, yli
                 fill = "lightblue", alpha = 0.6)+
     # Additional customization
     scale_color_manual(values = c("NSDUH Data" = "black", "RNC Policy Scenario" = "blue","Baseline Scenario" = "black")) +
-    labs(title = paste0(outcomelabel,outcomelabel2),
+    labs(title = paste0(outcomelabel,", ",outcomelabel2," ages ",age_filter),
          x = "Year",
          y = paste0(outcomelabel2," Prevalence"),
          color = "") +
     scale_x_continuous(limits = c(2005,2100),breaks = c(2005,seq(2025,2100,25)))+
-    scale_y_continuous(limits = c(0,ylim))+
+    scale_y_continuous(limits = c(0,ylim), breaks=ybreaks)+
     theme_minimal()+
     theme(legend.position = "bottom", legend.direction = "horizontal") 
   return(plot)
@@ -332,9 +344,9 @@ ECIGonly <- function(data, population_value, age_filter, ylim) {
                 fill = "lightblue", alpha = 0.6)+
     # Additional customization
     scale_color_manual(values = c("NSDUH Data" = "black", "RNC Policy Scenario" = "blue","Baseline Scenario" = "black")) +
-    labs(title = paste0(outcomelabel,outcomelabel2),
+    labs(title = paste0(population_value),
          x = "Year",
-         y = paste0(outcomelabel2," Prevalence"),
+         y = "Prevalence",
          color = "") +
     scale_x_continuous(limits = c(2005,2100),breaks = c(2005,seq(2025,2100,25)))+
     scale_y_continuous(limits = c(0,ylim))+
@@ -430,6 +442,8 @@ CND<-prev_by_status(df.prevs_comb, "C", "ND","18.99",0.5) + theme(legend.positio
 END<-prev_by_status(df.prevs_comb, "E", "ND","18.99",0.3) + theme(legend.position = "none")
 dualND<-prev_by_status(df.prevs_comb, "CE", "ND","18.99",0.11) + theme(legend.position = "none")
 
+MDE_18.99<-prev_by_status(df.prevs_comb,"D","T","18.99",0.14, seq(0,0.24,0.02))
+MDE_18.25<-prev_by_status(df.prevs_comb,"D","T","18.25",0.24, seq(0,0.24,0.02))
 #ECIG only figures
 #Subtract prevalence of dual users minus all vapers
 E_onlyT<-ECIGonly(df.prevs_comb,"T","18.99",.2)
@@ -574,6 +588,9 @@ jpeg(paste0("output/",figDir,"/cLYGgrid.jpeg"), width = 9, height = 3.5, units =
 grid.arrange(cYLLT,cYLLD, ncol = 2, nrow = 1)
 dev.off()
 
+jpeg(paste0("output/",figDir,"/MDE.jpeg"), width = 4.5, height = 5.5, units = "in", res = 500)
+MDE
+dev.off()
 
 # DIAGNOSTIC FIGURES PDF --------------------------------------------------
 
@@ -592,5 +609,6 @@ grid_arrange_shared_legend(list(E_onlyT,E_onlyD,E_onlyND),1,3,"Exclusive Vaping 
 grid_arrange_shared_legend(list(NE_age, CE_age, FE_age),1,3,"Smoking and Vaping Status Age Distribution in the Total Population")
 grid_arrange_shared_legend(list(NE_D_age, CE_D_age, FE_D_age),1,3,"Smoking and Vaping Status Age Distribution in the Depressed Population")
 grid.arrange(Cost_MED, Cost_SOC, Cost_PROD, nrow = 1, ncol = 3)# inputs
+grid_arrange_shared_legend(list(MDE_18.99,MDE_18.25),1,2,"MD prevalence")
 dev.off()
 

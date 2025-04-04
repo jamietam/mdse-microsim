@@ -14,7 +14,7 @@ run_scenarios = 1 # set to 0 if you want to use pre-generated results, set to 1 
 #depression effect, 1 is incidence as fit and 0 is back to pre-2016 levels
 s.HD_2100 <- 1
 
-n.i <- 1000 # number of people per birth cohort
+n.i <- 5000 # number of people per birth cohort
 policyyear <- 2028
 v.affected_ages <- c(0:99) # affects all ages
 d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by 3%
@@ -37,18 +37,18 @@ load(paste0(mainDir,"data/nsduh_calib_targets_both.RData")) # Load NSDUH data
 
 params <- list(
   baseline = NULL,
-  baseline2 =  c(1,1, 1, 1, 1, 1, 1,1, 1,1,0),
+  # baseline2 =  c(1,1, 1, 1, 1, 1, 1,1, 1,1,0),
   worst = c(1-0.38,1-0.39, 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75,0.1), #worst case
   main = c(1-0.63,1-0.65,0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5,0.1), #expected
-  best = c(1-0.83,1-0.85, 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2,0.1), #best case
-  MPRPM = c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0),
-  #One way Sensitivity analysis (of MPRPM)
-  Init_Sens= c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0),
-  Cess_Sens= c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0),
-  CO.CE_Sens= c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0),
-  CO.FE_Sens= c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0),
-  NO.NE_Sens= c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0)
-  #Sensitivity analysis (Depression)
+  best = c(1-0.83,1-0.85, 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2,0.1)#, #best case
+  # MPRPM = c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0),
+  # #One way Sensitivity analysis (of MPRPM)
+  # Init_Sens= c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0),
+  # Cess_Sens= c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0),
+  # CO.CE_Sens= c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0),
+  # CO.FE_Sens= c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0),
+  # NO.NE_Sens= c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0)
+  # #Sensitivity analysis (Depression)
   
   #FDA
   #FDA_est = c(1-0.63,1-0.65,"FDA",0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5), #expected

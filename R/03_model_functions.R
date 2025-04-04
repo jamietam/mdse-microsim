@@ -14,7 +14,7 @@
 # Probs:   function for the estimation of transition probabilities
 # Costs:   function for the estimation of cost state values
 # Effs:    function for the estimation of state specific health outcomes (QALYs)
-mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, seed = 1) {
+mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, seed = 59) {
   set.seed(seed)                                      # set the seed for every individual for the random number generator
   
   v.ysq <- rep(n.i, 0) # vector counting how many years since quit
