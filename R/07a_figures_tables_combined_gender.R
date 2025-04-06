@@ -8,6 +8,7 @@ dir.create(file.path(mainDir, "output", figDir), showWarnings = FALSE)
 #Obtain table of outcomes for smoking, deaths, and disparities:
 #Combine model prevs counts, alive and dead 
 #Combine by gender
+
 #Total
 df.prevs= as.data.frame(dfF[[1]][,4:6])+as.data.frame(dfM[[1]][,4:6])
 df.prevs=cbind(dfF[[1]][,1:2],df.prevs,dfM[[1]][,7:8])
@@ -44,8 +45,7 @@ df.prevs$T <- paste0(sprintf("%.1f", df.prevs$T * 100), "%")
 df.prevs$D <- paste0(sprintf("%.1f", df.prevs$D * 100), "%")
 df.prevs$ND <- paste0(sprintf("%.1f", df.prevs$ND * 100), "%")
 df.prevs$absdiff <- paste0(sprintf("%.1f", df.prevs$absdiff * 100), "%")
-df.prevs$reldiff <- sprintf("%.1f", df.prevs$reldiff)  
-df.prevs$prevratio <- sprintf("%.1f", df.prevs$prevratio)  
+
 
 # Function to process each prevalence column
 process_prevalence <- function(column_name) {
@@ -56,14 +56,14 @@ process_prevalence <- function(column_name) {
     summarize(
       scenario1 = list(c(sw[1], paste0(sw[2],",",sw[3]))),
       prevalence1 = list(
-        c(paste0(prevalence[scenario ==sw[1]]),paste0( "(",prevalence[scenario == sw[2]],", ", prevalence[scenario == sw[3]],  ")" ) ) ),
+        c(paste0(prevalence[scenario ==sw[1]]),paste0( "(",prevalence[scenario == sw[2]]," - ", prevalence[scenario == sw[3]],  ")" ) ) ),
       .groups = 'drop' ) %>%
     unnest(cols = c(scenario1, prevalence1)) %>%
     mutate(prevalence_type = column_name) # Add a column to identify the prevalence type
 }
 
 # List of prevalence columns to process
-outcome_columns<-c("T", "D", "ND", "absdiff","prevratio", "reldiff")
+outcome_columns<-c("T", "D", "ND", "absdiff")
 # Apply the function to each prevalence column and combine the results
 dataframe<-df.prevs
 sw<- c("baseline","baseline","baseline") #scenarios
@@ -76,10 +76,10 @@ df.MDSE <- map_dfr(outcome_columns, process_prevalence)
 df.MDSE <-df.MDSE %>%
   pivot_wider(names_from = prevalence_type, values_from = prevalence1)
 df.MDSE<-cbind(df.MDSE,df.baseline)
-df.MDSE<-df.MDSE[c("year", "scenario1","B_D", "D","B_ND", "ND", "B_T","T","B_absdiff" , "absdiff" ,"B_prevratio", "prevratio", "B_reldiff", "reldiff")]
+df.MDSE<-df.MDSE[c("year", "scenario1","B_D", "D","B_ND", "ND", "B_T","T","B_absdiff" , "absdiff" )]
 
-write.xlsx(df.MDSE, file = paste0(mainDir, "output/",figDir,"/Prevalance_allgender_MDSE.xlsx"))
-write.xlsx(df.prevs, file = paste0(mainDir, "output/",figDir,"/Prevalance_sensitivity.xlsx"))
+write.xlsx(df.MDSE, file = paste0(mainDir, "output/",figDir,"/1a.Table1_Prevalences.xlsx"), sheetName="papertable1", append=TRUE)
+#write.xlsx(df.prevs, file = paste0(mainDir, "output/",figDir,"/PrevalenceTableSensitivity.xlsx"), sheetName="sensitivity", append=TRUE)
 
 
 
@@ -87,7 +87,11 @@ write.xlsx(df.prevs, file = paste0(mainDir, "output/",figDir,"/Prevalance_sensit
 #Health outcomes
 #Combine model prevs counts, alive and dead for gender.
 #PLEASE NOTE DEATH RATE SHOULD NOT BE ADDED
+#Health outcomes for sensitivity
+
 nc=ncol(dfM[[3]])
+Health=dfM[[3]][,6:nc]+dfF[[3]][,6:nc]
+Health=cbind(dfM[[3]][,1:2],Health)
 Health=dfM[[3]][,6:nc]+dfF[[3]][,6:nc]
 Health=cbind(dfM[[3]][,1:2],Health)
 Health_D=dfM_D[[3]][,6:nc]+dfF_D[[3]][,6:nc]
@@ -136,6 +140,16 @@ dataframe$percentage_change_yll <- paste0(sprintf("%.1f", dataframe$percentage_c
 dataframe$percentage_change_sad <- paste0(sprintf("%.1f", dataframe$percentage_change_sad * 100), "%")
 
 
+sensitivity1<-dataframe %>%
+  filter(population == "T" , scenario %in% c("MPRPM","main","Init_Sens","Cess_Sens","CO.CE_Sens","CO.FE_Sens","NO.NE_Sens"))%>%
+  select(scenario,cSAD_averted)
+a=sensitivity1[sensitivity1$scenario=="MPRPM",]
+b=sensitivity1[sensitivity1$scenario=="main",]
+sensitivity1[1,]=a
+sensitivity1[2,]=b
+sensitivity1$per_MPRPM <- as.numeric(sensitivity1$cSAD_averted)/as.numeric(sensitivity1$cSAD_averted[sensitivity1$scenario=="MPRPM"])
+sensitivity1$per_MPRPM<-paste0(sprintf("%.1f", sensitivity1$per_MPRPM * 100), "%")
+
 # Function to process each prevalence column
 process_prevalence_H <- function(column_name) {
   dataframe %>%
@@ -145,7 +159,7 @@ process_prevalence_H <- function(column_name) {
     summarize(
       scenario1 = list(c(sw[1], paste0(sw[2],",",sw[3]))),
       prevalence1 = list(
-        c(paste0(prevalence[scenario ==sw[1]]),paste0( "(",prevalence[scenario == sw[2]],", ", prevalence[scenario == sw[3]],  ")" ) ) ),
+        c(paste0(prevalence[scenario ==sw[1]]),paste0( "(",prevalence[scenario == sw[2]]," - ", prevalence[scenario == sw[3]],  ")" ) ) ),
       .groups = 'drop' ) %>%
     unnest(cols = c(scenario1, prevalence1)) %>%
     mutate(prevalence_type = column_name) # Add a column to identify the prevalence type
@@ -166,8 +180,9 @@ resultsMDSE_fH1<-cbind(resultsMDSE_fH,resultsbaseline_fH)
 resultsMDSE_fH<-resultsMDSE_fH1[c("scenario1","prevalence_type","B_D","D","B_ND","ND","B_T","T")]
 
 
-write.xlsx(resultsMDSE_fH , file = paste0(mainDir, "output/",figDir,"/HealthOutcomes_allgender_MDSE.xlsx"))
-write.xlsx(dataframe , file = paste0(mainDir, "output/",figDir,"/HealthOutcomes_sensitivity.xlsx"))
+write.xlsx(resultsMDSE_fH , file = paste0(mainDir, "output/",figDir,"/1a.Table2_HealthOutcomes.xlsx"))
+# write.xlsx(dataframe , file = paste0(mainDir, "output/",figDir,"/HealthOutcomes_sensitivity.xlsx"))
+write.xlsx(sensitivity1 , file = paste0(mainDir, "output/",figDir,"/1b.eTable5_SensitivyMPRPM.xlsx"))
 
 
 # COST OUTCOMES -----------------------------------------------------------
@@ -208,18 +223,33 @@ COSTS$cons_US=round(COSTS$icer_consLY * COSTS$cYLL_averted_LYG_disc/1000000000,1
 
 ICERALL<- COSTS[c("year","scenario","population","icer_medQALY","icer_socQALY","icer_prodQALY","icer_consQALY","icer_medLY","icer_socLY","icer_prodLY","icer_consLY","MED_cost_US","SOC_cost_US","Prod_US","cons_US")]
 
-outcome_columns<-c("icer_medQALY","icer_consQALY","icer_prodQALY","icer_medLY","icer_consLY","icer_prodLY","MED_cost_US","cons_US","Prod_US")
+outcome_columns<-c("icer_medQALY","icer_socQALY","icer_medLY","icer_socLY","MED_cost_US","cons_US","Prod_US","SOC_cost_US")
+ICERALL[outcome_columns] <- lapply(ICERALL[outcome_columns], function(x) trimws(format(round(x, 0), big.mark = ",")))
+
 dataframe<-ICERALL %>%
   filter(year == 2100)
-
+process_prevalence_C <- function(column_name) {
+  dataframe %>%
+    select(population, scenario, one_of(column_name)) %>%
+    rename(prevalence = column_name) %>%
+    group_by(population) %>%
+    summarize(
+      scenario1 = list(c(sw[1], paste0(sw[2],",",sw[3]))),
+      prevalence1 = list(
+        c(paste0(prevalence[scenario ==sw[1]]),paste0( "(",prevalence[scenario == sw[2]]," - ", prevalence[scenario == sw[3]],  ")" ) ) ),
+      .groups = 'drop' ) %>%
+    unnest(cols = c(scenario1, prevalence1)) %>%
+    mutate(prevalence_type = column_name) # Add a column to identify the prevalence type
+}
 
 sw<- c("main", "worst","best")
-resultsMDSE_C <- map_dfr(outcome_columns, process_prevalence_H)
+resultsMDSE_C <- map_dfr(outcome_columns, process_prevalence_C)
 resultsMDSE_fC <-resultsMDSE_C %>%
   pivot_wider(names_from = population, values_from = prevalence1)
 
-write.xlsx(resultsMDSE_fC, file = paste0(mainDir, "output/",figDir,"/COSTS_Table_allgender_MDSE.xlsx"))
-write.xlsx(COSTS, file = paste0(mainDir, "output/",figDir,"/COSTS_Table_sensitivity.xlsx"))
+
+write.xlsx(resultsMDSE_fC, file = paste0(mainDir, "output/",figDir,"/1a.Table3_COSTS.xlsx"))
+#write.xlsx(COSTS, file = paste0(mainDir, "output/",figDir,"/COSTS_Table_sensitivity.xlsx"))
 
 
 # FIGURE FUNCTIONS --------------------------------------------------------
@@ -243,11 +273,11 @@ grid_arrange_shared_legend <- function(plots, nrow=NULL, ncol=NULL, titletext) {
 }
 
 # prev_by_status(df.prevs_comb, "C", "T","18.99",0.5)
-# data=df.prevs_comb
-# status_value="C"
-# population_value="T"
-# age_filter="18.99"
-# ylim=.5
+data=df.prevs_comb
+status_value="D"
+population_value="T"
+age_filter="18.99"
+ylim=.15
 #Prevalence Figures functions: columns of smoking prev, ecig prev, dual use prev and rows by mental health
 
 
@@ -261,15 +291,9 @@ prev_by_status <- function(data, status_value, population_value, age_filter, yli
   if (population_value=="T"){outcomelabel="Total Population"
   dep.calib=status_value
   }else if (population_value=="D"){outcomelabel="Current MD"
-  if (status_value=="C"){dep.calib="C_D"
-  }else if (status_value=="E"){dep.calib="E_D"
-  }else if (status_value=="F"){dep.calib="F_D"
-  }else if (status_value=="N"){dep.calib="N_D"
-  }else if (status_value=="CE"){dep.calib="CE_D"
-  }else if (status_value=="NE"){dep.calib="NE_D"
-  }else if (status_value=="FE"){dep.calib="FE_Dr"}
-  }else{outcomelabel="Never MD"
-  dep.calib=status_value}
+  dep.calib=paste0(status_value,"_D")
+  }else{outcomelabel="No current MD"
+  dep.calib=paste0(status_value,"_ND")}
   
   if (status_value=="C"){outcomelabel2=" Current Smoking"
   }else if (status_value=="E"){outcomelabel2=" E-cigarette Use"
@@ -278,18 +302,20 @@ prev_by_status <- function(data, status_value, population_value, age_filter, yli
   }else if (status_value=="CE"){outcomelabel2=" Dual Use"
   }else if (status_value=="NE"){outcomelabel2=" Never smoking, e-cig use"
   }else if (status_value=="FE"){outcomelabel2=" Former smoking, e-cig use"
+  }else if (status_value=="D"){outcomelabel1=""
+    outcomelabel2="Population with Current MD"
   }else{outcomelabel2=" help"}
   
   plot<- ggplot() +
-    geom_pointrange(data = subset(df.calib_targets, status == dep.calib& age==as.numeric(age_filter)), 
-                    aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, color = "NSDUH Data"),size = .5) +
+   # geom_pointrange(data = subset(df.calib_targets, status == dep.calib & age==as.numeric(age_filter)), 
+    #                aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, color = "NSDUH Data"),size = .5) +
     # Scenario 1 line
     geom_line(data = df_filtered, aes(x = year, y = main, color = "RNC Policy Scenario"), size = 1) +
     geom_line(data = df_filtered, aes(x = year, y = baseline, color = "Baseline Scenario"), size = 1) +
     # Confidence interval ribbon
-    geom_ribbon(data = df_filtered,
-                aes(x = year, ymin = worst, ymax = best),
-                fill = "lightblue", alpha = 0.6)+
+    # geom_ribbon(data = df_filtered,
+    #             aes(x = year, ymin = worst, ymax = best),
+    #             fill = "lightblue", alpha = 0.6)+
     # Additional customization
     scale_color_manual(values = c("NSDUH Data" = "black", "RNC Policy Scenario" = "blue","Baseline Scenario" = "black")) +
     labs(title = paste0(outcomelabel,outcomelabel2),
@@ -302,6 +328,8 @@ prev_by_status <- function(data, status_value, population_value, age_filter, yli
     theme(legend.position = "bottom", legend.direction = "horizontal") 
   return(plot)
 }
+
+
 
 #ECIGonly(df.prevs_comb,"T","18.99",.2)
 ECIGonly <- function(data, population_value, age_filter, ylim) {
@@ -332,9 +360,9 @@ ECIGonly <- function(data, population_value, age_filter, ylim) {
                 fill = "lightblue", alpha = 0.6)+
     # Additional customization
     scale_color_manual(values = c("NSDUH Data" = "black", "RNC Policy Scenario" = "blue","Baseline Scenario" = "black")) +
-    labs(title = paste0(outcomelabel,outcomelabel2),
+    labs(title = paste0("Vaping",population_value ),
          x = "Year",
-         y = paste0(outcomelabel2," Prevalence"),
+         y = paste0(" Prevalence"),
          color = "") +
     scale_x_continuous(limits = c(2005,2100),breaks = c(2005,seq(2025,2100,25)))+
     scale_y_continuous(limits = c(0,ylim))+
@@ -415,7 +443,13 @@ plotCosts_ <- function(data,population_value, outcome,ylim) {
   return(plot)
 }
 
-
+# Utility function to extract the legend from a ggplot object
+get_legend <- function(myggplot) {
+  tmp <- ggplotGrob(myggplot)
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+}
 # SPECIFY FIGURES ---------------------------------------------------------
 #ages: 18.25 18.99 26.34 35.49 50.64 65.99 
 #Smoking, ECIG and DUAL prevalence
@@ -429,6 +463,14 @@ dualD<-prev_by_status(df.prevs_comb, "CE", "D","18.99",0.11) + theme(legend.posi
 CND<-prev_by_status(df.prevs_comb, "C", "ND","18.99",0.5) + theme(legend.position = "none")
 END<-prev_by_status(df.prevs_comb, "E", "ND","18.99",0.3) + theme(legend.position = "none")
 dualND<-prev_by_status(df.prevs_comb, "CE", "ND","18.99",0.11) + theme(legend.position = "none")
+
+Dep<-prev_by_status(df.prevs_comb, "D", "T","18.99",0.15) + theme(legend.position = "none")
+
+
+pdf(paste0("output/",figDir,"/1dep.pdf"), width = 10, height = 10)
+Dep
+dev.off()
+
 
 #ECIG only figures
 #Subtract prevalence of dual users minus all vapers
@@ -452,18 +494,18 @@ Cost_MED <-  plotCosts_(COSTS,"T","MED_cost_US",1000)
 Cost_PROD <- plotCosts_(COSTS,"T","Prod_US",1000) 
 
 # Distribution in total population #prev_by_status(df.prevs_comb, "C", "T",FALSE,"18.99",0.5) 
-N_age <- prev_by_status(df.prevs_comb, "N", "T","18.99",0.5) 
+N_age <- prev_by_status(df.prevs_comb, "N", "T","18.99",1) 
 C_age <- prev_by_status(df.prevs_comb, "C", "T","18.99",0.5) 
 F_age <- prev_by_status(df.prevs_comb, "F", "T","18.99",0.5) 
-D_age <- prev_by_status(df.prevs_comb, "C", "T","18.99",0.5) 
+D_age <- prev_by_status(df.prevs_comb, "D", "T","18.99",0.1) 
 
 E_age <- prev_by_status(df.prevs_comb, "E", "T","18.99",0.5) 
 NE_age <- prev_by_status(df.prevs_comb, "NE", "T","18.99",0.5) 
 CE_age <- prev_by_status(df.prevs_comb, "CE", "T","18.99",0.5) 
-FE_age <- prev_by_status(df.prevs_comb, "CE", "T","18.99",0.5) 
+FE_age <- prev_by_status(df.prevs_comb, "FE", "T","18.99",0.5) 
 
 # Distribution in MDE population
-N_D_age <- prev_by_status(df.prevs_comb, "N", "D","18.99",0.5) 
+N_D_age <- prev_by_status(df.prevs_comb, "N", "D","18.99",1) 
 C_D_age <-  prev_by_status(df.prevs_comb, "C", "D","18.99",0.5) 
 F_D_age <-  prev_by_status(df.prevs_comb, "F", "D","18.99",0.5) 
 E_D_age <-  prev_by_status(df.prevs_comb, "E", "D","18.99",0.5) 
@@ -476,26 +518,83 @@ FE_D_age <-  prev_by_status(df.prevs_comb, "FE", "D","18.99",0.5)
 NCFE_total_B <- ggplot() +
   geom_line(data = subset(df.prevs_comb, age == 18.99 & (status == "N" | status == "C" | status == "F"| status =="E") & population=="T"& scenario=="baseline"),  
             aes(x = year, y = prev, color = status)) +
-  labs(title = paste0("Tobacco use - ", " ages 18-99")) +
+  labs(title = paste0("Tobacco use total - ", " ages 18-99")) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1), legend.title = element_blank())
 
 NCFE_D_B <- ggplot() +
   geom_line(data = subset(df.prevs_comb, age == 18.99 & (status == "N" | status == "C" | status == "F"| status =="E") & population=="D"& scenario=="baseline"),  
             aes(x = year, y = prev, color = status)) +
-  labs(title = paste0("Tobacco use - ", " ages 18-99")) +
+  labs(title = paste0("Tobacco use MDE - ", " ages 18-99")) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1), legend.title = element_blank())
 NCFE_total_MDSE <- ggplot() +
   geom_line(data = subset(df.prevs_comb, age == 18.99 & (status == "N" | status == "C" | status == "F"| status =="E") & population=="T"& scenario=="main"),  
             aes(x = year, y = prev, color = status)) +
-  labs(title = paste0("Tobacco use - ", " ages 18-99")) +
+  labs(title = paste0("Tobacco use total- ", " ages 18-99")) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1), legend.title = element_blank())
 
 NCFE_D_MDSE <- ggplot() +
   geom_line(data = subset(df.prevs_comb, age == 18.99 & (status == "N" | status == "C" | status == "F"| status =="E") & population=="D"& scenario=="main"),  
             aes(x = year, y = prev, color = status)) +
-  labs(title = paste0("Tobacco use - ", " ages 18-99")) +
+  labs(title = paste0("Tobacco use MDE- ", " ages 18-99")) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1), legend.title = element_blank())
 
+
+df.prevs_comb2 <- df.prevs_comb %>%
+  mutate(status = case_when(
+    population == "D" & status == "N" ~ "N_D",
+    population == "D" & status == "C" ~ "C_D",
+    population == "D" & status == "F" ~ "F_D",
+    population == "D" & status == "E" ~ "E_D",
+    TRUE ~ status  # Keep the existing value if no condition above is met
+  ))
+# library(ggplot2)
+# library(gridExtra)
+# library(grid)
+
+# Initial plot creation similar to your code
+NCFE_total <- ggplot() +
+  geom_pointrange(data = subset(df.calib_targets, age == 18.99 & 
+                                  (status != "E" | survey_year >= 2020) & 
+                                  (status == "N" | status == "C" | status == "F" | status == "E")), 
+                  aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, color = status, shape = "National Survey on Drug Use and Health")) +
+  geom_line(data = subset(df.prevs_comb, age == 18.99 & (status != "E" | year >= 2020) & 
+                            (status == "N" | status == "C" | status == "F" | status == "E") & scenario == "baseline" & population == "T"),  
+            aes(x = year, y = prev, color = status)) +
+  scale_y_continuous(name = "Prevalence (%)", limits = c(0, 1), breaks = seq(0, 1, 0.05)) +
+  scale_x_continuous(name = "Year", limits = c(calib_startyear, 2023), breaks = seq(calib_startyear, 2023, 1)) +
+  labs(title = paste0("Total Population")) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1), legend.title = element_blank(), legend.position = "bottom")
+
+NCFE_D_total <- ggplot() +
+  geom_pointrange(data = subset(df.calib_targets, age == 18.99 & 
+                                  (status != "E_D" | survey_year >= 2020) & 
+                                  (status == "N_D" | status == "C_D" | status == "F_D" | status == "E_D")), 
+                  aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, color = status, shape = "National Survey on Drug Use and Health")) +
+  geom_line(data = subset(df.prevs_comb2, age == 18.99 & 
+                            (status != "E_D" | year >= 2020) & 
+                            (status == "N_D" | status == "C_D" | status == "F_D" | status == "E_D") & scenario == "baseline" & population == "D"),  
+            aes(x = year, y = prev, color = status)) +
+  scale_y_continuous(name = "Prevalence (%)", limits = c(0, 1), breaks = seq(0, 1, 0.05)) +
+  scale_x_continuous(name = "Year", limits = c(calib_startyear, 2023), breaks = seq(calib_startyear, 2023, 1)) +
+  labs(title = paste0("Current MDE Population")) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1), legend.title = element_blank(), legend.position = "bottom")
+
+
+
+Depression_2016_2023_baseline <- ggplot() +
+  geom_pointrange(data=subset(df.calib_targets, status=="D" & age==18.99), 
+                  aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, color="NSDUH data")) +
+  geom_line(data = subset(df.prevs_comb, status=="D" & age==18.99 & scenario == "Dep_base" & population == "T"), aes(x = year, y = prev, color="2016 incidence Status Quo")) +
+  geom_line(data = subset(df.prevs_comb, status=="D" & age==18.99 & scenario == "Dep_Sens" & population == "T"), aes(x = year, y = prev, color="2016 incidence RNC")) +
+  geom_line(data = subset(df.prevs_comb, status=="D" & age==18.99 & scenario == "main" & population == "T"), aes(x = year, y = prev, color="2022 incidence RNC")) +
+  geom_line(data = subset(df.prevs_comb, status=="D" & age==18.99 & scenario == "baseline" & population == "T"), aes(x = year, y = prev, color="2022 incidence Status Quo")) +
+  scale_y_continuous(name="Prevalence (%)", limits=c(.05,0.15)) +
+  scale_x_continuous(name="Year") +
+  scale_color_manual(name = "Legend", values = c("NSDUH data" = "Black", "2016 incidence RNC" = "Light Blue", "2016 incidence Status Quo" = "Blue", "2022 incidence RNC" = "Dark Grey","2022 incidence Status Quo" = "Black")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle=60, hjust=1), 
+        legend.title = element_blank(), 
+        legend.position = "right")
 
 # Figure for e-cig transitions
 eciginit <- as.data.frame(c(p.NO.NE[,"2025"],p.NO.NE[,"2026"],p.CO.CE[,"2025"],p.CO.CE[,"2026"],p.FO.FE[,"2025"],p.FO.FE[,"2026"]))
@@ -540,37 +639,53 @@ table1 <-grid.table(df)
 # PAPER FIGURES -----------------------------------------------------------
 shared_legend <-get_legend(CTlegend)
 
-pdf(paste0("output/",figDir,"/use_prevalence_grid.pdf"), width = 10, height = 10)
+pdf(paste0("output/",figDir,"/1a.Fig2_prevalence.pdf"), width = 10, height = 10)
 grid.arrange(arrangeGrob(CD, CND,CT,ED,END,ET,dualD,dualND,dualT, ncol = 3,nrow=3), shared_legend,  # Add shared legend
              ncol = 1, heights = c(4, 0.5) )
 dev.off()
 
-pdf(paste0("output/",figDir,"/costs_grid.pdf"), width = 12, height = 4)
-grid.arrange(Cost_MED, Cost_SOC, Cost_PROD, nrow = 1, ncol = 3)
+pdf(paste0("output/",figDir,"/1b.eFig2_Depression.pdf"), width = 6, height = 6)
+Depression_2016_2023_baseline
 dev.off()
+
+# # Extracting legend from one of the plots
+# shared_legend2 <- get_legend(NCFE_total)
+# 
+# # Removing individual legends from the plots
+# NCFE_total2 <- NCFE_total + theme(legend.position = "none")
+# NCFE_D_total2 <- NCFE_D_total + theme(legend.position = "none")
+# 
+# # Saving the combined plot with shared legend
+# pdf(paste0("output/", figDir, "/Smokingprevalence_depression_grid.pdf"), width = 10, height = 6)
+# grid.arrange(arrangeGrob(NCFE_total2, NCFE_D_total2, ncol = 2, nrow = 1), shared_legend2, ncol = 1, heights = c(4, 0.5))  # Adjust heights to give more space for the legend
+# dev.off()
+# 
+# pdf(paste0("output/",figDir,"/depression_grid.pdf"), width = 12, height = 4)
+# grid.arrange(D_total, nrow = 1, ncol = 1)
+# dev.off()
 
 
 
 
 # PPT FIGURES -------------------------------------------------------------
 #PPT figures
-jpeg(paste0("output/",figDir,"/smokingprevalence_grid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
+jpeg(paste0("output/",figDir,"/3.smokingprevalence_grid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
 grid.arrange(CD, CND, ncol = 2, nrow = 1)
 dev.off()
 
-jpeg(paste0("output/",figDir,"/ecigprevalence_grid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
+jpeg(paste0("output/",figDir,"/3.ecigprevalence_grid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
 grid.arrange(ED, END, ncol = 2, nrow = 1)
 dev.off()
 
-jpeg(paste0("output/",figDir,"/dualprevalence_grid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
+jpeg(paste0("output/",figDir,"/3.dualprevalence_grid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
 grid.arrange(dualD, dualND, ncol = 2, nrow = 1)
 dev.off()
 
-jpeg(paste0("output/",figDir,"/cSADgrid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
+jpeg(paste0("output/",figDir,"/3.cSADgrid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
 grid.arrange(cSADT,cSADD, ncol = 2, nrow = 1)
 dev.off()
 
-jpeg(paste0("output/",figDir,"/cLYGgrid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
+jpeg(paste0("output/",figDir,"/3.cLYGgrid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
 grid.arrange(cYLLT,cYLLD, ncol = 2, nrow = 1)
 dev.off()
 
@@ -578,19 +693,19 @@ dev.off()
 # DIAGNOSTIC FIGURES PDF --------------------------------------------------
 
 #Diagnostic figures
-pdf(file = paste0(mainDir,"output/",figDir,"/diagnostic_policy_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
+pdf(file = paste0(mainDir,"output/",figDir,"/2.diagnostic_policy_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
 #maybe put a timer around table 
 grid.table(df)
 grid_arrange_shared_legend(list(N_age, C_age, F_age),1,3,"Smoking distribution among total population")
 grid_arrange_shared_legend(list(NCFE_total_B,NCFE_D_B),1,2,"Tobacco USE Baseline")
 grid_arrange_shared_legend(list(NCFE_total_MDSE,NCFE_D_MDSE),1,2,"Tobacco USE MDSE main scenario")
-grid_arrange_shared_legend(list(D_age),1,1,"MDE")
+grid_arrange_shared_legend(list(Depression_2016_2023_baseline),1,1,"MDE")
 grid_arrange_shared_legend(list(N_D_age, C_D_age, F_D_age),1,3,"Smoking distribution among people with depression")
 p.OE_age
 grid_arrange_shared_legend(list(E_age,E_D_age),1,2,"Vaping by Depression Status")
 grid_arrange_shared_legend(list(E_onlyT,E_onlyD,E_onlyND),1,3,"Exclusive Vaping by Depression Status")
-grid_arrange_shared_legend(list(NE_age, CE_age, FE_age),1,3,"Smoking and Vaping Status Age Distribution in the Total Population")
-grid_arrange_shared_legend(list(NE_D_age, CE_D_age, FE_D_age),1,3,"Smoking and Vaping Status Age Distribution in the Depressed Population")
+grid_arrange_shared_legend(list(NE_age, CE_age, FE_age),1,3,"Smoking and Vaping Status in the Total Population")
+grid_arrange_shared_legend(list(NE_D_age, CE_D_age, FE_D_age),1,3,"Smoking and Vaping Status in the Depressed Population")
 grid.arrange(Cost_MED, Cost_SOC, Cost_PROD, nrow = 1, ncol = 3)# inputs
 dev.off()
 

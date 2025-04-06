@@ -14,9 +14,10 @@
 # Probs:   function for the estimation of transition probabilities
 # Costs:   function for the estimation of cost state values
 # Effs:    function for the estimation of state specific health outcomes (QALYs)
+
 mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, seed = 1) {
-  set.seed(seed)                                      # set the seed for every individual for the random number generator
-  
+
+  set.seed(seednew)    #735                                  # set the seed for every individual for the random number generator
   v.ysq <- rep(n.i, 0) # vector counting how many years since quit
   
   # create the matrix capturing the state name/costs/health outcomes for all individuals at each time point 
@@ -463,9 +464,8 @@ f_gof <- function(v.params){
 }
 
 main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model for parameter calibration; no policy effects
-  
   t_init <- Sys.time() # Start timer
-  
+  print(seednew)
   # Loop over parameter names and assign values dynamically
   for (param in rownames(m.calib_inputs)) {
     assign(param, get_value(param,v.params))
@@ -481,7 +481,8 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   
   ## Incidence
   # scale up incidence by year for youth and young adults ages 12-34 from 2016-2100 vs 2016-2022
-  if (s.HD_2100 == 1) {
+ 
+  if (is.null(l.policy_effects) || l.policy_effects[["s.HD_2100"]]==1) {
     p.HD[1:18,117:201] <- s.HD_12.17*p.HD[1:18,116] # ages <18, apply increase from 2016 (col 117) onwards
     p.HD[19:26,117:201] <- s.HD_18.25*p.HD[19:26,116] # ages 18-25, apply increase from 2016 (col 117) onwards
     p.HD[27:35,117:201] <- s.HD_26.34*p.HD[27:35,116] # ages 26-34, apply increase from 2016 (col 117) onwards
@@ -495,7 +496,7 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   } else {
     p.HD[13:29,1:116] <-p.HD[13:29,1:116]+calib.HD_2005_2015
   }
-  "calib.HD_2005_2015"
+  "calib.HD_2005_2015" #does this need to be here?
   #Apply policy effects here
   #Initiation and Cessation for Healthy
   ## Initiation - No initiation after 25
@@ -553,12 +554,14 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   p.CO.FE[18:90,paste0((policyyear+1):endyear)] <- l.policy_effects[["p.CO.FE_s"]]
   }
   
-  if (!is.null(l.policy_effects) && l.policy_effects[["p.EX"]]!=1){
-    p.EX<-p.NX+((p.NX-p.CX)*l.policy_effects[["p.EX"]])
+  if (!is.null(l.policy_effects) && l.policy_effects[["s.EX"]]!=1){
+    p.EX<-p.NX+((p.NX-p.CX)*l.policy_effects[["s.EX"]])
   }else{
     #non smoker vaping mortality
     p.EX<-p.NX
   }  
+  
+  
   p.CF[p.CF > 1] <- 1 # replace any cessation probabilities that are greater than 1 with 1
 
   # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
@@ -571,7 +574,7 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
                            'p.NO.NE', 'p.CO.CE', 'p.FO.FE',
                            'p.NE.NQ', 'p.CE.CQ', 'p.FE.FQ',
                            'p.NQ.NE', 'p.CQ.CE', 'p.FQ.FE',
-                           'p.CO.FE','rr.OD.ED')) %dopar% {
+                           'p.CO.FE','rr.OD.ED','seednew')) %dopar% {
                              mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
                            }
   
@@ -709,6 +712,7 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   
   
   # Output prevalence results as a list -------------------------------------
+  #l.model_prevs <- lapply(c("X"), get_prevs_combined, m.cohortbyyear=m.M, denom=NULL, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
   
   # by age group
   l.model_prevs <- lapply(c("N", "C","F", "D", "NO", "CO", "FO", "O", "NE", "CE", "FE", "E", "NQ", "CQ", "FQ", "Q"), get_prevs_combined, m.cohortbyyear=m.M, denom=NULL, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
@@ -840,20 +844,20 @@ run_policy <- function(policy) {
   }else{
     l.policy_effects <- apply_policy(params[[policy]][1], params[[policy]][2],params[[policy]][3], params[[policy]][4],
                                      params[[policy]][5], params[[policy]][6],params[[policy]][7], params[[policy]][8],
-                                     params[[policy]][9], params[[policy]][10],params[[policy]][11], 
+                                     params[[policy]][9], params[[policy]][10],params[[policy]][11],params[[policy]][12], 
                                      policyyear, v.affected_ages)}
   output <- main(v.params, l.policy_effects, policy)
   return(output)
 }
 
-apply_policy <- function(rr.init_1,rr.init_s,rr.cess_1,rr.cess_s, p.CO.CE_1,p.CO.CE_s,p.CO.FE_1,p.CO.FE_s,p.NO.NE_1,p.NO.NE_s,p.EX, policyyear, v.affected_ages) {
+apply_policy <- function(rr.init_1,rr.init_s,rr.cess_1,rr.cess_s, p.CO.CE_1,p.CO.CE_s,p.CO.FE_1,p.CO.FE_s,p.NO.NE_1,p.NO.NE_s,s.EX, s.HD_2100, policyyear, v.affected_ages) {
   
   l.policy_effects <- list(rr.init_1=as.numeric(rr.init_1),rr.init_s=as.numeric(rr.init_s),
                            rr.cess_1=as.numeric(rr.cess_1),rr.cess_s=as.numeric(rr.cess_s),
                            p.CO.CE_1=as.numeric(p.CO.CE_1),p.CO.CE_s=as.numeric(p.CO.CE_s),
                            p.CO.FE_1=as.numeric(p.CO.FE_1),p.CO.FE_s=as.numeric(p.CO.FE_s),
                            p.NO.NE_1=as.numeric(p.NO.NE_1),p.NO.NE_s=as.numeric(p.NO.NE_s),
-                           p.EX=as.numeric(p.EX))
+                           s.EX=as.numeric(s.EX), s.HD_2100=as.numeric(s.HD_2100))
   return(l.policy_effects)
 }
 
