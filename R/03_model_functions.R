@@ -14,7 +14,7 @@
 # Probs:   function for the estimation of transition probabilities
 # Costs:   function for the estimation of cost state values
 # Effs:    function for the estimation of state specific health outcomes (QALYs)
-mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, seed = 59) {
+mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, seed = 1) {
   set.seed(seed)                                      # set the seed for every individual for the random number generator
   
   v.ysq <- rep(n.i, 0) # vector counting how many years since quit
@@ -499,10 +499,10 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   #Apply policy effects here
   #Initiation and Cessation for Healthy
   ## Initiation - No initiation after 25
-  p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
+  p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(s.NC_26.34,9),rep(0,65))
   p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
   ## Cessation - No cessation before 18
-  p.NC[,119:201] = smk_init[,119:201]*c(rep(s.NC_18.23_9.17,18),rep(s.NC_18.23_18.25,8),rep(0,74))
+  p.NC[,119:201] = smk_init[,119:201]*c(rep(s.NC_18.23_9.17,18),rep(s.NC_18.23_18.25,8),rep(s.NC_18.23_26.34,9),rep(0,65))
   p.CF[,119:201] = smk_cess[,119:201]*c(rep(0,16),rep(s.CF_18.23_18.25,10), rep(s.CF_18.23_26.34,9),rep(s.CF_18.23_35.49,15),rep(s.CF_18.23_50.64,15),rep(s.CF_18.23_65.99,35))
   ## Initiation and Cessation for Depressed scaling factors - No initiation after 25 
   ## Cessation - No cessation before 18

@@ -351,7 +351,7 @@ grid_arrange_shared_legend <- function(plots,columns,titletext) {
 df.calib <- merge(as.data.frame(v.params),as.data.frame(m.calib_inputs),by="row.names",all.x=TRUE,all.y=TRUE,sort=FALSE)
 colnames(df.calib)[1:3] <- c("parameters", "est","initial")
 
-pdf(file = paste0(mainDir,"output/", whichgender,"_mds_calib_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
+pdf(file = paste0(mainDir,"output/", whichgender,"_mds_calib_",n.i,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".pdf"),width=10, height=6,onefile = TRUE)
 # plot.new()
 # text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
 # text(.5, 1.0, "Calibration fit values", font=2, cex=1.5)
