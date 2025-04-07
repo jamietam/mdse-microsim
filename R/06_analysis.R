@@ -1,7 +1,8 @@
 ## Clean up the workspace and set main working directory
 rm(list = ls()) 
-Sys.setenv(RGL_USE_NULL=TRUE)
-Sys.setenv('R_MAX_VSIZE'=64000000000)
+#this doesn't work right now?
+# Sys.setenv(RGL_USE_NULL=TRUE) 
+# Sys.setenv('R_MAX_VSIZE'=64000000000)
 # Set working directory
 mainDir = "/Users/srs249/University of Michigan Dropbox/Sarah Skolnick/GitHub/mdse-microsim/"
 setwd(mainDir)
@@ -10,18 +11,19 @@ setwd(mainDir)
 
 hpc = 0
 calibration = 0 # need to set this to 0 so main_calib works and outputs proper matrix for main function
-run_scenarios = 0 # set to 0 if you want to use pre-generated results, set to 1 to simulate all scenarios
+run_scenarios = 1 # set to 0 if you want to use pre-generated results, set to 1 to simulate all scenarios
 #set seed
-seednew <<- 9
+seednew <<- 2
+n.i <- 10000 # number of people per birth cohort
 
 policyyear <- 2028
 v.affected_ages <- c(0:99) # affects all ages
 d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by 3%
-d.year <- 2023 # which year to start discounting from
+d.year <- 2025 # which year to start discounting from
 
 
 
-args <- c("females",500, 2100) #no need to change this for now
+args <- c("females",n.i, 2100) #no need to change this for now
 source(paste0(mainDir,"R/01_environment.R"), echo=FALSE) #
 source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE)
 source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
@@ -37,11 +39,11 @@ load(paste0(mainDir,"data/nsduh_calib_targets_both.RData")) # Load NSDUH data
 params <- list(
   baseline = NULL,
   # baseline2 =  c(1,1, 1, 1, 1, 1, 1,1, 1,1,0.1,1),
-  # worst = c(1-0.38,1-0.39, 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75,0.1,1), #worst case
-  main = c(1-0.63,1-0.65,0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5,0.1,1)#, #expected
-  # best = c(1-0.83,1-0.85, 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2,0.1,1), #best case
-  # MPRPM = c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0.1,1),
-  # #One way Sensitivity analysis (of MPRPM)
+  worst = c(1-0.38,1-0.39, 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75,0.1,1), #worst case
+  main = c(1-0.63,1-0.65,0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5,0.1,1), #expected
+  best = c(1-0.83,1-0.85, 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2,0.1,1),#, #best case
+  #MPRPM = c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0.1,1),
+  #One way Sensitivity analysis (of MPRPM)
   # Init_Sens= c(1-0.63,1-0.65, 1, 1, 1, 1, 1,1, 1,1,0.1,1),
   # Cess_Sens= c( 1, 1, 0.36,0.34, 1, 1, 1,1, 1,1,0.1,1),
   # CO.CE_Sens= c( 1, 1, 1, 1, 0.61, 0.51, 1,1, 1,1,0.1,1),
@@ -84,10 +86,9 @@ df.calib_targets <- do.call(rbind, lapply(names(l.calib_targets), function(statu
 
 # run all scenarios and save results OR use pre-generated results
 if (run_scenarios == 0) {  # choose the files you want to use for both genders here:
-  # femalefile="rnc_females_depression_5000_03.28.25_06.48PM.RData" #0 mortality
-  # malefile= "rnc_males_depression_5000_03.28.25_09.10PM.RData"
-  malefile= "rnc_females_depression_5000_03.28.25_06.48PM.RData"
-  femalefile="rnc_females_depression_5000_03.28.25_06.48PM.RData"
+  #combined files
+  # malefile= "rnc_females_depression_5000_03.28.25_06.48PM.RData"
+  # femalefile="rnc_females_depression_5000_03.28.25_06.48PM.RData"
   # Load and format files for females
   load(paste0(mainDir, "output/",femalefile))
   dfF=reformat_model_outputs(l.results)
@@ -104,11 +105,11 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   source(paste0(mainDir,"R/07a_figures_tables_combined_gender.R"), echo=TRUE)
   
 } else {
-  
+  print(n.i)
   # Run the model -----------------------------------------------------------
   t.init = Sys.time()
   # SIMULATE FEMALE POPULATION
-  args <- c("females",5000, 2100) # Parameters for HPC vs non-HPC setup
+  args <- c("females",n.i, 2100) # Parameters for HPC vs non-HPC setup
   source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE) 
   source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
   
@@ -133,7 +134,7 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   dfF_ND=reformat_model_outputs(l.results_ND)
   
   # SIMULATE MALE POPULATION
-  args <- c("males",10000, 2100) # Parameters for HPC vs non-HPC setup
+  args <- c("males",n.i, 2100) # Parameters for HPC vs non-HPC setup
   source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE) 
   source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
 
@@ -157,6 +158,6 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   dfM_ND=reformat_model_outputs(l.results_ND)
   
   ## GENERATE FIGURES AND TABLES
-  source(paste0(mainDir,"R/07a_figures_tables_combined_gender.R"), echo=TRUE)
+  #source(paste0(mainDir,"R/07a_figures_tables_combined_gender.R"), echo=TRUE)
   print(Sys.time() - t.init)
 }

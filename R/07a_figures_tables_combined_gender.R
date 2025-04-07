@@ -1,7 +1,7 @@
 # create subdirectory for figures based on today's date
 figDir <- format(as.POSIXct(Sys.time()), "%m.%d.%y")
 dir.create(file.path(mainDir, "output", figDir), showWarnings = FALSE)
-
+wb <- createWorkbook()
 
 
 # PREVALENCE OUTCOMES -----------------------------------------------------
@@ -78,8 +78,12 @@ df.MDSE <-df.MDSE %>%
 df.MDSE<-cbind(df.MDSE,df.baseline)
 df.MDSE<-df.MDSE[c("year", "scenario1","B_D", "D","B_ND", "ND", "B_T","T","B_absdiff" , "absdiff" )]
 
-write.xlsx(df.MDSE, file = paste0(mainDir, "output/",figDir,"/1a.Table1_Prevalences.xlsx"), sheetName="papertable1", append=TRUE)
-#write.xlsx(df.prevs, file = paste0(mainDir, "output/",figDir,"/PrevalenceTableSensitivity.xlsx"), sheetName="sensitivity", append=TRUE)
+
+addWorksheet(wb, "1a.Prevalance_allgender_MDSE")
+writeData(wb, "1a.Prevalance_allgender_MDSE", df.MDSE)
+
+addWorksheet(wb, "Prevalance_sensitivity")
+writeData(wb, "Prevalance_sensitivity", df.prevs)
 
 
 
@@ -103,11 +107,12 @@ Health_ND$population="ND"
 Health_D$population="D"
 Health$population="T"
 
+
 Health_comb<-rbind(Health,Health_D,Health_ND)
 Health_comb_orig<-Health_comb
 Health_comb<-Health_comb %>%
   filter(year %in% 2100)%>%
-  select(scenario,year,population,cSAD,cSAD_averted,cYLL,cYLL_averted_LYG)
+  select(scenario,year,population,cSAD,cSAD_averted,cYLL,cYLL_averted_LYG,cLYG_disc_new,cMort_new)
 
 baseline_values <- Health_comb %>%
   filter(scenario == "baseline", year == 2100) %>%
@@ -180,9 +185,11 @@ resultsMDSE_fH1<-cbind(resultsMDSE_fH,resultsbaseline_fH)
 resultsMDSE_fH<-resultsMDSE_fH1[c("scenario1","prevalence_type","B_D","D","B_ND","ND","B_T","T")]
 
 
-write.xlsx(resultsMDSE_fH , file = paste0(mainDir, "output/",figDir,"/1a.Table2_HealthOutcomes.xlsx"))
-# write.xlsx(dataframe , file = paste0(mainDir, "output/",figDir,"/HealthOutcomes_sensitivity.xlsx"))
-write.xlsx(sensitivity1 , file = paste0(mainDir, "output/",figDir,"/1b.eTable5_SensitivyMPRPM.xlsx"))
+addWorksheet(wb, "1a.Table2_HealthOutcomes")
+writeData(wb, "1a.Table2_HealthOutcomes", resultsMDSE_fH)
+
+addWorksheet(wb, "1b.eTable5_SensitivyMPRPM")
+writeData(wb, "1b.eTable5_SensitivyMPRPM", sensitivity1)
 
 
 # COST OUTCOMES -----------------------------------------------------------
@@ -248,8 +255,8 @@ resultsMDSE_fC <-resultsMDSE_C %>%
   pivot_wider(names_from = population, values_from = prevalence1)
 
 
-write.xlsx(resultsMDSE_fC, file = paste0(mainDir, "output/",figDir,"/1a.Table3_COSTS.xlsx"))
-#write.xlsx(COSTS, file = paste0(mainDir, "output/",figDir,"/COSTS_Table_sensitivity.xlsx"))
+addWorksheet(wb, "1a.Table3_COSTS")
+writeData(wb, "1a.Table3_COSTS", resultsMDSE_fC)
 
 
 # FIGURE FUNCTIONS --------------------------------------------------------
@@ -281,7 +288,7 @@ ylim=.15
 #Prevalence Figures functions: columns of smoking prev, ecig prev, dual use prev and rows by mental health
 
 
-prev_by_status <- function(data, status_value, population_value, age_filter, ylim) {
+prev_by_status <- function(data, status_value, population_value, age_filter, ylim, ybreaks=NULL) {
   df_filtered <- subset(data, status == status_value &  population == population_value & age==age_filter)
   
   df_filtered <- df_filtered %>%
@@ -323,7 +330,7 @@ prev_by_status <- function(data, status_value, population_value, age_filter, yli
          y = paste0(outcomelabel2," Prevalence"),
          color = "") +
     scale_x_continuous(limits = c(2005,2100),breaks = c(2005,seq(2025,2100,25)))+
-    scale_y_continuous(limits = c(0,ylim))+
+    scale_y_continuous(limits = c(0,ylim), breaks=ybreaks)+
     theme_minimal()+
     theme(legend.position = "bottom", legend.direction = "horizontal") 
   return(plot)
@@ -464,11 +471,12 @@ CND<-prev_by_status(df.prevs_comb, "C", "ND","18.99",0.5) + theme(legend.positio
 END<-prev_by_status(df.prevs_comb, "E", "ND","18.99",0.3) + theme(legend.position = "none")
 dualND<-prev_by_status(df.prevs_comb, "CE", "ND","18.99",0.11) + theme(legend.position = "none")
 
-Dep<-prev_by_status(df.prevs_comb, "D", "T","18.99",0.15) + theme(legend.position = "none")
 
+MDE_18.99<-prev_by_status(df.prevs_comb,"D","T","18.99",0.14, seq(0,0.24,0.02))
+MDE_18.25<-prev_by_status(df.prevs_comb,"D","T","18.25",0.24, seq(0,0.24,0.02))
 
 pdf(paste0("output/",figDir,"/1dep.pdf"), width = 10, height = 10)
-Dep
+MDE_18.99
 dev.off()
 
 
@@ -706,6 +714,7 @@ grid_arrange_shared_legend(list(E_age,E_D_age),1,2,"Vaping by Depression Status"
 grid_arrange_shared_legend(list(E_onlyT,E_onlyD,E_onlyND),1,3,"Exclusive Vaping by Depression Status")
 grid_arrange_shared_legend(list(NE_age, CE_age, FE_age),1,3,"Smoking and Vaping Status in the Total Population")
 grid_arrange_shared_legend(list(NE_D_age, CE_D_age, FE_D_age),1,3,"Smoking and Vaping Status in the Depressed Population")
+grid_arrange_shared_legend(list(MDE_18.99,MDE_18.25),1,2,"MD prevalence")
 grid.arrange(Cost_MED, Cost_SOC, Cost_PROD, nrow = 1, ncol = 3)# inputs
 dev.off()
 

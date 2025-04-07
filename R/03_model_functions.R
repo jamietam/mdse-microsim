@@ -15,7 +15,7 @@
 # Costs:   function for the estimation of cost state values
 # Effs:    function for the estimation of state specific health outcomes (QALYs)
 
-mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE, seed = 1) {
+mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE) {
 
   set.seed(seednew)    #735                                  # set the seed for every individual for the random number generator
   v.ysq <- rep(n.i, 0) # vector counting how many years since quit
@@ -415,8 +415,26 @@ cohortage_to_cohortyear <- function(m.M){
   return(m.M_cy)
 }
 
+
 reorder_by_age <- function(data) {
   data[order(data[,"age"], decreasing = FALSE),]
+}
+
+keep_X_with_left_D <- function(mat) {
+  # Get matrix dimensions
+  nrow_mat <- nrow(mat)
+  ncol_mat <- ncol(mat)
+  # Create a matrix of NAs to store the result
+  result <- matrix(NA, nrow = nrow_mat, ncol = ncol_mat)
+  # Identify positions where mat == "X"
+  X_positions <- which(mat == "X", arr.ind = TRUE)
+  # Check if the left-adjacent cell contains "D" in its string
+  valid_positions <- X_positions[X_positions[, 2] > 1 & grepl("D", mat[cbind(X_positions[, 1], X_positions[, 2] - 1)]), ]
+  # Retain only valid "X" positions
+  if (nrow(valid_positions) > 0) {
+    result[cbind(valid_positions[, 1], valid_positions[, 2])] <- "X"
+  }
+  return(result)
 }
 ## CALIBRATION FUNCTIONS ---------------------------------------------------
 
@@ -500,10 +518,10 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   #Apply policy effects here
   #Initiation and Cessation for Healthy
   ## Initiation - No initiation after 25
-  p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(0,74))
+  p.NC =  p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(s.NC_26.34,9),rep(0,65))
   p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
   ## Cessation - No cessation before 18
-  p.NC[,119:201] = smk_init[,119:201]*c(rep(s.NC_18.23_9.17,18),rep(s.NC_18.23_18.25,8),rep(0,74))
+  p.NC[,119:201] = smk_init[,119:201]*c(rep(s.NC_18.23_9.17,18),rep(s.NC_18.23_18.25,8),rep(s.NC_18.23_26.34,9),rep(0,65))
   p.CF[,119:201] = smk_cess[,119:201]*c(rep(0,16),rep(s.CF_18.23_18.25,10), rep(s.CF_18.23_26.34,9),rep(s.CF_18.23_35.49,15),rep(s.CF_18.23_50.64,15),rep(s.CF_18.23_65.99,35))
   ## Initiation and Cessation for Depressed scaling factors - No initiation after 25 
   ## Cessation - No cessation before 18
@@ -685,31 +703,51 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   m.B_notD <- cohortage_to_cohortyear(m.B_notD)
   m.F_notD <- cohortage_to_cohortyear(m.F_notD)
   
-  # Get mortality counts by year
-   n.X = apply(m.M,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
-   n.X_D = apply(m.M_D,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
-   n.X_notD = apply(m.M_notD,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
-   
-   n.X =  n.X [paste0(d.year:max(cohorts))]
-   n.X_D = n.X_D[paste0(d.year:max(cohorts))]
-   n.X_notD=n.X_notD[paste0(d.year:max(cohorts))]
-   
-  # Get total person life-years by year
-  v.lifeyears = apply(m.M,2,function(x) sum(x!="X",na.rm=TRUE))
-  v.lifeyears_D = apply(m.M_D,2,function(x) sum(x!="X",na.rm=TRUE))
-  v.lifeyears_notD = apply(m.M_notD,2,function(x) sum(x!="X",na.rm=TRUE))
+  ## Get mortality counts by year, scaled to US population estimates of mortality
+  v.X = apply(m.M,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
+  s.X = (3279857 / v.X["2022"]) # Total number of US deaths in 2022: 3,279,857, so scale up the number of deaths by the 2022 ratio to reflect all US deaths. Each X = 4298.644 deaths
+  v.X_totalpop = v.X * s.X
+  v.X_D = apply(keep_X_with_left_D(m.M),2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's just among people who are depressed
+  v.X_Dpop = v.X_D * s.X
+  v.X_notDpop = v.X_totalpop - v.X_Dpop
+  v.X_totalpop =  v.X_totalpop[paste0(d.year:max(cohorts))]  # keep only years of interest
+  v.X_Dpop = v.X_Dpop[paste0(d.year:max(cohorts))]
+  v.X_notDpop=v.X_notDpop[paste0(d.year:max(cohorts))]
   
-  v.lifeyears <- v.lifeyears[paste0(d.year:max(cohorts))]
-  v.lifeyears_D <- v.lifeyears_D[paste0(d.year:max(cohorts))]
-  v.lifeyears_notD <- v.lifeyears_notD[paste0(d.year:max(cohorts))]
+  ## Get total person life-years by year, scaled to US population estimates of annual births 
+  m.personyears <- m.M[,paste0(cohorts)]
+  m.personyears[!is.na(m.personyears)] <- 1
+  m.personyears <- apply(m.personyears, 2, as.numeric)
+  
+  m.personyears_D <- m.M_D[,paste0(cohorts)]
+  m.personyears_D[!is.na(m.personyears_D)] <- 1
+  m.personyears_D <- apply(m.personyears_D, 2, as.numeric)
+  
+  row_groups <- rep(1:length(cohorts), each=n.i) # group rows for each birth cohort
+  
+  # get number of personyears for each birth cohort as a row
+  m.personyears_bc <- rowsum(m.personyears, group=row_groups,na.rm=TRUE)
+  m.personyears_totalpop = m.personyears_bc * births[paste0(cohorts),] / n.i # scale up personyears for each birth cohort based on the number of actual births
+  
+  m.personyears_bc_D <- rowsum(m.personyears_D, group=row_groups,na.rm=TRUE)
+  m.personyears_Dpop <- m.personyears_bc_D* births[paste0(cohorts),] / n.i 
+  m.personyears_notDpop <- m.personyears_totalpop-m.personyears_Dpop
+  
+  # Person life-years scaled to US population estimates
+  v.lifeyears_totalpop = colSums(m.personyears_totalpop)[paste0(d.year:max(cohorts))]
+  v.lifeyears_Dpop = colSums(m.personyears_Dpop)[paste0(d.year:max(cohorts))]
+  v.lifeyears_notDpop = colSums(m.personyears_notDpop)[paste0(d.year:max(cohorts))]
+  
+  # Person life-years, NOT scaled
+  v.lifeyears = apply(m.M,2,function(x) sum(x!="X",na.rm=TRUE))[paste0(d.year:max(cohorts))]
+  v.lifeyears_D = apply(m.M_D,2,function(x) sum(x!="X",na.rm=TRUE))[paste0(d.year:max(cohorts))]
+  v.lifeyears_notD = apply(m.M_notD,2,function(x) sum(x!="X",na.rm=TRUE))[paste0(d.year:max(cohorts))]
   
   
   #Get mortality rate by year for each state.Check this with Jamie
-  v.deathrate=n.X/v.lifeyears
-  v.deathrate_D=n.X_D/v.lifeyears_D
-  v.deathrate_notD=n.X_notD/v.lifeyears_notD
-  
-  
+  v.deathrate=v.X/v.lifeyears
+  v.deathrate_D=v.X_D/v.lifeyears_D
+  v.deathrate_notD=(v.X - v.X_D)/v.lifeyears_notD
   
   # Output prevalence results as a list -------------------------------------
   #l.model_prevs <- lapply(c("X"), get_prevs_combined, m.cohortbyyear=m.M, denom=NULL, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
@@ -809,7 +847,7 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   m.total_cuw_notD <- m.total_cuw - m.total_cuw_D
   rownames(m.total_cuw) <- rownames(m.total_cuw_D) <- rownames(m.total_cuw_notD) <- c("med_costs","QALYs","productivity","consumer_exp","soc_costs","lifeyears","YLL")
   
-  # Assume 2023 is the starting year for discounting purposes, calculate discount weight based on the discount rate d.c
+  # Assume d.year is the starting year for discounting purposes, calculate discount weight based on the discount rate d.c
   v.d = c( c(1 / (1 + d.c) ^ (0:(ncol(m.total_cuw)-1)))) # vector of discount weights
   
   # Total discounted costs, QALYs, and productivity
@@ -822,19 +860,27 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   m.cuw_D <- t(m.d_total_cuw_D[,as.character(v.year_range)])
   m.cuw_notD <- t(m.d_total_cuw_notD[,as.character(v.year_range)])
   
+  # discounted lifeyears
+  v.d_lifeyears_totalpop <- v.lifeyears_totalpop*v.d
+  v.d_lifeyears_Dpop <- v.lifeyears_Dpop*v.d
+  v.d_lifeyears_notDpop <- v.lifeyears_notDpop*v.d
+  
   cat(paste0("\n  ", v.params," "))
   print(Sys.time() - t_init) # End timer
 
   # Output results as two lists: one for general population, and one for depressed population
-  l.results <- list(l.model_prevs = l.model_prevs, m.cuw=m.cuw, v.lifeyears=v.lifeyears, v.SAD=v.SAD, v.yll = v.yll,
-                        init = p.NC, cess = p.CF, m.prev_C=m.prev_C, m.prev_F = m.prev_F, m.prev_N=m.prev_N,  v.deathrate= v.deathrate)
-    
-  l.results_D <- list(l.model_prevs = l.model_prevs_D, m.cuw=m.cuw_D, v.lifeyears=v.lifeyears_D, v.SAD=v.SAD_D,  v.yll = v.yll_D,
-                        init = p.NC_D, cess = rr.CD.FD*p.CF, m.prev_C=m.prev_C_D, m.prev_F = m.prev_F_D, m.prev_N=m.prev_N_D, v.deathrate_D= v.deathrate_D)
-  
-  l.results_notD <- list(l.model_prevs=l.model_prevs_notD, m.cuw=m.cuw_notD , v.lifeyears = v.lifeyears_notD, v.SAD=v.SAD_notD, v.yll = v.yll_notD,
-                         init = p.NC, cess = p.CF, m.prev_C=m.prev_C_notD, m.prev_F = m.prev_F_notD, m.prev_N=m.prev_N_notD, v.deathrate_notD= v.deathrate_notD)
-  
+  l.results <- list(l.model_prevs = l.model_prevs, m.cuw=m.cuw, 
+                    v.lifeyears=v.lifeyears, v.lifeyears_pop = v.lifeyears_totalpop, v.d_lifeyears_pop = v.d_lifeyears_totalpop, 
+                    v.SAD=v.SAD, v.yll = v.yll,
+                    init = p.NC, cess = p.CF, m.prev_C=m.prev_C, m.prev_F = m.prev_F, m.prev_N=m.prev_N,  v.X=v.X_totalpop, v.deathrate= v.deathrate)
+  l.results_D <- list(l.model_prevs = l.model_prevs_D, m.cuw=m.cuw_D, 
+                      v.lifeyears=v.lifeyears_D, v.lifeyears_pop = v.lifeyears_Dpop, v.d_lifeyears_pop = v.d_lifeyears_Dpop, 
+                      v.SAD=v.SAD_D,  v.yll = v.yll_D,
+                      init = p.NC_D, cess = rr.CD.FD*p.CF, m.prev_C=m.prev_C_D, m.prev_F = m.prev_F_D, m.prev_N=m.prev_N_D, v.X=v.X_Dpop, v.deathrate_D= v.deathrate_D)
+  l.results_notD <- list(l.model_prevs=l.model_prevs_notD, m.cuw=m.cuw_notD , 
+                         v.lifeyears = v.lifeyears_notD, v.lifeyears_pop = v.lifeyears_notDpop, v.d_lifeyears_pop = v.d_lifeyears_notDpop, 
+                         v.SAD=v.SAD_notD, v.yll = v.yll_notD,
+                         init = p.NC, cess = p.CF, m.prev_C=m.prev_C_notD, m.prev_F = m.prev_F_notD, m.prev_N=m.prev_N_notD, v.X=v.X_notDpop, v.deathrate_notD= v.deathrate_notD)
   return(list(l.results=l.results, l.results_D = l.results_D, l.results_notD=l.results_notD))
 }
 
@@ -909,7 +955,14 @@ reformat_model_outputs <- function(l.results){
       aNonhealth = cuw[paste0(policyyear:max(cohorts)), "consumer_exp"],
       cNonhealth = cumsum(cuw[paste0(policyyear:max(cohorts)), "consumer_exp"]),
       aSocCosts = cuw[paste0(policyyear:max(cohorts)), "soc_costs"],
-      cSocCosts = cumsum(cuw[paste0(policyyear:max(cohorts)), "soc_costs"])
+      cSocCosts = cumsum(cuw[paste0(policyyear:max(cohorts)), "soc_costs"]),
+      #newly calculated mortality and life years
+      aLY_disc_new= policy$v.d_lifeyears_pop[paste0(policyyear:max(cohorts))],
+      cLY_disc_new= cumsum(policy$v.d_lifeyears_pop[paste0(policyyear:max(cohorts))]),
+      aMort_new= policy$v.X[paste0(policyyear:max(cohorts))],
+      cMort_new= cumsum(policy$v.X[paste0(policyyear:max(cohorts))])
+      
+      
     )
   }) %>%
     bind_rows()
@@ -917,13 +970,13 @@ reformat_model_outputs <- function(l.results){
   # Ensure numeric columns are indeed numeric
   combined_data <- combined_data %>%
     mutate(across(c(year, aLY, cLY, aSAD, cSAD,aYLL,cYLL, aMort_perLY, cMort_perLY,aYLL_disc,cYLL_disc,aQALYs_disc,cQALYs_disc,
-                    aMedCosts,cMedCosts, aProd,cProd,aNonhealth,cNonhealth,aSocCosts,cSocCosts), as.numeric))
+                    aMedCosts,cMedCosts, aProd,cProd,aNonhealth,cNonhealth,aSocCosts,cSocCosts,cLY_disc_new,aLY_disc_new,cMort_new,aMort_new), as.numeric))
   
   # Extract baseline values
   baseline_values <- combined_data %>%
     filter(scenario == "baseline") %>%
     select(year, aLY, cLY, aSAD, cSAD,aYLL,cYLL, aMort_perLY, cMort_perLY,aYLL_disc,cYLL_disc,aQALYs_disc,cQALYs_disc,
-           aMedCosts,cMedCosts, aProd,cProd,aNonhealth,cNonhealth,aSocCosts,cSocCosts) %>%
+           aMedCosts,cMedCosts, aProd,cProd,aNonhealth,cNonhealth,aSocCosts,cSocCosts,cLY_disc_new,aLY_disc_new,cMort_new,aMort_new) %>%
     rename(
       baseline_aLY= aLY, 
       baseline_cLY=cLY, 
@@ -944,10 +997,15 @@ reformat_model_outputs <- function(l.results){
       baseline_aNonhealth=aNonhealth,
       baseline_cNonhealth=cNonhealth,
       baseline_aSocCosts=aSocCosts,
-      baseline_cSocCost=cSocCosts
+      baseline_cSocCost=cSocCosts,
+      baseline_cLY_disc_new=cLY_disc_new,
+      baseline_aLY_disc_new=aLY_disc_new,
+      baseline_cMort_new=cMort_new,
+      baseline_aMort_new=aMort_new
     )
   
   # Join baseline values with main data frame and calculate difference in values
+  # Mortality and other outcomes
   combined_data <- combined_data %>%
     left_join(baseline_values, by = "year") %>%
     mutate(
@@ -958,12 +1016,19 @@ reformat_model_outputs <- function(l.results){
       #discounted lyg calculated for costs figures
       cYLL_averted_LYG_disc = baseline_cYLL_disc - cYLL_disc,
       aYLL_averted_LYG_disc = baseline_aYLL_disc - aYLL_disc,
+      
+      #new Mortality outcomes and Life years from updated calculations
+      cLYG_disc_new = cLY_disc_new-baseline_cLY_disc_new ,
+      aLYG_disc_new =  aLY_disc_new-baseline_aLY_disc_new ,
+      cMort_avert_new = baseline_cMort_new - cMort_new,
+      aMort_avert_new = baseline_aMort_new - aMort_new
 
     ) %>%
     select( -baseline_aLY, -baseline_cLY, -baseline_aSAD, -baseline_cSAD, -baseline_aYLL, -baseline_cYLL, 
             -baseline_aMort_perLY,  -baseline_cMort_perLY, -baseline_aYLL_disc, -baseline_cYLL_disc,-baseline_aQALYs_disc,
             -baseline_cQALYs_disc, -baseline_aMedCosts, -baseline_cMedCosts,  -baseline_aProd, -baseline_cProd,
-            -baseline_aNonhealth, -baseline_cNonhealth, -baseline_aSocCosts, -baseline_cSocCost )  # Remove temporary baseline columns
+            -baseline_aNonhealth, -baseline_cNonhealth, -baseline_aSocCosts, -baseline_cSocCost,
+            -baseline_cLY_disc_new, -baseline_aLY_disc_new , -baseline_cMort_new, -baseline_aMort_new)  # Remove temporary baseline columns
   
   # Calculate ICER
   cea_data <- lapply(names(l.results), function(name) {
