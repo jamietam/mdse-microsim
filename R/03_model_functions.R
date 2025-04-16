@@ -514,11 +514,11 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   } else {
     p.HD[13:29,1:116] <-p.HD[13:29,1:116]+calib.HD_2005_2015
   }
-  "calib.HD_2005_2015" #does this need to be here?
+  # "calib.HD_2005_2015"
   #Apply policy effects here
   #Initiation and Cessation for Healthy
   ## Initiation - No initiation after 25
-  p.NC =  p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(s.NC_26.34,9),rep(0,65))
+  p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(s.NC_26.34,9),rep(0,65))
   p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
   ## Cessation - No cessation before 18
   p.NC[,119:201] = smk_init[,119:201]*c(rep(s.NC_18.23_9.17,18),rep(s.NC_18.23_18.25,8),rep(s.NC_18.23_26.34,9),rep(0,65))
@@ -743,6 +743,29 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   v.lifeyears_D = apply(m.M_D,2,function(x) sum(x!="X",na.rm=TRUE))[paste0(d.year:max(cohorts))]
   v.lifeyears_notD = apply(m.M_notD,2,function(x) sum(x!="X",na.rm=TRUE))[paste0(d.year:max(cohorts))]
   
+  #Get mortality rate by year for each state.Check this with Jamie
+  v.deathrate=v.X/v.lifeyears
+  v.deathrate_D=v.X_D/v.lifeyears_D
+  v.deathrate_notD=(v.X - v.X_D)/v.lifeyears_notD
+  
+  # get number of personyears for each birth cohort as a row
+  m.personyears_bc <- rowsum(m.personyears, group=row_groups,na.rm=TRUE)
+  m.personyears_totalpop = m.personyears_bc * births[paste0(cohorts),] / n.i # scale up personyears for each birth cohort based on the number of actual births
+  
+  m.personyears_bc_D <- rowsum(m.personyears_D, group=row_groups,na.rm=TRUE)
+  m.personyears_Dpop <- m.personyears_bc_D* births[paste0(cohorts),] / n.i 
+  m.personyears_notDpop <- m.personyears_totalpop-m.personyears_Dpop
+  
+  # Person life-years scaled to US population estimates
+  v.lifeyears_totalpop = colSums(m.personyears_totalpop)[paste0(d.year:max(cohorts))]
+  v.lifeyears_Dpop = colSums(m.personyears_Dpop)[paste0(d.year:max(cohorts))]
+  v.lifeyears_notDpop = colSums(m.personyears_notDpop)[paste0(d.year:max(cohorts))]
+  
+  # Person life-years, NOT scaled
+  v.lifeyears = apply(m.M,2,function(x) sum(x!="X",na.rm=TRUE))[paste0(d.year:max(cohorts))]
+  v.lifeyears_D = apply(m.M_D,2,function(x) sum(x!="X",na.rm=TRUE))[paste0(d.year:max(cohorts))]
+  v.lifeyears_notD = apply(m.M_notD,2,function(x) sum(x!="X",na.rm=TRUE))[paste0(d.year:max(cohorts))]
+  
   
   #Get mortality rate by year for each state.Check this with Jamie
   v.deathrate=v.X/v.lifeyears
@@ -873,15 +896,36 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
                     v.lifeyears=v.lifeyears, v.lifeyears_pop = v.lifeyears_totalpop, v.d_lifeyears_pop = v.d_lifeyears_totalpop, 
                     v.SAD=v.SAD, v.yll = v.yll,
                     init = p.NC, cess = p.CF, m.prev_C=m.prev_C, m.prev_F = m.prev_F, m.prev_N=m.prev_N,  v.X=v.X_totalpop, v.deathrate= v.deathrate)
+
   l.results_D <- list(l.model_prevs = l.model_prevs_D, m.cuw=m.cuw_D, 
                       v.lifeyears=v.lifeyears_D, v.lifeyears_pop = v.lifeyears_Dpop, v.d_lifeyears_pop = v.d_lifeyears_Dpop, 
                       v.SAD=v.SAD_D,  v.yll = v.yll_D,
                       init = p.NC_D, cess = rr.CD.FD*p.CF, m.prev_C=m.prev_C_D, m.prev_F = m.prev_F_D, m.prev_N=m.prev_N_D, v.X=v.X_Dpop, v.deathrate_D= v.deathrate_D)
+
   l.results_notD <- list(l.model_prevs=l.model_prevs_notD, m.cuw=m.cuw_notD , 
                          v.lifeyears = v.lifeyears_notD, v.lifeyears_pop = v.lifeyears_notDpop, v.d_lifeyears_pop = v.d_lifeyears_notDpop, 
                          v.SAD=v.SAD_notD, v.yll = v.yll_notD,
                          init = p.NC, cess = p.CF, m.prev_C=m.prev_C_notD, m.prev_F = m.prev_F_notD, m.prev_N=m.prev_N_notD, v.X=v.X_notDpop, v.deathrate_notD= v.deathrate_notD)
+
   return(list(l.results=l.results, l.results_D = l.results_D, l.results_notD=l.results_notD))
+}
+
+# Keep only deaths among people who were depressed at the previous time step
+keep_X_with_left_D <- function(mat) {
+  # Get matrix dimensions
+  nrow_mat <- nrow(mat)
+  ncol_mat <- ncol(mat)
+  # Create a matrix of NAs to store the result
+  result <- matrix(NA, nrow = nrow_mat, ncol = ncol_mat)
+  # Identify positions where mat == "X"
+  X_positions <- which(mat == "X", arr.ind = TRUE)
+  # Check if the left-adjacent cell contains "D" in its string
+  valid_positions <- X_positions[X_positions[, 2] > 1 & grepl("D", mat[cbind(X_positions[, 1], X_positions[, 2] - 1)]), ]
+  # Retain only valid "X" positions
+  if (nrow(valid_positions) > 0) {
+    result[cbind(valid_positions[, 1], valid_positions[, 2])] <- "X"
+  }
+  return(result)
 }
 
 run_policy <- function(policy) {
