@@ -495,7 +495,7 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   } else {
     p.HD[13:29,1:116] <-p.HD[13:29,1:116]+calib.HD_2005_2015
   }
-  "calib.HD_2005_2015"
+  # "calib.HD_2005_2015"
   #Apply policy effects here
   #Initiation and Cessation for Healthy
   ## Initiation - No initiation after 25
