@@ -7,9 +7,10 @@ whichgender = "females"
 
 if (whichgender=="females"){ 
   # Sex = 0 is for males, 1 for females
+  # Read in CISNET smoking initiation and cessation parameters by age (0:99) and birth cohort (1864:2100)
   smk_init_bc <- subset(read.delim("data-raw/new_shg_initiation.txt", sep=",", skip = 5, header=TRUE),Sex==1)[,-c(1:39)] # remove unnecessary columns (race, sex, age) and birth cohorts (1864-1899)
   smk_cess_bc <- subset(read.delim("data-raw/new_shg_cessation.txt", sep=",", skip = 5, header=TRUE),Sex==1)[,-c(1:39)] 
-  # Read in latest CISNET smoking initiation and cessation parameters by age (0:99) and birth cohort (1864:2100)
+  # Read in mortality parameters
   p.NX_bc <- read.csv(paste0("data-raw/all_final_results_FEMALENever.csv"))
   p.CX_bc <- read.csv(paste0("data-raw/all_final_results_FEMALECurrent.csv"))
   p.FX_bc <- read.csv(paste0("data-raw/all_final_results_FEMALEFormer.csv"))  
@@ -83,6 +84,8 @@ for (j in 1:40) { # years since quitting
 
 ages=dim(p.NX)[1] ### should be 100 if using CISNET's ages 0-99
 years=dim(p.NX)[2] ## number of years
+
+# Get never smoker life expectancy
 le_N=matrix(0,nrow=ages,ncol=years) 
 
 for (j in 1:years){
@@ -106,9 +109,5 @@ for (j in 1:years){
   
   le_N[,j]=LT[,6]
 }
-  
-
-
-# Get never smoker life expectancy
 
 save(p.NX,p.CX,p.FX,a_p.FX.ysq,smk_init,smk_cess,le_N, file=paste0("data/smk_precomputed_inputs_",whichgender,".RData"))
