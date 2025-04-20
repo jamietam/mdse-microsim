@@ -744,33 +744,10 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   v.lifeyears_notD = apply(m.M_notD,2,function(x) sum(x!="X",na.rm=TRUE))[paste0(d.year:max(cohorts))]
   
   #Get mortality rate by year for each state.Check this with Jamie
-  v.deathrate=v.X/v.lifeyears
-  v.deathrate_D=v.X_D/v.lifeyears_D
-  v.deathrate_notD=(v.X - v.X_D)/v.lifeyears_notD
+  v.deathrate=v.X[paste0(d.year:max(cohorts))]/v.lifeyears
+  v.deathrate_D=v.X_D[paste0(d.year:max(cohorts))]/v.lifeyears_D
+  v.deathrate_notD=(v.X[paste0(d.year:max(cohorts))] - v.X_D[paste0(d.year:max(cohorts))])/v.lifeyears_notD
   
-  # get number of personyears for each birth cohort as a row
-  m.personyears_bc <- rowsum(m.personyears, group=row_groups,na.rm=TRUE)
-  m.personyears_totalpop = m.personyears_bc * births[paste0(cohorts),] / n.i # scale up personyears for each birth cohort based on the number of actual births
-  
-  m.personyears_bc_D <- rowsum(m.personyears_D, group=row_groups,na.rm=TRUE)
-  m.personyears_Dpop <- m.personyears_bc_D* births[paste0(cohorts),] / n.i 
-  m.personyears_notDpop <- m.personyears_totalpop-m.personyears_Dpop
-  
-  # Person life-years scaled to US population estimates
-  v.lifeyears_totalpop = colSums(m.personyears_totalpop)[paste0(d.year:max(cohorts))]
-  v.lifeyears_Dpop = colSums(m.personyears_Dpop)[paste0(d.year:max(cohorts))]
-  v.lifeyears_notDpop = colSums(m.personyears_notDpop)[paste0(d.year:max(cohorts))]
-  
-  # Person life-years, NOT scaled
-  v.lifeyears = apply(m.M,2,function(x) sum(x!="X",na.rm=TRUE))[paste0(d.year:max(cohorts))]
-  v.lifeyears_D = apply(m.M_D,2,function(x) sum(x!="X",na.rm=TRUE))[paste0(d.year:max(cohorts))]
-  v.lifeyears_notD = apply(m.M_notD,2,function(x) sum(x!="X",na.rm=TRUE))[paste0(d.year:max(cohorts))]
-  
-  
-  #Get mortality rate by year for each state.Check this with Jamie
-  v.deathrate=v.X/v.lifeyears
-  v.deathrate_D=v.X_D/v.lifeyears_D
-  v.deathrate_notD=(v.X - v.X_D)/v.lifeyears_notD
   
   # Output prevalence results as a list -------------------------------------
   #l.model_prevs <- lapply(c("X"), get_prevs_combined, m.cohortbyyear=m.M, denom=NULL, minyear=calib_startyear, maxyear=max(cohorts)) # denominator is everyone still alive
@@ -854,6 +831,8 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   v.SAD_notD <- v.SAD - v.SAD_D # not depressed pop
   
   # Calculate years of life lost - multiply each SAD by the remaining life expectancy of someone at that age who had never smoked
+  #le_N life expectancy does not have columns named... so need to add that.
+  colnames(le_N)=c(1900:2100)
   v.yll = colSums(le_N[,as.character(v.year_range)]*m.SADcs) + colSums(le_N[,as.character(v.year_range)]*m.SADfs.ysq)
   v.yll_D = colSums(le_N[,as.character(v.year_range)]*m.SADcs_D)+ colSums(le_N[,as.character(v.year_range)]*m.SADfs.ysq_D)
   v.yll_notD <- v.yll - v.yll_D
@@ -912,11 +891,9 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
 
 # Keep only deaths among people who were depressed at the previous time step
 keep_X_with_left_D <- function(mat) {
-  # Get matrix dimensions
-  nrow_mat <- nrow(mat)
-  ncol_mat <- ncol(mat)
   # Create a matrix of NAs to store the result
-  result <- matrix(NA, nrow = nrow_mat, ncol = ncol_mat)
+  result <- mat
+  mat[,] <- NA
   # Identify positions where mat == "X"
   X_positions <- which(mat == "X", arr.ind = TRUE)
   # Check if the left-adjacent cell contains "D" in its string
