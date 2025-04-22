@@ -893,7 +893,7 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
 keep_X_with_left_D <- function(mat) {
   # Create a matrix of NAs to store the result
   result <- mat
-  mat[,] <- NA
+  result[,] <- NA
   # Identify positions where mat == "X"
   X_positions <- which(mat == "X", arr.ind = TRUE)
   # Check if the left-adjacent cell contains "D" in its string
