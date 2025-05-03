@@ -7,6 +7,12 @@ load(paste0(mainDir,"data/cuw_inputs_",whichgender,".RData"))
 load(paste0(mainDir,"data/pop_",whichgender,".RData")) # Read in Census population for SAD calculation
 load(paste0(mainDir,"data/ecig_precomputed_inputs_",whichgender,".RData"))
 
+if (whichgender=="females"){
+  deaths<<-1560607
+}else {
+  deaths<<-1719250
+}
+
 calib_startyear <-2005
 endyear <- as.numeric(args[3]) 
 cohorts <- 1900:as.numeric(args[3])            # last cohort is the last calendar year
