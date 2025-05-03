@@ -5,7 +5,7 @@ library(openxlsx)
 library(ggplot2)
 library(survey)
 
-whichgender="females"
+whichgender="males"
 
 ## Price index for inflating to 2023 USD
 # healthcare
@@ -35,7 +35,7 @@ c.CH <- c.CR <- bea2024.hc["2023"]/bea2024.hc["2015"]*c(rep(0,20),rep(2909, 10),
 c.FH <- c.FR <- bea2024.hc["2023"]/bea2024.hc["2015"]*c(rep(0,20),rep(3208, 10), rep(3754,10),rep(4390,10),rep(5130,10),rep(5990,10), rep(6990, 10), rep(8153,20)) # cost of remaining one cycle Former Smoking, No MD
 
 # data from Egede et al 2014 USD, inflate to 2023 USD
-c.D <- bea2024["2023"]/bea2024["2014"]*2654 # incremental cost of depression 
+c.D <- bea2024.hc["2023"]/bea2024.hc["2014"]*2654 # incremental cost of depression 
 
 # combine smoking and depression costs
 c.ND <- c.NH + c(rep(0,18),rep(c.D,82))
@@ -72,32 +72,108 @@ dev.off()
 
 # Utilities ---------------------------------------------------------------
 if (whichgender=="females"){
-  u.NH <- u.NR <- c(rep(1,25), rep(0.85,5),rep(0.84,5), rep(0.83,5), rep(0.81,5), rep(0.79,5), rep(0.76,5), rep(0.74,5), rep(0.72,5), rep(0.72,5), rep(0.71,5), rep(0.67,5), rep(0.63,5), rep(0.55,15))
-  u.CH <- u.CR <- c(rep(1,25), rep(0.79,5),rep(0.79,5), rep(0.78,5), rep(0.76,5), rep(0.73,5), rep(0.71,5), rep(0.68,5), rep(0.66,5), rep(0.67,5), rep(0.65,5), rep(0.61,5), rep(0.58,5), rep(0.50,15))
-  u.FH <- u.FR <- c(rep(1,25), rep(0.83,5),rep(0.83,5), rep(0.82,5), rep(0.80,5), rep(0.77,5), rep(0.75,5), rep(0.72,5), rep(0.70,5), rep(0.71,5), rep(0.69,5), rep(0.65,5), rep(0.62,5), rep(0.54,15))
+  # not depressed, no e-cig
+  u.NOH <- u.NOR <- u.NQH <- u.NQR <- c(rep(1,18),rep(0.839,7),rep(0.824,20), rep(0.797,20),rep(0.7625,35))
+  u.COH <- u.COR <- u.CQH <- u.CQR <- c(rep(1,18),rep(0.826,7),rep(0.816,20), rep(0.776,20),rep(0.7405,35))
+  u.FOH <- u.FOR <- u.FQH <- u.FQR <- c(rep(1,18),rep(0.843,7),rep(0.816,20), rep(0.787,20),rep(0.7405,35))
+  
+  # depressed, no e-cig
+  u.NOD <- u.NQD <- c(rep(1,18),rep(0.824,7),rep(0.804,20), rep(0.776,20),rep(0.7405,35))
+  u.COD <- u.CQD <- c(rep(1,18),rep(0.817,7),rep(0.799,20), rep(0.759,20),rep(0.706,35))
+  u.FOD <- u.FQD <- c(rep(1,18),rep(0.829,7),rep(0.801,20), rep(0.773,20),rep(0.724,35))
+  
+  # not depressed, e-cig
+  u.NEH <- u.NER <- c(rep(1,18),rep(0.839,7),rep(0.816,20), rep(0.767,20),rep(0.7625,35))
+  u.CEH <- u.CER <- c(rep(1,18),rep(0.829,7),rep(0.811,20), rep(0.773,20),rep(0.7685,35))
+  u.FEH <- u.FER <- c(rep(1,18),rep(0.826,7),rep(0.816,20), rep(0.777,20),rep(0.7685,35))
+  
+  # depressed, e-cig
+  u.NED <- c(rep(1,18),rep(0.824,7),rep(0.8,20), rep(0.777,20),rep(0.7,35))
+  u.CED <- c(rep(1,18),rep(0.817,7),rep(0.798,20), rep(0.759,20),rep(0.7095,35))
+  u.FED <- c(rep(1,18),rep(0.823,7),rep(0.8,20), rep(0.767,20),rep(0.724,35))
+  
 } else {
   # males
-  u.NH <- u.NR <- c(rep(1,25), rep(0.87,5),rep(0.86,5), rep(0.85,5), rep(0.83,5), rep(0.81,5), rep(0.79,5), rep(0.76,5), rep(0.74,5), rep(0.75,5), rep(0.73,5), rep(0.69,5), rep(0.65,5), rep(0.57,15))
-  u.CH <- u.CR <- c(rep(1,25), rep(0.82,5),rep(0.81,5), rep(0.80,5), rep(0.78,5), rep(0.76,5), rep(0.73,5), rep(0.71,5), rep(0.69,5), rep(0.69,5), rep(0.68,5), rep(0.64,5), rep(0.60,5), rep(0.52,15))
-  u.FH <- u.FR <- c(rep(1,25), rep(0.86,5),rep(0.85,5), rep(0.84,5), rep(0.82,5), rep(0.80,5), rep(0.77,5), rep(0.75,5), rep(0.73,5), rep(0.73,5), rep(0.72,5), rep(0.68,5), rep(0.64,5), rep(0.56,15))
+  # not depressed, no e-cig
+  u.NOH <- u.NOR <- u.NQH <- u.NQR <- c(rep(1,18),rep(0.843,7),rep(0.821,20), rep(0.795,20),rep(0.7625,35))
+  u.COH <- u.COR <- u.CQH <- u.CQR <- c(rep(1,18),rep(0.839,7),rep(0.811,20), rep(0.773,20),rep(0.7095,35))
+  u.FOH <- u.FOR <- u.FQH <- u.FQR <- c(rep(1,18),rep(0.843,7),rep(0.816,20), rep(0.778,20),rep(0.7405,35))
+  
+  # depressed, no e-cig
+  u.NOD <- u.NQD <- c(rep(1,18),rep(0.829,7),rep(0.801,20), rep(0.773,20),rep(0.7095,35))
+  u.COD <- u.CQD <- c(rep(1,18),rep(0.817,7),rep(0.793,20), rep(0.755,20),rep(0.7075,35))
+  u.FOD <- u.FQD <- c(rep(1,18),rep(0.829,7),rep(0.801,20), rep(0.767,20),rep(0.7095,35))
+  
+  # not depressed, e-cig
+  u.NEH <- u.NER <- c(rep(1,18),rep(0.839,7),rep(0.821,20), rep(0.778,20),rep(0.724,35))
+  u.CEH <- u.CER <- c(rep(1,18),rep(0.821,7),rep(0.804,20), rep(0.787,20),rep(0.7405,35))
+  u.FEH <- u.FER <- c(rep(1,18),rep(0.832,7),rep(0.811,20), rep(0.767,20),rep(0.7605,35))
+  
+  # depressed, e-cig
+  u.NED <- c(rep(1,18),rep(0.823,7),rep(0.801,20), rep(0.761,20),rep(0.7625,35))
+  u.CED <- c(rep(1,18),rep(0.817,7),rep(0.798,20), rep(0.767,20),rep(0.7075,35))
+  u.FED <- c(rep(1,18),rep(0.824,7),rep(0.801,20), rep(0.759,20),rep(0.724,35))
 }
-u.ND <- u.NH + c(rep(0,18),rep(-0.22,8),rep(-0.29,19),rep(-0.35,20),rep(-0.36,35)) # apply disutility of depression among non-smoking persons MEPS 2003
-u.FD <- u.FH + c(rep(0,18),rep(-0.22,8),rep(-0.29,19),rep(-0.35,20),rep(-0.36,35)) # apply disutility of depression among non-smoking persons MEPS 2003
-u.CD <- u.CH + c(rep(0,18),rep(-0.27,8),rep(-0.42,19),rep(-0.36,20),rep(-0.22,35)) # apply disutility of depression among current smoking persons MEPS 2003
 
-utilities <- as.data.frame(rbind(cbind(0:99,u.NH,"N",whichgender,"HR"),cbind(0:99,u.CH,"C",whichgender,"HR"),cbind(0:99,u.FH,"F",whichgender,"HR"), cbind(0:99,u.ND,"N",whichgender,"D"),cbind(0:99,u.CD,"C",whichgender,"D"),cbind(0:99,u.FD,"F",whichgender,"D")))
-names(utilities) <- c("age","utility","smoking_status","gender","depression_status")
+# Create a helper function to generate each combination
+create_utility_df <- function(values, smk_status, gender, dep_status, vap_status = NA) {
+  data.frame(
+    age = 0:99,
+    utility = values,
+    smk_status = smk_status,
+    gender = gender,
+    dep_status = dep_status,
+    vap_status = vap_status,
+    stringsAsFactors = FALSE
+  )
+}
+
+
+# Combine all groups into one data frame
+utilities <- do.call(rbind, list(
+  create_utility_df(u.NOH, "N", whichgender, "notD","notE"),
+  create_utility_df(u.COH, "C", whichgender, "notD","notE"),
+  create_utility_df(u.FOH, "F", whichgender, "notD","notE"),
+  create_utility_df(u.NEH, "N", whichgender, "notD","E"),
+  create_utility_df(u.CEH, "C", whichgender, "notD","E"),
+  create_utility_df(u.FEH, "F", whichgender, "notD","E"),
+  create_utility_df(u.NOD, "N", whichgender, "D","notE"),
+  create_utility_df(u.COD, "C", whichgender, "D","notE"),
+  create_utility_df(u.FOD, "F", whichgender, "D","notE"),
+  create_utility_df(u.NED, "N", whichgender, "D","E"),
+  create_utility_df(u.CED, "C", whichgender, "D","E"),
+  create_utility_df(u.FED, "F", whichgender, "D","E")
+))
+
+# Convert column types
 utilities$age <- as.numeric(utilities$age)
 utilities$utility <- as.numeric(utilities$utility)
-utilities$smoking_status <- factor(utilities$smoking_status,levels = c("C","N","F"))
-utilities$depression_status <- factor(utilities$depression_status,levels = c("HR","D"))
 
-jpeg(paste0("output/utilities.jpeg"), width = 5, height = 3.5, units = "in", res = 500)
-ggplot(data=utilities)+geom_line(aes(x=age,y=utility,colour = smoking_status,linetype = depression_status)) +
-  scale_y_continuous(limits = c(0,1))+
-  labs(title="Utilities by smoking and depression status")
+# Factor levels — adjusted to match values in your data
+utilities$smk_status <- factor(utilities$smk_status, levels = c("C", "N", "F"))
+utilities$dep_status <- factor(utilities$dep_status, levels = c("notD", "D"))
+utilities$vap_status <- factor(utilities$vap_status, levels = c("notE", "E"))
+
+pdf(paste0("output/utilities.pdf"), width = 11, height = 8.5, onefile=TRUE)
+# jpeg(paste0("output/utilities.jpeg"), width = 5, height = 3.5, units = "in", res = 500)
+ggplot(data=utilities) + 
+  geom_step(aes(x=age,y=utility,colour = dep_status,linetype=vap_status)) +
+  facet_wrap(~smk_status)+
+  scale_y_continuous(limits = c(0.7,1),breaks=seq(0.7,1,0.05))+
+  labs(title="Utilities by vaping and depression status - smoking groups")
+
+ggplot(data=utilities) + 
+  geom_step(aes(x=age,y=utility,colour = smk_status,linetype=vap_status)) +
+  facet_wrap(~dep_status)+
+  scale_y_continuous(limits = c(0.7,1),breaks=seq(0.7,1,0.05))+
+  labs(title="Utilities by smoking and vaping status - depression groups")
+
+ggplot(data=utilities) + 
+  geom_step(aes(x=age,y=utility,colour = smk_status,linetype=dep_status)) +
+  facet_wrap(~vap_status)+
+  scale_y_continuous(limits = c(0.7,1),breaks=seq(0.7,1,0.05))+
+  labs(title="Utilities by smoking and depression status - vaping groups")
 dev.off()
-
 
 # Productivities ----------------------------------------------------------
 ppcps<-read.csv("data-raw/asecpub23csv/pppub23.csv")
@@ -106,21 +182,18 @@ cps$PH_SEQ <- cps$h_seq
 mergedcps <- merge(cps,ppcps,by = c("PH_SEQ","PPPOS"))
 svy <- svrepdesign(data = mergedcps, repweights = "pwwgt[0-160]+", weights = ~MARSUPWT, type = "JK1", scale = 4/160)#, rscales = rep(1, 160), mse = TRUE)
 avg_wages <-svyby(~WSAL_VAL,~A_AGE,design = svy, svymean) 
-w = c(avg_wages[1:81,2],rep(avg_wages[81,2],4),rep(avg_wages[82,2],15))*1.311 # Fringe rate in 2023: 31% among civilian workers https://www.bls.gov/news.release/archives/ecec_06162023.pdf
+w <- c(avg_wages[1:81,2],rep(avg_wages[81,2],4),rep(avg_wages[82,2],15))*1.311 # Fringe rate in 2023: 31% among civilian workers https://www.bls.gov/news.release/archives/ecec_06162023.pdf
 productivities <- as.data.frame(cbind(age=0:99, w))
 
-# avg_income_cat <-svyby(~PTOTVAL,~AGE1,design = svy, svymean) 
-# w_old <- c(rep(0,15), rep(24110,10),rep(52730,5),rep(64890,5),rep(71680,5),rep(77270,5),rep(79000,5),rep(79150,5), rep(73290,5),rep(64520,5),rep(53050,5),rep(49260,5),rep(41030,25))
-# w_cat <- c(avg_income_cat[1:81,2],rep(avg_income_cat[81,2],4),rep(avg_income_cat[82,2],15))
-
 jpeg(paste0("output/productivities.jpeg"), width = 5, height = 3.5, units = "in", res = 500)
-ggplot(data=productivities)+geom_point(aes(x=age,y=earnings/1000))+theme_light()+scale_y_continuous("Average productivity ($, thousands)")+
+ggplot(data=productivities)+geom_point(aes(x=age,y=w/1000))+theme_light()+scale_y_continuous("Average productivity ($, thousands)")+
   labs(title="Productivity by age, 2023 USD")
 dev.off()
 
 save(c.NH, c.NR, c.ND, c.CH, c.CR, c.CD, c.FH, c.FR, c.FD, c.nonhealth,
-     u.NH, u.NR, u.ND, u.CH, u.CR, u.CD, u.FH, u.FR, u.FD, 
-     w, file=paste0("data/cuw_inputs_",whichgender,".RData"))
+     u.NOH, u.NOR, u.NQH, u.NQR, u.COH, u.COR, u.CQH, u.CQR, u.FOH, u.FOR, u.FQH, u.FQR, 
+     u.NOD, u.NQD, u.COD, u.CQD, u.FOD, u.FQD, u.NEH, u.NER, u.CEH, u.CER, u.FEH, u.FER, 
+     u.NED, u.CED, u.FED, w, file=paste0("data/cuw_inputs_",whichgender,".RData"))
 
 # Sources:
 ## Costs
@@ -133,10 +206,8 @@ save(c.NH, c.NR, c.ND, c.CH, c.CR, c.CD, c.FH, c.FR, c.FD, c.nonhealth,
 # 2022: https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm#rf-age 
 
 ## Utilities
-# Xu X, Fiacco L, Rostron B, et al. Assessing quality-adjusted years of life lost associated with exclusive cigarette smoking and smokeless tobacco use. 
-# Preventive medicine. 2021/09/01/ 2021;150:106707. doi:https://doi.org/10.1016/j.ypmed.2021.106707
-# AND
-# analysis of Medical Expenditure Panel Survey (MEPS) 2003 examining disutility of depression among smoking vs. non-smoking persons
+# Analysis of BRFSS 2022 data based on number of healthy days (physical or mental) 
+# Converts number of healthy days into utility scores by age, depression status, smoking status, gender
 
 ## Productivity
 # Source: U.S. Census Bureau, Current Population Survey, 2023 Annual Social and Economic Supplement (CPS ASEC).
