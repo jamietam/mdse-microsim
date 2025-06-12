@@ -1,13 +1,19 @@
 #specify the output files you want to combine:
+gender=1 #1 for male and 2 for female
+
+if (gender==1){genderlabel="male"
 file_names <- c(
   #males
-  "output/rnc_9males_depression_10000_04.05.25_08.44PM.RData",
-  "output/rnc_6males_depression_10000_04.05.25_06.16PM.RData",
-  "output/rnc_3males_depression_10000_04.05.25_02.05PM.RData",
-  "output/rnc_255males_depression_10000_04.04.25_02.27PM.RData"
-  #females
-  
+  "output/rnc_1males_depression_10000_05.06.25_08.06AM.RData",
+  "output/rnc_2males_depression_10000_05.04.25_09.34PM.RData"#,
 )
+}else{genderlabel="female"
+file_names <- c(
+  #males
+  "output/rnc_1females_depression_10000_05.05.25_09.14PM.RData",
+  "output/rnc_2females_depression_10000_05.04.25_10.37AM.RData"#,
+)
+}
 
 # Initialize the results list
 results_list <- list()
@@ -19,12 +25,6 @@ for (file_name in file_names) {
     list(l.results = l.results, l.results_D = l.results_D, l.results_ND = l.results_ND)
   ))
 }
-
-# Add more files to the results_list as needed
-# load("output/rnc_Xmales_depression_10000_XX.XX.XX_XX.XXPM.RData")
-# results_list <- append(results_list, list(
-#   list(l.results = l.results, l.results_D = l.results_D, l.results_ND = l.results_ND)
-# ))
 
 # Helper functions to combine elements
 
@@ -55,12 +55,23 @@ combine_result_elements <- function(result_elements) {
   
   combined[["m.cuw"]] <- combine_data_frames(lapply(result_elements, `[[`, "m.cuw"))
   combined[["v.lifeyears"]] <- combine_vectors(lapply(result_elements, `[[`, "v.lifeyears"))
-  combined[["v.SAD"]] <- combine_vectors(lapply(result_elements, `[[`, "v.SAD"))
-  combined[["v.yll"]] <- combine_vectors(lapply(result_elements, `[[`, "v.yll"))
+  combined[["v.SAD_old"]] <- combine_vectors(lapply(result_elements, `[[`, "v.SAD_old"))
+  combined[["v.yll_old"]] <- combine_vectors(lapply(result_elements, `[[`, "v.yll_old"))
+  combined[["v.SAD_old_disc"]] <- combine_vectors(lapply(result_elements, `[[`, "v.SAD_old_disc"))
+  combined[["v.yll_old_disc"]] <- combine_vectors(lapply(result_elements, `[[`, "v.yll_old_disc"))
+  combined[["v.VAD_old"]] <- combine_vectors(lapply(result_elements, `[[`, "v.VAD_old"))
+  combined[["v.VAD_old_disc"]] <- combine_vectors(lapply(result_elements, `[[`, "v.VAD_old_disc"))
+  combined[["v.lifeyears_pop_new"]] <- combine_vectors(lapply(result_elements, `[[`, "v.lifeyears_pop_new"))
+  combined[["v.SAD_new"]] <- combine_vectors(lapply(result_elements, `[[`, "v.SAD_new"))
+  combined[["v.lifeyears_pop_new_disc"]] <- combine_vectors(lapply(result_elements, `[[`, "v.lifeyears_pop_new_disc"))
+  combined[["v.SAD_new_disc"]] <- combine_vectors(lapply(result_elements, `[[`, "v.SAD_new_disc"))
   combined[["m.prev_C"]] <- combine_data_frames(lapply(result_elements, `[[`, "m.prev_C"))
   combined[["m.prev_F"]] <- combine_data_frames(lapply(result_elements, `[[`, "m.prev_F"))
   combined[["m.prev_N"]] <- combine_data_frames(lapply(result_elements, `[[`, "m.prev_N"))
+  combined[["init"]] <- combine_data_frames(lapply(result_elements, `[[`, "init"))
+  combined[["cess"]] <- combine_data_frames(lapply(result_elements, `[[`, "cess"))
   combined[["v.deathrate"]] <- combine_vectors(lapply(result_elements, `[[`, "v.deathrate"))
+
   
   return(combined)
 }
@@ -94,25 +105,12 @@ combine_all_results <- function(results_list) {
 # Combine all results
 combined_results <- combine_all_results(results_list)
 
-combined_l_results <- combined_results$combined_l_results
-combined_l_results_D <- combined_results$combined_l_results_D
-combined_l_results_ND <- combined_results$combined_l_results_ND
+l.results <- combined_results$combined_l_results
+l.results_D <- combined_results$combined_l_results_D
+l.results_ND <- combined_results$combined_l_results_ND
 
+n=10000*length(results_list)
 # Save the combined results
-# save(combined_l_results, combined_l_results_D, combined_l_results_ND, 
-#      file = "output/combined_males_depression_results.RData")
+save(l.results, l.results_D, l.results_ND,
+     file = paste0("output/combined_",genderlabel,n,".RData"))
 
-maindep<-combined_l_results$main[["l.model_prevs"]][["D"]][97:192,]
-baselinedep<-combined_l_results$baseline[["l.model_prevs"]][["D"]][97:192,]
-
-ggplot() +
-  # Add the first dataset
-  geom_line(data = maindep, aes(x = year, y = prev), color = "blue") +
-  # Add the second dataset
-  geom_line(data = baselinedep, aes(x = year, y = prev), color = "black")# +
-# Add labels
-
-
-# Save the combined results
-save(combined_l_results, combined_l_results_D, combined_l_results_ND, 
-     file = "output/combined_males_depression_results.RData")

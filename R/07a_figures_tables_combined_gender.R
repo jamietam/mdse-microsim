@@ -31,6 +31,10 @@ years_of_interest <- c(2027, 2040, 2060, 2080, 2100)
 age_filter <- "18.99" 
 statusfilter<-c("C") #Current Smoker Prevalence
 
+df.prevs_depsens<-df.prevs_comb %>%
+  filter(year == 2100, age == age_filter, status%in% statusfilter, scenario%in% c("main", "Dep_Sens") ) %>%select(age,year,prev,scenario,population)%>%
+  pivot_wider(names_from = population, values_from = c(prev))
+
 df.prevs<- df.prevs_comb %>%
   filter(year %in% years_of_interest, age == age_filter, status%in% statusfilter) %>%select(age,year,prev,scenario,population)%>%
   pivot_wider(names_from = population, values_from = c(prev))
@@ -56,7 +60,7 @@ process_prevalence <- function(column_name) {
     summarize(
       scenario1 = list(c(sw[1], paste0(sw[2],",",sw[3]))),
       prevalence1 = list(
-        c(paste0(prevalence[scenario ==sw[1]]),paste0( "(",prevalence[scenario == sw[2]]," - ", prevalence[scenario == sw[3]],  ")" ) ) ),
+        c(paste0(prevalence[scenario ==sw[1]]),paste0( "(",prevalence[scenario == sw[3]]," - ", prevalence[scenario == sw[2]],  ")" ) ) ),
       .groups = 'drop' ) %>%
     unnest(cols = c(scenario1, prevalence1)) %>%
     mutate(prevalence_type = column_name) # Add a column to identify the prevalence type
@@ -78,12 +82,47 @@ df.MDSE <-df.MDSE %>%
 df.MDSE<-cbind(df.MDSE,df.baseline)
 df.MDSE<-df.MDSE[c("year", "scenario1","B_D", "D","B_ND", "ND", "B_T","T","B_absdiff" , "absdiff" )]
 
+#calculate depressions averted: prevalence of depression each year time population for taht year
+df.prevs_D<- df.prevs_comb %>%
+  filter(population=="T", age == 18.99, status=="D")%>%select(year,prev,scenario)
+pop_sums <- colSums(pop)
+merged_df <- merge(data.frame(year = names(pop_sums), population1 = pop_sums, stringsAsFactors = FALSE), df.prevs_D, by = "year")
+# Multiplying the population by the prevalence for each year
+merged_df$result <- merged_df$population1 * merged_df$prev
+
+diffDprev=merged_df$prev[merged_df$year==2100 & merged_df$scenario=="baseline"]-merged_df$prev[merged_df$year==2100 & merged_df$scenario=="main"]
+
+compute_scenario_difference <- function(df, scenario_a, scenario_b) {
+  # Subset dataframes for each scenario
+  df_a <- subset(df, scenario == scenario_a)
+  df_b <- subset(df, scenario == scenario_b)
+  # Rename columns to avoid conflicts during merging
+  colnames(df_a)[which(colnames(df_a) == "result")] <- "result_a"
+  colnames(df_b)[which(colnames(df_b) == "result")] <- "result_b"
+  # Merge the dataframes by year
+  merged_df <- merge(df_a, df_b, by = "year")
+  # Calculate the difference between scenarios
+  merged_df$difference <- merged_df$result_b - merged_df$result_a
+  # Select relevant columns
+  result_df <- merged_df[, c("year", "result_a", "result_b", "difference")]
+  return(result_df)
+}
+
+depressiondifference=compute_scenario_difference(merged_df,"main","baseline")
+cum_dep<-data.frame(sum(depressiondifference$difference[depressiondifference$year%in% c(2028:2100)]))
+
 # add first sheet and write the data
 addWorksheet(wb, "1a.Prevalance_allgender_MDSE")
 writeData(wb, "1a.Prevalance_allgender_MDSE", df.MDSE)
 
 addWorksheet(wb, "Prevalance_sensitivity")
 writeData(wb, "Prevalance_sensitivity", df.prevs)
+
+addWorksheet(wb, "Depression_difference_pop")
+writeData(wb, "Depression_difference_pop", depressiondifference)
+
+addWorksheet(wb, "Depression_difference_poptotal")
+writeData(wb, "Depression_difference_poptotal", cum_dep)
 
 
 # HEALTH OUTCOMES ---------------------------------------------------------
@@ -93,8 +132,6 @@ writeData(wb, "Prevalance_sensitivity", df.prevs)
 #Health outcomes for sensitivity
 
 nc=ncol(dfM[[3]])
-Health=dfM[[3]][,6:nc]+dfF[[3]][,6:nc]
-Health=cbind(dfM[[3]][,1:2],Health)
 Health=dfM[[3]][,6:nc]+dfF[[3]][,6:nc]
 Health=cbind(dfM[[3]][,1:2],Health)
 Health_D=dfM_D[[3]][,6:nc]+dfF_D[[3]][,6:nc]
@@ -108,14 +145,27 @@ Health$population="T"
 
 
 Health_comb<-rbind(Health,Health_D,Health_ND)
+
+#note need to fix this in function code but deaths are for total population and we do by gender so when they are combined it is doubled. we should
+#really do deaths by gender in the US?
+# columns_to_divide <- c("cSAD_new", "cSAD_new_disc", "aSAD_new", "aSAD_new_disc", "aSAD_averted_new", "cSAD_averted_new","aSAD_averted_new_disc","cSAD_averted_new_disc")
+# Health_comb <- Health_comb %>% 
+#   mutate(across(all_of(columns_to_divide), ~ . / 2))
+Health_combcheck=Health_comb%>% select(scenario, cSAD_averted_new)
+
 Health_comb_orig<-Health_comb
 Health_comb<-Health_comb %>%
   filter(year %in% 2100)%>%
-  select(scenario,year,population,cSAD,cSAD_averted,cYLL,cYLL_averted_LYG,cLYG_disc_new,cMort_new)
+  select(scenario,year,population, aSAD_averted_old, cSAD_averted_old, aLYG_old, cLYG_old,
+         aSAD_averted_old_disc, cSAD_averted_old_disc, aLYG_old_disc, cLYG_old_disc,
+         aLYG_new,cLYG_new,aSAD_averted_new,cSAD_averted_new,
+         aLYG_new_disc,cLYG_new_disc,aSAD_averted_new_disc,cSAD_averted_new_disc,
+         cSAD_new, cSAD_old, cLYpop_new, cYLL_old,
+         cSAD_new_disc, cSAD_old_disc, cLYpop_new_disc, cYLL_old_disc, cVAD_old, aVAD_old, cVAD_averted_old, cVAD_averted_old_disc)
 
 baseline_values <- Health_comb %>%
   filter(scenario == "baseline", year == 2100) %>%
-  select(population, cSAD_base = cSAD, cYLL_base = cYLL)
+  select(population, cSAD_new_base=cSAD_new, cSAD_old_base=cSAD_old, cLYpop_new_base=cLYpop_new, cYLL_old_base=cYLL_old)
 
 # Calculate averted deaths and percentage changes with join
 results_df <- Health_comb %>%
@@ -123,36 +173,62 @@ results_df <- Health_comb %>%
   left_join(baseline_values, by = "population") %>%  # Join baseline_values by population
   group_by(population, scenario) %>%
   mutate(
-    SADdeathsaverted = cSAD_base - cSAD,
-    YLLdeathsaverted = cYLL_base - cYLL,
-    percentage_change_yll = (cYLL_base - cYLL) / cYLL_base,
-    percentage_change_sad = (cSAD_base - cSAD) / cSAD_base
+    percentage_change_yll_old = (cLYG_old) / cYLL_old_base,
+    percentage_change_sad_old = (cSAD_averted_old) / cSAD_old_base,
+    percentage_change_LY_new = (cLYG_new) / cLYpop_new_base,
+    percentage_change_sad_new = (cSAD_averted_new) / cSAD_new_base
+    
   ) %>%
   ungroup() %>%  # Always a good practice to ungroup if further operations are intended
-  select(scenario,population, cYLL_averted_orig=cYLL_averted_LYG,YLLdeathsaverted,percentage_change_yll, cSAD_averted_orig=cSAD_averted,SADdeathsaverted, percentage_change_sad)
+  select(scenario,population, percentage_change_yll_old,percentage_change_sad_old, percentage_change_LY_new, percentage_change_sad_new 
+         )
+
 
 Health_new<- Health_comb %>%left_join(results_df, by = c("scenario","population"))
+Health_new_depsens<-Health_new%>%
+  filter(scenario %in% c("main","Dep_Sens"), population=="T")%>%
+  select(scenario, cSAD_averted_old,cSAD_averted_new)
 # Calculate averted deaths and percentage changes with join
-outcome_columns<-c( "cSAD", "cSAD_averted","cYLL","cYLL_averted_LYG" ,"percentage_change_yll", "percentage_change_sad")
 dataframe<-Health_new
+variables=c("cSAD_old", "cSAD_new", "cLYpop_new", "cYLL_old" , "cSAD_old_disc", "cSAD_new_disc", "cLYpop_new_disc", "cYLL_old_disc",
+            "cSAD_averted_old", "cSAD_averted_old_disc", "cSAD_averted_new", "cSAD_averted_new_disc",
+            "cLYG_old", "cLYG_old_disc", "cLYG_new", "cLYG_new_disc", "cVAD_old","cVAD_averted_old","cVAD_averted_old_disc")
+dataframe[variables] <- apply(dataframe[variables], 2, function(x) paste0(sprintf("%.2f", x / 1000000)))
+dataframe$percentage_change_yll_old <- paste0(sprintf("%.1f", dataframe$percentage_change_yll_old * 100), "%")
+dataframe$percentage_change_sad_old <- paste0(sprintf("%.1f", dataframe$percentage_change_sad_old* 100), "%")
+dataframe$percentage_change_LY_new <- paste0(sprintf("%.1f", dataframe$percentage_change_LY_new * 100), "%")
+dataframe$percentage_change_sad_new  <- paste0(sprintf("%.1f", dataframe$percentage_change_sad_new * 100), "%")
 
-dataframe$cSAD <- paste0(sprintf("%.1f", dataframe$cSAD/1000000))
-dataframe$cSAD_averted <- paste0(sprintf("%.1f", dataframe$cSAD_averted/1000000))
-dataframe$cYLL <- paste0(sprintf("%.1f", dataframe$cYLL/1000000))
-dataframe$cYLL_averted_LYG <- paste0(sprintf("%.1f", dataframe$cYLL_averted_LYG/1000000))
-dataframe$percentage_change_yll <- paste0(sprintf("%.1f", dataframe$percentage_change_yll * 100), "%")
-dataframe$percentage_change_sad <- paste0(sprintf("%.1f", dataframe$percentage_change_sad * 100), "%")
 
+dataframesens1<-Health_new
+variables=c("cSAD_old", "cSAD_new", "cLYpop_new", "cYLL_old" , "cSAD_old_disc", "cSAD_new_disc", "cLYpop_new_disc", "cYLL_old_disc",
+            "cSAD_averted_old", "cSAD_averted_old_disc", "cSAD_averted_new", "cSAD_averted_new_disc",
+            "cLYG_old", "cLYG_old_disc", "cLYG_new", "cLYG_new_disc", "cVAD_old","cVAD_averted_old","cVAD_averted_old_disc")
+dataframesens1[variables] <- apply(dataframesens1[variables], 2, function(x) paste0(sprintf("%.2f", x / 1000000)))
 
-sensitivity1<-dataframe %>%
+sensitivity1<-dataframesens1 %>%
   filter(population == "T" , scenario %in% c("MPRPM","main","Init_Sens","Cess_Sens","CO.CE_Sens","CO.FE_Sens","NO.NE_Sens"))%>%
-  select(scenario,cSAD_averted)
+  select(scenario,cSAD_averted_old,cSAD_averted_new)
 a=sensitivity1[sensitivity1$scenario=="MPRPM",]
 b=sensitivity1[sensitivity1$scenario=="main",]
 sensitivity1[1,]=a
 sensitivity1[2,]=b
-sensitivity1$per_MPRPM <- as.numeric(sensitivity1$cSAD_averted)/as.numeric(sensitivity1$cSAD_averted[sensitivity1$scenario=="MPRPM"])
-sensitivity1$per_MPRPM<-paste0(sprintf("%.1f", sensitivity1$per_MPRPM * 100), "%")
+sensitivity1$per_MPRPM_old <- as.numeric(sensitivity1$cSAD_averted_old)/as.numeric(sensitivity1$cSAD_averted_old[sensitivity1$scenario=="MPRPM"])
+sensitivity1$per_MPRPM_old<-paste0(sprintf("%.1f", sensitivity1$per_MPRPM_old * 100), "%")
+sensitivity1$per_MPRPM_new <- as.numeric(sensitivity1$cSAD_averted_new)/as.numeric(sensitivity1$cSAD_averted_new[sensitivity1$scenario=="MPRPM"])
+sensitivity1$per_MPRPM_new<-paste0(sprintf("%.1f", sensitivity1$per_MPRPM_new * 100), "%")
+
+sensitivity2<-dataframesens1 %>%
+  filter(population == "T" , scenario %in% c("main","p.EX_Sens0","p.EX_Sens.15"))%>%
+  select(scenario,cSAD_averted_new, cLYG_new)
+
+sensitivity3<-dataframe %>%
+  filter(population == "T" , scenario %in% c("main","Dep_Sens"))%>%
+  select(scenario,cSAD_averted_new, cSAD_averted_old, cLYG_old,cLYG_new)
+
+sensitivity4<-dataframesens1 %>%
+  filter(population == "T" , scenario %in% c("main","Dep_Sens"))%>%
+  select(scenario,cSAD_averted_new, cLYG_new)
 
 # Function to process each prevalence column
 process_prevalence_H <- function(column_name) {
@@ -169,7 +245,26 @@ process_prevalence_H <- function(column_name) {
     mutate(prevalence_type = column_name) # Add a column to identify the prevalence type
 }
 
+#old lyg
+outcome_columns<-c("cSAD_old","cSAD_averted_old", "cSAD_old_disc", "cSAD_averted_old_disc",
+                   "cYLL_old" ,"cLYG_old", "cYLL_old_disc", "cLYG_old_disc","percentage_change_sad_old","percentage_change_yll_old")
+             
+sw<- c("baseline","baseline","baseline")
+resultsbaseline_H <- map_dfr(outcome_columns, process_prevalence_H)
+resultsbaseline_fH <-resultsbaseline_H %>%
+  pivot_wider(names_from = population, values_from = prevalence1,names_prefix = "B_")
 
+#MDSE Scenarios old lyg
+sw<- c("main", "worst","best")
+resultsMDSE_H <- map_dfr(outcome_columns, process_prevalence_H)
+resultsMDSE_fH <-resultsMDSE_H %>%
+  pivot_wider(names_from = population, values_from = prevalence1)
+resultsMDSE_fH1<-cbind(resultsMDSE_fH,resultsbaseline_fH)
+resultsMDSE_fH_old<-resultsMDSE_fH1[c("scenario1","prevalence_type","B_D","D","B_ND","ND","B_T","T")]
+
+#new lyg
+outcome_columns<-c("cSAD_new","cSAD_averted_new","cSAD_new_disc","cSAD_averted_new_disc",
+                   "cLYpop_new", "cLYG_new", "cLYpop_new_disc", "cLYG_new_disc","percentage_change_sad_new","percentage_change_LY_new")
 sw<- c("baseline","baseline","baseline")
 resultsbaseline_H <- map_dfr(outcome_columns, process_prevalence_H)
 resultsbaseline_fH <-resultsbaseline_H %>%
@@ -181,16 +276,24 @@ resultsMDSE_H <- map_dfr(outcome_columns, process_prevalence_H)
 resultsMDSE_fH <-resultsMDSE_H %>%
   pivot_wider(names_from = population, values_from = prevalence1)
 resultsMDSE_fH1<-cbind(resultsMDSE_fH,resultsbaseline_fH)
-resultsMDSE_fH<-resultsMDSE_fH1[c("scenario1","prevalence_type","B_D","D","B_ND","ND","B_T","T")]
+resultsMDSE_fH_new<-resultsMDSE_fH1[c("scenario1","prevalence_type","B_D","D","B_ND","ND","B_T","T")]
 
-addWorksheet(wb, "HealthOutcomes_allgender_MDSE")
-writeData(wb, "HealthOutcomes_allgender_MDSE", resultsMDSE_fH)
 
-addWorksheet(wb, "1a.Table2_HealthOutcomes")
-writeData(wb, "1a.Table2_HealthOutcomes", resultsMDSE_fH)
+addWorksheet(wb, "1a.Table2_HealthOutcomes_old")
+writeData(wb, "1a.Table2_HealthOutcomes_old", resultsMDSE_fH_old)
+
+addWorksheet(wb, "1a.Table2_HealthOutcomes_new")
+writeData(wb, "1a.Table2_HealthOutcomes_new", resultsMDSE_fH_new)
 
 addWorksheet(wb, "1b.eTable5_SensitivyMPRPM")
 writeData(wb, "1b.eTable5_SensitivyMPRPM", sensitivity1)
+
+addWorksheet(wb, "1b.eTable6_SensitivyVap")
+writeData(wb, "1b.eTable6_SensitivyVap", sensitivity2)
+
+addWorksheet(wb, "1b.eTable7_SensitivyDep")
+writeData(wb, "1b.eTable7_SensitivyDep", sensitivity3)
+
 
 
 # COST OUTCOMES -----------------------------------------------------------
@@ -199,16 +302,9 @@ writeData(wb, "1b.eTable5_SensitivyMPRPM", sensitivity1)
 nc=ncol(dfM[[4]])
 ICERST=dfM[[4]][,2:nc]+dfF[[4]][,2:nc]
 ICERST$scenario=dfM[[4]][,1]
-ICERSD=dfM_D[[4]][,2:nc]+dfF_D[[4]][,2:nc]
-ICERSD$scenario=dfM[[4]][,1]
-ICERSND=dfM_ND[[4]][,2:nc]+dfF_ND[[4]][,2:nc]
-ICERSND$scenario=dfM[[4]][,1]
 
-ICERSND$population="ND"
-ICERSD$population="D"
 ICERST$population="T"
-ICERALL=rbind(ICERST,ICERSD,ICERSND)
-
+ICERALL=ICERST
 
 #need to recalculate icers with combined numberators over combined demominators
 ICERALL$icer_medQALY <- round(ICERALL$inc_med_cost / ICERALL$inc_effectQALY,0)
@@ -223,19 +319,44 @@ ICERALL$icer_consQALY <- round(ICERALL$inc_cons / ICERALL$inc_effectQALY,0)
 #GET discounted LYG and costs
 COSTS=merge(Health_comb_orig,ICERALL, by=c("population","scenario"))
 
-COSTS$SOC_cost_US=round(COSTS$icer_socLY * COSTS$cYLL_averted_LYG_disc/1000000000,1) #LYG from total/cummulative YLL across the years 
-COSTS$MED_cost_US=round(COSTS$icer_medLY * COSTS$cYLL_averted_LYG_disc/1000000000,1)
-COSTS$Prod_US=round(COSTS$icer_prodLY * COSTS$cYLL_averted_LYG_disc/1000000000,1) #LYG from total/cummulative YLL across the years 
-COSTS$cons_US=round(COSTS$icer_consLY * COSTS$cYLL_averted_LYG_disc/1000000000,1) 
+COSTS$SOC_cost_US_old=round(COSTS$icer_socLY * COSTS$cLYG_old_disc/1000000000,1) #LYG from total/cummulative YLL across the years 
+COSTS$MED_cost_US_old=round(COSTS$icer_medLY * COSTS$cLYG_old_disc/1000000000,1)
+COSTS$Prod_US_old=round(COSTS$icer_prodLY * COSTS$cLYG_old_disc/1000000000,1) #LYG from total/cummulative YLL across the years 
+COSTS$cons_US_old=round(COSTS$icer_consLY * COSTS$cLYG_old_disc/1000000000,1) 
+COSTS$SOC_cost_US_new=round(COSTS$icer_socLY * COSTS$cLYG_new_disc/1000000000,1) #LYG from total/cummulative YLL across the years 
+COSTS$MED_cost_US_new=round(COSTS$icer_medLY * COSTS$cLYG_new_disc/1000000000,1)
+COSTS$Prod_US_new=round(COSTS$icer_prodLY * COSTS$cLYG_new_disc/1000000000,1) #LYG from total/cummulative YLL across the years 
+COSTS$cons_US_new=round(COSTS$icer_consLY * COSTS$cLYG_new_disc/1000000000,1) 
 
+COSTS_depsens<-COSTS%>%
+  filter(population == "T" , scenario %in% c("main","Dep_Sens"), year==2100)%>%
+  select(scenario, cSAD_averted_old,cSAD_averted_new,MED_cost_US_new, MED_cost_US_old)
 
-ICERALL<- COSTS[c("year","scenario","population","icer_medQALY","icer_socQALY","icer_prodQALY","icer_consQALY","icer_medLY","icer_socLY","icer_prodLY","icer_consLY","MED_cost_US","SOC_cost_US","Prod_US","cons_US")]
+ICERALL<- COSTS[c("year","scenario","population","icer_medQALY","icer_socQALY","icer_prodQALY","icer_consQALY","icer_medLY","icer_socLY","icer_prodLY","icer_consLY",
+                  "MED_cost_US_old","SOC_cost_US_old","Prod_US_old","cons_US_old",
+                  "MED_cost_US_new","SOC_cost_US_new","Prod_US_new","cons_US_new")]
 
-outcome_columns<-c("icer_medQALY","icer_socQALY","icer_medLY","icer_socLY","MED_cost_US","cons_US","Prod_US","SOC_cost_US")
+outcome_columns<-c("icer_medQALY","icer_socQALY","icer_medLY","icer_socLY","MED_cost_US_old","cons_US_old","Prod_US_old","SOC_cost_US_old",
+                   "MED_cost_US_new","cons_US_new","Prod_US_new","SOC_cost_US_new")
 ICERALL[outcome_columns] <- lapply(ICERALL[outcome_columns], function(x) trimws(format(round(x, 0), big.mark = ",")))
 
 dataframe<-ICERALL %>%
   filter(year == 2100)
+
+# Define a function to change numeric values
+flip_signs <- function(df) {
+  df <- df %>%
+    #mutate(across(Prod_US, ~ ifelse(grepl("^-", .), ., paste0("+", .))))%>%
+    mutate(across(where(is.character), ~ ifelse(startsWith(., "-"), sub("-", "+", .), paste0("-", .)))) %>%
+    # Flip signs for numeric columns
+    mutate(across(where(is.numeric), ~ ifelse(. > 0, paste0("-", .), paste0("+", abs(.)))))
+  # Process character columns to flip signs
+  return(df)
+}
+# Assuming your dataframe is named 'dataframe'
+dataframe[c("Prod_US_old","Prod_US_new")] <- flip_signs(dataframe[c("Prod_US_old","Prod_US_new")])
+
+
 process_prevalence_C <- function(column_name) {
   dataframe %>%
     select(population, scenario, one_of(column_name)) %>%
@@ -250,18 +371,35 @@ process_prevalence_C <- function(column_name) {
     mutate(prevalence_type = column_name) # Add a column to identify the prevalence type
 }
 
+
+outcome_columns<-c("icer_medQALY","icer_socQALY","icer_medLY","icer_socLY",
+                   "MED_cost_US_new","cons_US_new","Prod_US_new","SOC_cost_US_new")
 sw<- c("main", "worst","best")
 resultsMDSE_C <- map_dfr(outcome_columns, process_prevalence_C)
-resultsMDSE_fC <-resultsMDSE_C %>%
+resultsMDSE_fC_new <-resultsMDSE_C %>%
   pivot_wider(names_from = population, values_from = prevalence1)
 
-addWorksheet(wb, "1a.Table3_COSTS")
-writeData(wb, "1a.Table3_COSTS", resultsMDSE_fC)
-                                   
-addWorksheet(wb, "COSTS_Table_sensitivity")
-writeData(wb, "COSTS_Table_sensitivity", COSTS)
+outcome_columns<-c("icer_medQALY","icer_socQALY","icer_medLY","icer_socLY","MED_cost_US_old","cons_US_old","Prod_US_old","SOC_cost_US_old" )
+sw<- c("main", "worst","best")
+resultsMDSE_C <- map_dfr(outcome_columns, process_prevalence_C)
+resultsMDSE_fC_old <-resultsMDSE_C %>%
+  pivot_wider(names_from = population, values_from = prevalence1)
+
+addWorksheet(wb, "1a.Table3_COSTS_old")
+writeData(wb, "1a.Table3_COSTS_old", resultsMDSE_fC_old)
+
+addWorksheet(wb, "1a.Table3_COSTS_new")
+writeData(wb, "1a.Table3_COSTS_new", resultsMDSE_fC_new)
+
+#Depression Sensitivity Analysis eTable7:
+
+merged_df_sens<- merge(df.prevs_depsens, COSTS_depsens, by = "scenario")
+merged_df_sens1<- merge(merged_df_sens, sensitivity4, by = "scenario")
+addWorksheet(wb, "1b.eTable7_depsens")
+writeData(wb, "1b.eTable7_depsens", merged_df_sens1)
 
 saveWorkbook(wb, file = paste0(mainDir, "output/",figDir,"/Tables.xlsx"), overwrite=TRUE)
+
 
 
 # FIGURE FUNCTIONS --------------------------------------------------------
@@ -286,7 +424,7 @@ grid_arrange_shared_legend <- function(plots, nrow=NULL, ncol=NULL, titletext) {
 
 # prev_by_status(df.prevs_comb, "C", "T","18.99",0.5)
 data=df.prevs_comb
-status_value="D"
+status_value="C"
 population_value="T"
 age_filter="18.99"
 ylim=.15
@@ -304,7 +442,7 @@ prev_by_status <- function(data, status_value, population_value, age_filter, yli
   dep.calib=status_value
   }else if (population_value=="D"){outcomelabel="Current MD"
   dep.calib=paste0(status_value,"_D")
-  }else{outcomelabel="No current MD"
+  }else{outcomelabel="No Current MD"
   dep.calib=paste0(status_value,"_ND")}
   
   if (status_value=="C"){outcomelabel2=" Current Smoking"
@@ -318,25 +456,30 @@ prev_by_status <- function(data, status_value, population_value, age_filter, yli
   } else {outcomelabel2=" help"}
   
   plot<- ggplot() +
-   # geom_pointrange(data = subset(df.calib_targets, status == dep.calib & age==as.numeric(age_filter)), 
-    #                aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, color = "NSDUH Data"),size = .5) +
+   geom_pointrange(data = subset(df.calib_targets, status == dep.calib & age==as.numeric(age_filter)),
+                  aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, color = "NSDUH Data"),size = .5) +
     # Scenario 1 line
-    geom_line(data = df_filtered, aes(x = year, y = main, color = "RNC Policy Scenario"), size = 1) +
-    geom_line(data = df_filtered, aes(x = year, y = baseline, color = "Baseline Scenario"), size = 1) +
+    geom_line(data = df_filtered, aes(x = year, y = main, color = "Nicotine Product Standard"), size = 1, linetype = "dashed") +
+    geom_line(data = df_filtered, aes(x = year, y = baseline, color = "Status Quo"), size = 1) +
     # Confidence interval ribbon
-    # geom_ribbon(data = df_filtered,
-    #             aes(x = year, ymin = worst, ymax = best),
-    #             fill = "lightblue", alpha = 0.6)+
+    geom_ribbon(data = df_filtered,
+                aes(x = year, ymin = worst, ymax = best),
+                fill = "lightblue", alpha = 0.6)+
     # Additional customization
-    scale_color_manual(values = c("NSDUH Data" = "black", "RNC Policy Scenario" = "blue","Baseline Scenario" = "black")) +
-    labs(title = paste0(outcomelabel,", ",outcomelabel2," ages ",age_filter),
+    scale_color_manual(values = c("NSDUH Data" = "black", "Nicotine Product Standard" = "blue","Status Quo" = "black")) +
+    labs(title = paste0(outcomelabel,", ",outcomelabel2),
          x = "Year",
          y = paste0(outcomelabel2," Prevalence"),
          color = "") +
     scale_x_continuous(limits = c(2005,2100),breaks = c(2005,seq(2025,2100,25)))+
     scale_y_continuous(limits = c(0,ylim), breaks=ybreaks)+
     theme_minimal()+
-    theme(legend.position = "bottom", legend.direction = "horizontal") 
+    theme(legend.position = "bottom", legend.direction = "horizontal") +
+    guides(
+      color = guide_legend(override.aes = list(linetype = c("dashed", "solid", "solid"), size = .5), keywidth = 2.5, keyheight = 1),
+      linetype = guide_legend(override.aes = list(size = .5), keywidth = 2.5, keyheight = 1)
+    )
+  
   return(plot)
 }
 
@@ -363,14 +506,14 @@ ECIGonly <- function(data, population_value, age_filter, ylim) {
     geom_pointrange(data = subset(df.calib_targets, status == "NEFE" & age==as.numeric(age_filter)), 
                     aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, color = "NSDUH Data"),size = .5) +
     # Scenario 1 line
-    geom_line(data = df_filtered, aes(x = year, y = main_Diff, color = "RNC Policy Scenario"), size = 1) +
-    geom_line(data = df_filtered, aes(x = year, y = baseline_Diff, color = "Baseline Scenario"), size = 1) +
+    geom_line(data = df_filtered, aes(x = year, y = main_Diff, color = "Nicotine Product Standard"), size = 1) +
+    geom_line(data = df_filtered, aes(x = year, y = baseline_Diff, color = "Status Quo"), size = 1) +
     # Confidence interval ribbon
     geom_ribbon(data = df_filtered,
                 aes(x = year, ymin = worst_Diff, ymax = best_Diff),
                 fill = "lightblue", alpha = 0.6)+
     # Additional customization
-    scale_color_manual(values = c("NSDUH Data" = "black", "RNC Policy Scenario" = "blue","Baseline Scenario" = "black")) +
+    scale_color_manual(values = c("NSDUH Data" = "black", "Nicotine Product Standard" = "blue","Status Quo" = "black")) +
     labs(title = paste0(population_value),
          x = "Year",
          y = "Prevalence",
@@ -388,22 +531,26 @@ ECIGonly <- function(data, population_value, age_filter, ylim) {
 # population_value="T"
 # outcome="cYLL_averted_LYG"
 
-
-Health_comb_orig$cSAD_averted<-Health_comb_orig$cSAD_averted/1e6
-Health_comb_orig$cYLL_averted_LYG<-Health_comb_orig$cYLL_averted_LYG/1e6
-
 #Health Outcome figures: columns of cSAD, cYLL and rows by mental health
 Mort_by_status <- function(data, population_value, outcome, ylim) { #outcome = either cSAD_averted or cYLL_averted_LYG, sw is scenarios list 
-  df_filtered <- subset(data,  population == population_value )
-
+  df_filtered <- subset(data, population == population_value) %>%
+    select(year, cLYG_old, cLYG_new, cSAD_averted_old, cSAD_averted_new, population, scenario)
+  
+  # Use apply to divide all numeric columns by 1e6
+  df_filtered[, sapply(df_filtered, is.numeric)] <- apply(df_filtered[, sapply(df_filtered, is.numeric)], 2, function(x) x / 1e6)
+  
   df_filtered <- df_filtered %>%
-    select(year,cYLL_averted_LYG,cSAD_averted,population, scenario) %>%
-    pivot_wider(names_from = scenario, values_from = c(cYLL_averted_LYG,cSAD_averted))
+    pivot_wider(names_from = scenario, values_from = c(cLYG_old, cLYG_new, cSAD_averted_old, cSAD_averted_new))
+  
   if (population_value=="T"){outcomelabel="Total adult population"
   }else if (population_value=="D"){outcomelabel="Adults with MDE"
   }else(outcomelabel="Adults without MDE")
-  if (outcome=="cSAD_averted"){outcomelabel2="Cumulative SADs averted"
-  }else{outcomelabel2="Cumulative LYG"}
+  if (startsWith(outcome, "cSAD")) {
+    outcomelabel2 = "Cumulative SADs averted"
+  } else {
+    outcomelabel2 = "Cumulative LYG"
+  }
+  
 
     plot<-ggplot() +
       # Scenario 1 line
@@ -428,14 +575,15 @@ Mort_by_status <- function(data, population_value, outcome, ylim) { #outcome = e
  # ylim=10
 #MED_cost_US,SOC_cost_US,Prod_US
 #plotCosts_(COSTS,"T","SOC_cost_US",10)
+
 plotCosts_ <- function(data,population_value, outcome,ylim) {
   df_filtered <- subset(data,  population == population_value )
   df_filtered <- df_filtered %>%
-    select(year,MED_cost_US,SOC_cost_US,Prod_US, scenario) %>%
-    pivot_wider(names_from = scenario, values_from = c(MED_cost_US,SOC_cost_US,Prod_US))
-  
-  if (outcome=="SOC_cost_US"){outcomelabel="Cumulative Societal Cost"
-  }else if (outcome=="MED_cost_US"){outcomelabel="Cumulative US Medical costs"
+    select(year,MED_cost_US_new,SOC_cost_US_new,Prod_US_new,MED_cost_US_old,SOC_cost_US_old,Prod_US_old, scenario) %>%
+    pivot_wider(names_from = scenario, values_from = c(MED_cost_US_new,SOC_cost_US_new,Prod_US_new,MED_cost_US_old,SOC_cost_US_old,Prod_US_old))
+  startsWith(outcome, "cSAD")
+  if (startsWith(outcome, "SOC")){outcomelabel="Cumulative Societal Cost"
+  }else if (startsWith(outcome, "MED")){outcomelabel="Cumulative US Medical costs"
   }else(outcomelabel="Cumulative US Productivity Gains")
    plot<- ggplot() +
     # Scenario 1 line
@@ -465,15 +613,15 @@ get_legend <- function(myggplot) {
 #ages: 18.25 18.99 26.34 35.49 50.64 65.99 
 #Smoking, ECIG and DUAL prevalence
 CTlegend<-prev_by_status(df.prevs_comb, "C", "T","18.99",0.5) 
-CT<-prev_by_status(df.prevs_comb, "C", "T","18.99",0.5) + theme(legend.position = "none")
-ET<-prev_by_status(df.prevs_comb, "E", "T","18.99",0.3) + theme(legend.position = "none")
-dualT<-prev_by_status(df.prevs_comb, "CE", "T","18.99",0.11) + theme(legend.position = "none")
-CD<-prev_by_status(df.prevs_comb, "C", "D","18.99",0.5) + theme(legend.position = "none")
-ED<-prev_by_status(df.prevs_comb, "E", "D","18.99",0.3) + theme(legend.position = "none")
-dualD<-prev_by_status(df.prevs_comb, "CE", "D","18.99",0.11) + theme(legend.position = "none")
-CND<-prev_by_status(df.prevs_comb, "C", "ND","18.99",0.5) + theme(legend.position = "none")
-END<-prev_by_status(df.prevs_comb, "E", "ND","18.99",0.3) + theme(legend.position = "none")
-dualND<-prev_by_status(df.prevs_comb, "CE", "ND","18.99",0.11) + theme(legend.position = "none")
+CT<-prev_by_status(df.prevs_comb, "C", "T","18.99",0.5,seq(0,0.5,0.1)) + theme(legend.position = "none")
+ET<-prev_by_status(df.prevs_comb, "E", "T","18.99",0.3,seq(0,0.3,0.1)) + theme(legend.position = "none")
+dualT<-prev_by_status(df.prevs_comb, "CE", "T","18.99",0.11,seq(0,0.11,0.05)) + theme(legend.position = "none")
+CD<-prev_by_status(df.prevs_comb, "C", "D","18.99",0.5,seq(0,0.5,0.1)) + theme(legend.position = "none")
+ED<-prev_by_status(df.prevs_comb, "E", "D","18.99",0.3,seq(0,0.3,0.1)) + theme(legend.position = "none")
+dualD<-prev_by_status(df.prevs_comb, "CE", "D","18.99",0.11,seq(0,0.11,0.05)) + theme(legend.position = "none")
+CND<-prev_by_status(df.prevs_comb, "C", "ND","18.99",0.5,seq(0,0.5,0.1)) + theme(legend.position = "none")
+END<-prev_by_status(df.prevs_comb, "E", "ND","18.99",0.3,seq(0,0.3,0.1)) + theme(legend.position = "none")
+dualND<-prev_by_status(df.prevs_comb, "CE", "ND","18.99",0.11,seq(0,0.11,0.05)) + theme(legend.position = "none")
 
 MDE_18.99<-prev_by_status(df.prevs_comb,"D","T","18.99",0.14, seq(0,0.24,0.02))
 MDE_18.25<-prev_by_status(df.prevs_comb,"D","T","18.25",0.24, seq(0,0.24,0.02))
@@ -490,24 +638,35 @@ E_onlyND<-ECIGonly(df.prevs_comb,"ND","18.99",.2)
 
 
 # Health Outcomes
-cSADT <- Mort_by_status(Health_comb_orig, "T", "cSAD_averted",10)
-cYLLT <- Mort_by_status(Health_comb_orig, "T", "cYLL_averted_LYG",10)
-cSADD <- Mort_by_status(Health_comb_orig, "D", "cSAD_averted",10)
-cYLLD <- Mort_by_status(Health_comb_orig, "D", "cYLL_averted_LYG",10)
-cSADND <- Mort_by_status(Health_comb_orig, "ND", "cSAD_averted",10)
-cYLLND <- Mort_by_status(Health_comb_orig, "ND", "cYLL_averted_LYG",10)
+#cLYG_old, cLYG_new, cSAD_averted_old, cSAD_averted_new
+cSADT_old <- Mort_by_status(Health_comb_orig, "T", "cSAD_averted_old",10)
+cYLLT_old <- Mort_by_status(Health_comb_orig, "T", "cLYG_old",10)
+cSADD_old <- Mort_by_status(Health_comb_orig, "D", "cSAD_averted_old",10)
+cYLLD_old <- Mort_by_status(Health_comb_orig, "D", "cLYG_old",10)
+cSADND_old <- Mort_by_status(Health_comb_orig, "ND", "cSAD_averted_old",10)
+cYLLND_old <- Mort_by_status(Health_comb_orig, "ND", "cLYG_old",10)
+cSADT_new <- Mort_by_status(Health_comb_orig, "T", "cSAD_averted_new",10)
+cYLLT_new <- Mort_by_status(Health_comb_orig, "T", "cLYG_new",10)
+cSADD_new <- Mort_by_status(Health_comb_orig, "D", "cSAD_averted_new",10)
+cYLLD_new <- Mort_by_status(Health_comb_orig, "D", "cLYG_new",10)
+cSADND_new <- Mort_by_status(Health_comb_orig, "ND", "cSAD_averted_new",10)
+cYLLND_new <- Mort_by_status(Health_comb_orig, "ND", "cLYG_new",10)
 
 
 #Costs
-Cost_SOC <- plotCosts_(COSTS,"T","SOC_cost_US",1000)
-Cost_MED <-  plotCosts_(COSTS,"T","MED_cost_US",1000) 
-Cost_PROD <- plotCosts_(COSTS,"T","Prod_US",1000) 
+#MED_cost_US_new,SOC_cost_US_new,Prod_US_new,MED_cost_US_old,SOC_cost_US_old,Prod_US_old
+Cost_SOC_old <- plotCosts_(COSTS,"T","SOC_cost_US_old",1000)
+Cost_MED_old <-  plotCosts_(COSTS,"T","MED_cost_US_old",1000) 
+Cost_PROD_old <- plotCosts_(COSTS,"T","Prod_US_old",1000) 
+Cost_SOC_new  <- plotCosts_(COSTS,"T","SOC_cost_US_new",1000)
+Cost_MED_new  <-  plotCosts_(COSTS,"T","MED_cost_US_new",1000) 
+Cost_PROD_new  <- plotCosts_(COSTS,"T","Prod_US_new",1000) 
 
 # Distribution in total population #prev_by_status(df.prevs_comb, "C", "T",FALSE,"18.99",0.5) 
 N_age <- prev_by_status(df.prevs_comb, "N", "T","18.99",1) 
 C_age <- prev_by_status(df.prevs_comb, "C", "T","18.99",0.5) 
 F_age <- prev_by_status(df.prevs_comb, "F", "T","18.99",0.5) 
-D_age <- prev_by_status(df.prevs_comb, "D", "T","18.99",0.1) 
+D_age <- prev_by_status(df.prevs_comb, "D", "T","18.99",0.13) 
 
 E_age <- prev_by_status(df.prevs_comb, "E", "T","18.99",0.5) 
 NE_age <- prev_by_status(df.prevs_comb, "NE", "T","18.99",0.5) 
@@ -590,22 +749,29 @@ NCFE_D_total <- ggplot() +
   theme(axis.text.x = element_text(angle = 60, hjust = 1), legend.title = element_blank(), legend.position = "bottom")
 
 
+df.prevs_comb_1<-df.prevs_comb%>% filter(age==18.99,scenario %in% c("main", "Dep_Sens", "baseline", "Dep_base"), population=="T",status == "D")
 
-Depression_2016_2023_baseline <- ggplot() +
-  geom_pointrange(data=subset(df.calib_targets, status=="D" & age==18.99), 
-                  aes(x = survey_year, y = prev, ymin=prev_lowCI, ymax=prev_highCI, color="NSDUH data")) +
-  geom_line(data = subset(df.prevs_comb, status=="D" & age==18.99 & scenario == "Dep_base" & population == "T"), aes(x = year, y = prev, color="2016 incidence Status Quo")) +
-  geom_line(data = subset(df.prevs_comb, status=="D" & age==18.99 & scenario == "Dep_Sens" & population == "T"), aes(x = year, y = prev, color="2016 incidence RNC")) +
-  geom_line(data = subset(df.prevs_comb, status=="D" & age==18.99 & scenario == "main" & population == "T"), aes(x = year, y = prev, color="2022 incidence RNC")) +
-  geom_line(data = subset(df.prevs_comb, status=="D" & age==18.99 & scenario == "baseline" & population == "T"), aes(x = year, y = prev, color="2022 incidence Status Quo")) +
-  scale_y_continuous(name="Prevalence (%)", limits=c(.05,0.15)) +
-  scale_x_continuous(name="Year") +
-  scale_color_manual(name = "Legend", values = c("NSDUH data" = "Black", "2016 incidence RNC" = "Light Blue", "2016 incidence Status Quo" = "Blue", "2022 incidence RNC" = "Dark Grey","2022 incidence Status Quo" = "Black")) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle=60, hjust=1), 
-        legend.title = element_blank(), 
-        legend.position = "right")
 
+df.prevs_comb_1 <- df.prevs_comb_1 %>%
+  mutate(color_group = ifelse(scenario %in% c("Dep_Sens", "Dep_base"), "Depression 2016", "Depression 2022"),
+         line_type = ifelse(scenario %in% c("Dep_base", "baseline"), "Status Quo", "Policy"))
+
+
+Depression_2016_2023_baseline <-ggplot() +
+  geom_pointrange(data = subset(df.calib_targets, status == "D" & age == 18.99), 
+                  aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, color = "NSDUH data")) +
+  geom_line(data = subset(df.prevs_comb_1, status == "D" & age == 18.99 & scenario %in% c("main", "Dep_Sens", "baseline", "Dep_base") & population == "T"), 
+            aes(x = year, y = prev, color = color_group, linetype = line_type)) +
+  scale_y_continuous(name = "Prevalence (%)", limits = c(0.06, 0.12)) +
+  scale_x_continuous(name = "Year") +
+  scale_color_manual(values = c("Depression 2016" = "blue", "Depression 2022" = "black", "NSDUH data" = "black"),
+                     name = "",
+                     labels = c("Depression 2016" = "Incidence returns to \npre-2016 levels from 2023-2100", "Depression 2022" = "Incidence levels \nconstant 2016-2100", "NSDUH data" = "NSDUH Data")) +
+  scale_linetype_manual(values = c("Status Quo" = "solid", "Policy" = "dashed"),
+                        name = "",
+                        labels = c("Status Quo" = "Status Quo (Solid)", "Policy" = "Nicotine Product \n Standard (Dashed)"))+
+  theme_minimal()
+  
 # Figure for e-cig transitions
 eciginit <- as.data.frame(c(p.NO.NE[,"2025"],p.NO.NE[,"2026"],p.CO.CE[,"2025"],p.CO.CE[,"2026"],p.FO.FE[,"2025"],p.FO.FE[,"2026"]))
 eciginit <- cbind(rep(seq(0:99),6),
@@ -654,7 +820,7 @@ grid.arrange(arrangeGrob(CD, CND,CT,ED,END,ET,dualD,dualND,dualT, ncol = 3,nrow=
              ncol = 1, heights = c(4, 0.5) )
 dev.off()
 
-pdf(paste0("output/",figDir,"/1b.eFig2_Depression.pdf"), width = 6, height = 6)
+pdf(paste0("output/",figDir,"/1b.eFig2_Depression.pdf") , width = 6, height = 6)
 Depression_2016_2023_baseline
 dev.off()
 
@@ -691,16 +857,23 @@ jpeg(paste0("output/",figDir,"/3.dualprevalence_grid.jpeg"), width = 9, height =
 grid.arrange(dualD, dualND, ncol = 2, nrow = 1)
 dev.off()
 
-jpeg(paste0("output/",figDir,"/3.cSADgrid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
-grid.arrange(cSADT,cSADD, ncol = 2, nrow = 1)
+jpeg(paste0("output/",figDir,"/3.cSAD_oldgrid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
+grid.arrange(cSADT_old,cSADD_old, ncol = 2, nrow = 1)
+dev.off()
+jpeg(paste0("output/",figDir,"/3.cSAD_newgrid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
+grid.arrange(cSADT_new,cSADD_new, ncol = 2, nrow = 1)
 dev.off()
 
 jpeg(paste0("output/",figDir,"/3.cLYGgrid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
-grid.arrange(cYLLT,cYLLD, ncol = 2, nrow = 1)
+grid.arrange(cYLLT_old,cYLLD_old, ncol = 2, nrow = 1)
+dev.off()
+
+jpeg(paste0("output/",figDir,"/3.cLYGgrid.jpeg"), width = 9, height = 3.5, units = "in", res = 500)
+grid.arrange(cYLLT_new,cYLLD_new, ncol = 2, nrow = 1)
 dev.off()
 
 jpeg(paste0("output/",figDir,"/MDE.jpeg"), width = 4.5, height = 5.5, units = "in", res = 500)
-MDE
+Depression_2016_2023_baseline
 dev.off()
 
 # DIAGNOSTIC FIGURES PDF --------------------------------------------------
@@ -714,13 +887,14 @@ grid_arrange_shared_legend(list(NCFE_total_B,NCFE_D_B),1,2,"Tobacco USE Baseline
 grid_arrange_shared_legend(list(NCFE_total_MDSE,NCFE_D_MDSE),1,2,"Tobacco USE MDSE main scenario")
 grid_arrange_shared_legend(list(Depression_2016_2023_baseline),1,1,"MDE")
 grid_arrange_shared_legend(list(N_D_age, C_D_age, F_D_age),1,3,"Smoking distribution among people with depression")
-p.OE_age
+ p.OE_age
 grid_arrange_shared_legend(list(E_age,E_D_age),1,2,"Vaping by Depression Status")
 grid_arrange_shared_legend(list(E_onlyT,E_onlyD,E_onlyND),1,3,"Exclusive Vaping by Depression Status")
 grid_arrange_shared_legend(list(NE_age, CE_age, FE_age),1,3,"Smoking and Vaping Status in the Total Population")
 grid_arrange_shared_legend(list(NE_D_age, CE_D_age, FE_D_age),1,3,"Smoking and Vaping Status in the Depressed Population")
 grid_arrange_shared_legend(list(MDE_18.99,MDE_18.25),1,2,"MD prevalence")
-grid.arrange(Cost_MED, Cost_SOC, Cost_PROD, nrow = 1, ncol = 3)# inputs
+grid.arrange(Cost_MED_old, Cost_SOC_old, Cost_PROD_old, nrow = 1, ncol = 3)# inputs
+grid.arrange(Cost_MED_new, Cost_SOC_new, Cost_PROD_new, nrow = 1, ncol = 3)# inputs
 grid_arrange_shared_legend(list(MDE_18.99,MDE_18.25),1,2,"MD prevalence")
 dev.off()
 
