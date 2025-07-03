@@ -80,7 +80,7 @@ df.MDSE <- map_dfr(outcome_columns, process_prevalence)
 df.MDSE <-df.MDSE %>%
   pivot_wider(names_from = prevalence_type, values_from = prevalence1)
 df.MDSE<-cbind(df.MDSE,df.baseline)
-df.MDSE<-df.MDSE[c("year", "scenario1","B_D", "D","B_ND", "ND", "B_T","T","B_absdiff" , "absdiff" )]
+df.MDSE<-df.MDSE[c("year", "scenario1","B_T","T","B_D", "D","B_ND", "ND","B_absdiff" , "absdiff" )]
 
 #calculate depressions averted: prevalence of depression each year time population for taht year
 df.prevs_D<- df.prevs_comb %>%
@@ -193,7 +193,7 @@ dataframe<-Health_new
 variables=c("cSAD_old", "cSAD_new", "cLYpop_new", "cYLL_old" , "cSAD_old_disc", "cSAD_new_disc", "cLYpop_new_disc", "cYLL_old_disc",
             "cSAD_averted_old", "cSAD_averted_old_disc", "cSAD_averted_new", "cSAD_averted_new_disc",
             "cLYG_old", "cLYG_old_disc", "cLYG_new", "cLYG_new_disc", "cVAD_old","cVAD_averted_old","cVAD_averted_old_disc")
-dataframe[variables] <- apply(dataframe[variables], 2, function(x) paste0(sprintf("%.2f", x / 1000000)))
+dataframe[variables] <- apply(dataframe[variables], 2, function(x) paste0(sprintf("%.1f", x / 1000000)))
 dataframe$percentage_change_yll_old <- paste0(sprintf("%.1f", dataframe$percentage_change_yll_old * 100), "%")
 dataframe$percentage_change_sad_old <- paste0(sprintf("%.1f", dataframe$percentage_change_sad_old* 100), "%")
 dataframe$percentage_change_LY_new <- paste0(sprintf("%.1f", dataframe$percentage_change_LY_new * 100), "%")
@@ -230,7 +230,7 @@ sensitivity4<-dataframesens1 %>%
   filter(population == "T" , scenario %in% c("main","Dep_Sens"))%>%
   select(scenario,cSAD_averted_new, cLYG_new)
 
-# Function to process each prevalence column
+# Function to process each outcome column
 process_prevalence_H <- function(column_name) {
   dataframe %>%
     select(population, scenario, one_of(column_name)) %>%
@@ -260,7 +260,7 @@ resultsMDSE_H <- map_dfr(outcome_columns, process_prevalence_H)
 resultsMDSE_fH <-resultsMDSE_H %>%
   pivot_wider(names_from = population, values_from = prevalence1)
 resultsMDSE_fH1<-cbind(resultsMDSE_fH,resultsbaseline_fH)
-resultsMDSE_fH_old<-resultsMDSE_fH1[c("scenario1","prevalence_type","B_D","D","B_ND","ND","B_T","T")]
+resultsMDSE_fH_old<-resultsMDSE_fH1[c("scenario1","prevalence_type","B_T","T","B_D","D","B_ND","ND")]
 
 #new lyg
 outcome_columns<-c("cSAD_new","cSAD_averted_new","cSAD_new_disc","cSAD_averted_new_disc",
@@ -276,7 +276,7 @@ resultsMDSE_H <- map_dfr(outcome_columns, process_prevalence_H)
 resultsMDSE_fH <-resultsMDSE_H %>%
   pivot_wider(names_from = population, values_from = prevalence1)
 resultsMDSE_fH1<-cbind(resultsMDSE_fH,resultsbaseline_fH)
-resultsMDSE_fH_new<-resultsMDSE_fH1[c("scenario1","prevalence_type","B_D","D","B_ND","ND","B_T","T")]
+resultsMDSE_fH_new<-resultsMDSE_fH1[c("scenario1","prevalence_type","B_T","T","B_D","D","B_ND","ND")]
 
 
 addWorksheet(wb, "1a.Table2_HealthOutcomes_old")
@@ -446,18 +446,18 @@ prev_by_status <- function(data, status_value, population_value, age_filter, yli
   dep.calib=paste0(status_value,"_ND")}
   
   if (status_value=="C"){outcomelabel2=" Current Smoking"
-  }else if (status_value=="E"){outcomelabel2=" E-cigarette Use"
+  }else if (status_value=="E"){outcomelabel2=" Current Vaping"
   }else if (status_value=="F"){outcomelabel2=" Former Smoking"
   }else if (status_value=="N"){outcomelabel2=" Never Smoking"
   }else if (status_value=="CE"){outcomelabel2=" Dual Use"
-  }else if (status_value=="NE"){outcomelabel2=" Never smoking, e-cig use"
-  }else if (status_value=="FE"){outcomelabel2=" Former smoking, e-cig use"
+  }else if (status_value=="NE"){outcomelabel2=" Never smoking, Current Vaping"
+  }else if (status_value=="FE"){outcomelabel2=" Former smoking, Current Vaping"
   }else if (status_value=="D"){outcomelabel2=" Current MD"
   } else {outcomelabel2=" help"}
   
   plot<- ggplot() +
    geom_pointrange(data = subset(df.calib_targets, status == dep.calib & age==as.numeric(age_filter)),
-                  aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, color = "NSDUH Data"),size = .5) +
+                  aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, color = "NSDUH Data"),size = .5, alpha = 0.5) +
     # Scenario 1 line
     geom_line(data = df_filtered, aes(x = year, y = main, color = "Nicotine Product Standard"), size = 1, linetype = "dashed") +
     geom_line(data = df_filtered, aes(x = year, y = baseline, color = "Status Quo"), size = 1) +
@@ -466,7 +466,9 @@ prev_by_status <- function(data, status_value, population_value, age_filter, yli
                 aes(x = year, ymin = worst, ymax = best),
                 fill = "lightblue", alpha = 0.6)+
     # Additional customization
-    scale_color_manual(values = c("NSDUH Data" = "black", "Nicotine Product Standard" = "blue","Status Quo" = "black")) +
+    scale_color_manual(values = c("NSDUH Data" = "black", "Nicotine Product Standard" = "blue", "Status Quo" = "black"),
+                       breaks = c("NSDUH Data", "Nicotine Product Standard", "Status Quo")) +
+    
     labs(title = paste0(outcomelabel,", ",outcomelabel2),
          x = "Year",
          y = paste0(outcomelabel2," Prevalence"),

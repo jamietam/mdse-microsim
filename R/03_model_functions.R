@@ -724,7 +724,7 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   
   ## Get mortality counts by year, scaled to US population estimates of mortality
   v.X = apply(m.M,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
-  s.X = (deaths / v.X["2022"]) # Total number of US deaths in 2022: 3,279,857, so scale up the number of deaths by the 2022 ratio to reflect all US deaths. Each X = 4298.644 deaths
+  s.X = (deaths / v.X["2023"]) # Total number of US deaths in 2023: 3,279,857, so scale up the number of deaths by the 2022 ratio to reflect all US deaths. Each X = 4298.644 deaths
   v.X_totalpop = v.X * s.X
   v.X_D = apply(keep_X_with_left_D(m.M),2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's just among people who are depressed
   v.X_Dpop = v.X_D * s.X

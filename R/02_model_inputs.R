@@ -8,9 +8,9 @@ load(paste0(mainDir,"data/pop_",whichgender,".RData")) # Read in Census populati
 load(paste0(mainDir,"data/ecig_precomputed_inputs_",whichgender,".RData"))
 
 if (whichgender=="females"){
-  deaths<<-1560607
+  deaths<<-1473817
 }else {
-  deaths<<-1719250
+  deaths<<-1616765
 }
 
 calib_startyear <-2005
