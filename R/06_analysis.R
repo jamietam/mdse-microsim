@@ -106,7 +106,7 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   dfM_ND=reformat_model_outputs(l.results_ND)
   
   ## GENERATE FIGURES AND TABLES
-  source(paste0(mainDir,"R/07a_figures_tables_combined_gender.R"), echo=TRUE)
+  source(paste0(mainDir,"R/07_figures_tables_combined_gender.R"), echo=TRUE)
   
 } else {
   print(n.i)
@@ -162,6 +162,6 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   dfM_ND=reformat_model_outputs(l.results_ND)
   
   ## GENERATE FIGURES AND TABLES
-  source(paste0(mainDir,"R/07a_figures_tables_combined_gender.R"), echo=TRUE)
+  source(paste0(mainDir,"R/07_figures_tables_combined_gender.R"), echo=TRUE)
   print(Sys.time() - t.init)
 }
