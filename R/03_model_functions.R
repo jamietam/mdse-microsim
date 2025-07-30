@@ -808,68 +808,10 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   names(l.model_prevs1_notD) <- c("N","C","F","E",paste0("q",str_pad(1:40,2,pad="0"))) # track former prevalence by years since quitting
   l.model_prevs1_notD <- lapply(l.model_prevs1_notD, reorder_by_age) # re-order the age groups from 18.25, 18.99, 26.34, etc
   
-  # Calculate smoking-attributable mortality from d.year to 2100 --------
-  v.year_range <- d.year:max(cohorts) # Specify years of interest
-  v.age_range <- 0:99
-  
-  m.prev_N <- extract_prevalence(l.model_prevs1, "N", v.age_range, v.year_range)
-  m.prev_C <- extract_prevalence(l.model_prevs1, "C", v.age_range, v.year_range) # Extract prevalence data for current smokers and former smokers
-  m.prev_F <- extract_prevalence(l.model_prevs1, "F", v.age_range, v.year_range) # Average FX, not by years since quit
-  m.prev_D <- extract_prevalence(l.model_prevs1, "D", v.age_range, v.year_range) 
-  m.prev_E <- extract_prevalence(l.model_prevs1, "E", v.age_range, v.year_range) 
-  m.prev_CE <- extract_prevalence(l.model_prevs1, "CE", v.age_range, v.year_range) 
-  m.prev_N_D <- extract_prevalence(l.model_prevs1_D, "N", v.age_range, v.year_range)
-  m.prev_C_D <- extract_prevalence(l.model_prevs1_D, "C", v.age_range, v.year_range)
-  m.prev_F_D <- extract_prevalence(l.model_prevs1_D, "F", v.age_range, v.year_range)
-  m.prev_E_D <- extract_prevalence(l.model_prevs1_D, "E", v.age_range, v.year_range) 
-  m.prev_N_notD <- extract_prevalence(l.model_prevs1_notD, "N", v.age_range, v.year_range)
-  m.prev_C_notD <- extract_prevalence(l.model_prevs1_notD, "C", v.age_range, v.year_range)
-  m.prev_F_notD <- extract_prevalence(l.model_prevs1_notD, "F", v.age_range, v.year_range)
-  m.prev_E_notD <- extract_prevalence(l.model_prevs1_notD, "E", v.age_range, v.year_range) 
-  
-  # Extract prevalence data for former smoker years since quit
-  l.prev_fs.ysq <- lapply(paste0("q", sprintf("%02d", 1:40)), function(state) extract_prevalence(l.model_prevs1, state, v.age_range, v.year_range))
-  
-  # Calculate smoking-attributable deaths for current smokers
-  m.SADcs <- pop[, as.character(v.year_range)] * (m.prev_C * (p.CX[v.age_range + 1, v.year_range - 1899] - p.NX[v.age_range + 1, v.year_range - 1899]))
-  m.SADcs_D <- pop[, as.character(v.year_range)] * m.prev_D *
-    (m.prev_C_D * (p.CX[v.age_range + 1, v.year_range - 1899] - p.NX[v.age_range + 1, v.year_range - 1899]))
-  
-  v.SADcs <- colSums(m.SADcs)
-  v.SADcs_D <- colSums(m.SADcs_D)
-
-  # Calculate smoking-attributable deaths for former smokers
-  m.SADfs.ysq <- pop[, as.character(v.year_range)] * m.prev_F *
-                           Reduce(`+`, lapply(1:40, function(i) l.prev_fs.ysq[[i]] * 
-                                                (a_p.FX.ysq[, , i][v.age_range + 1, v.year_range - 1899] - p.NX[v.age_range + 1, v.year_range - 1899])))
-  m.SADfs.ysq_D <- pop[, as.character(v.year_range)] * m.prev_D * m.prev_F_D *
-    Reduce(`+`, lapply(1:40, function(i) l.prev_fs.ysq[[i]] * 
-                         (a_p.FX.ysq[, , i][v.age_range + 1, v.year_range - 1899] - p.NX[v.age_range + 1, v.year_range - 1899])))
-  v.SADfs.ysq <- colSums(m.SADfs.ysq)
-  v.SADfs.ysq_D <- colSums(m.SADfs.ysq_D)
-  
-  # Total smoking-attributable deaths
-  v.SAD <- v.SADfs.ysq + v.SADcs # total pop
-  v.SAD_D <- v.SADfs.ysq_D + v.SADcs_D # depressed pop
-  v.SAD_notD <- v.SAD - v.SAD_D # not depressed pop
-  
-  # Calculate Vaping-attributable deaths for current smokers
-  m.VAD <- pop[, as.character(v.year_range)] * ((m.prev_CE-m.prev_E)* (p.EX[v.age_range + 1, v.year_range - 1899]))
-  m.VAD_D <- pop[, as.character(v.year_range)] * m.prev_D * (m.prev_E_D * (p.EX[v.age_range + 1, v.year_range - 1899]))
-  
-  v.VAD <- colSums( m.VAD)
-  v.VAD_D <- colSums( m.VAD_D)
-  v.VAD_notD <- v.VAD - v.VAD_D 
-  
-  # Calculate years of life lost - multiply each SAD by the remaining life expectancy of someone at that age who had never smoked
-  #le_N life expectancy does not have columns named... so need to add that.
-  colnames(le_N)=c(1900:2100)
-  v.yll = colSums(le_N[,as.character(v.year_range)]*m.SADcs) + colSums(le_N[,as.character(v.year_range)]*m.SADfs.ysq)
-  v.yll_D = colSums(le_N[,as.character(v.year_range)]*m.SADcs_D)+ colSums(le_N[,as.character(v.year_range)]*m.SADfs.ysq_D)
-  v.yll_notD <- v.yll - v.yll_D
 
   # Economic outcomes -------------------------------------------------------
-  
+  v.year_range <- d.year:max(cohorts) # Specify years of interest
+  v.age_range <- 0:99
   # Calculate costs, utilities, and productivity for each health state by age in the population
   m.total_cuw <- rbind(colSums(m.C[,paste0(v.year_range)],na.rm=TRUE),colSums(m.U[,paste0(v.year_range)],na.rm=TRUE),colSums(m.W[,paste0(v.year_range)],na.rm=TRUE),colSums(m.B[,paste0(v.year_range)],na.rm=TRUE),
                      colSums(m.C[,paste0(v.year_range)],na.rm=TRUE)+colSums(m.B[,paste0(v.year_range)],na.rm=TRUE)-colSums(m.W[,paste0(v.year_range)],na.rm=TRUE),v.lifeyears) # societal costs = medical costs + consumer expenditures (non-medical) -  productivity 
@@ -893,23 +835,7 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   m.cuw_D <- t(m.d_total_cuw_D[,as.character(v.year_range)])
   m.cuw_notD <- t(m.d_total_cuw_notD[,as.character(v.year_range)])
   
-  #Dsicounting old and new life years and SAD for clarity.
-  #Discounted
-  #v.d goes from 2025-2100 currently as do the vectors here
-  #old attributable fraction method:
-  #years of life lost
-  v.yll_disc= v.yll*v.d
-  v.yll_D_disc=v.yll_D*v.d
-  v.yll_notD_disc=v.yll_notD*v.d
-  #smoking attributable deaths
-  v.SAD_disc=v.SAD*v.d
-  v.SAD_D_disc=v.SAD_D*v.d
-  v.SAD_notD_disc=v.SAD_notD*v.d
-  
-  v.VAD_disc<-v.VAD*v.d
-  v.VAD_D_disc<-v.VAD_D*v.d
-  v.VAD_notD_disc<-v.VAD_notD*v.d
-  #new method:
+  #Dsicounting  life years and deaths for clarity.
   #new SAD
   v.X_totalpop_disc=v.X_totalpop*v.d
   v.X_Dpop_disc=  v.X_Dpop*v.d
@@ -919,7 +845,6 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   v.lifeyears_Dpop_disc <- v.lifeyears_Dpop*v.d
   v.lifeyears_notDpop_disc <- v.lifeyears_notDpop*v.d
   
-  
   v.X_notD=v.X-v.X_D
   
   cat(paste0("\n  ", v.params," "))
@@ -927,27 +852,21 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
 
   # Output results as two lists: one for general population, and one for depressed population
   l.results <- list(l.model_prevs = l.model_prevs, m.cuw=m.cuw, 
-                    v.lifeyears=v.lifeyears,  
-                    v.SAD_old =v.SAD, v.yll_old = v.yll,v.SAD_old_disc =v.SAD_disc, v.yll_old_disc = v.yll_disc,
-                    v.VAD_old_disc= v.VAD_disc, v.VAD_old=v.VAD,
+                    v.lifeyears=v.lifeyears,
                     v.SAD_new=v.X_totalpop, v.lifeyears_pop_new = v.lifeyears_totalpop, v.SAD_new_disc=v.X_totalpop_disc, v.lifeyears_pop_new_disc = v.lifeyears_totalpop_disc, 
-                    init = p.NC, cess = p.CF, m.prev_C=m.prev_C, m.prev_F = m.prev_F, m.prev_N=m.prev_N, v.deathrate= v.deathrate,
+                    init = p.NC, cess = p.CF, v.deathrate= v.deathrate,
                     v.X=v.X)
 
   l.results_D <- list(l.model_prevs = l.model_prevs_D, m.cuw=m.cuw_D, 
-                      v.lifeyears=v.lifeyears_D,  
-                      v.SAD_old =v.SAD_D,  v.yll_old  = v.yll_D,v.SAD_old_disc =v.SAD_D_disc,  v.yll_old_disc  = v.yll_D_disc,
-                      v.VAD_old_disc=v.VAD_D_disc,v.VAD_old=v.VAD_D,
+                      v.lifeyears=v.lifeyears_D,
                       v.SAD_new=v.X_Dpop, v.lifeyears_pop_new = v.lifeyears_Dpop, v.SAD_new_disc=v.X_Dpop_disc, v.lifeyears_pop_new_disc = v.lifeyears_Dpop_disc,
-                      init = p.NC_D, cess = rr.CD.FD*p.CF, m.prev_C=m.prev_C_D, m.prev_F = m.prev_F_D, m.prev_N=m.prev_N_D, v.deathrate_D= v.deathrate_D,
+                      init = p.NC_D, cess = rr.CD.FD*p.CF, v.deathrate_D= v.deathrate_D,
                       v.X=v.X_D)
 
   l.results_notD <- list(l.model_prevs=l.model_prevs_notD, m.cuw=m.cuw_notD , 
                          v.lifeyears = v.lifeyears_notD, 
-                         v.SAD_old =v.SAD_notD, v.yll_old  = v.yll_notD,v.SAD_old_disc =v.SAD_notD_disc, v.yll_old_disc  = v.yll_notD_disc,
-                         v.VAD_old_disc=v.VAD_notD_disc, v.VAD_old=v.VAD_notD,
                          v.SAD_new=v.X_notDpop, v.lifeyears_pop_new = v.lifeyears_notDpop, v.SAD_new_disc=v.X_notDpop_disc, v.lifeyears_pop_new_disc = v.lifeyears_notDpop_disc,
-                         init = p.NC, cess = p.CF, m.prev_C=m.prev_C_notD, m.prev_F = m.prev_F_notD, m.prev_N=m.prev_N_notD,  v.deathrate_notD= v.deathrate_notD,
+                         init = p.NC, cess = p.CF,  v.deathrate_notD= v.deathrate_notD,
                          v.X=v.X)
 
   return(list(l.results=l.results, l.results_D = l.results_D, l.results_notD=l.results_notD))

@@ -1,17 +1,27 @@
+
+rm(list = ls()) 
+#this doesn't work right now?
+# Sys.setenv(RGL_USE_NULL=TRUE) 
+# Sys.setenv('R_MAX_VSIZE'=64000000000)
+# Set working directory
+mainDir = "/Users/srs249/University of Michigan Dropbox/Sarah Skolnick/GitHub/mdse-microsim/"
+# mainDir = "/Users/jt936/Dropbox/GitHub/mdse-microsim/"
+# mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" 
+setwd(mainDir)
 #specify the output files you want to combine:
 gender=1 #1 for male and 2 for female
 
 if (gender==1){genderlabel="male"
 file_names <- c(
   #males
-  "output/rnc_1males_depression_10000_05.06.25_08.06AM.RData",
-  "output/rnc_2males_depression_10000_05.04.25_09.34PM.RData"#,
+  "output/rnc_1males_depression_10000_07.25.25_01.03AM.RData",
+  "output/rnc_2males_depression_10000_07.29.25_12.42PM.RData"#,
 )
 }else{genderlabel="female"
 file_names <- c(
   #males
-  "output/rnc_1females_depression_10000_05.05.25_09.14PM.RData",
-  "output/rnc_2females_depression_10000_05.04.25_10.37AM.RData"#,
+  "output/rnc_1females_depression_10000_07.24.25_03.46AM.RData",
+  "output/rnc_2females_depression_10000_07.28.25_08.23PM.RData"#,
 )
 }
 
