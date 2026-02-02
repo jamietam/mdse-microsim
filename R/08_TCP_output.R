@@ -6,8 +6,8 @@ mainDir = "/Users/srs475/Library/CloudStorage/Dropbox-UniversityofMichigan/Sarah
 setwd(mainDir)
 
 hpc = 0
-n.i <- 10000 # number of people per birth cohort
-policyyear <- 2027
+n.i <- 20000 # number of people per birth cohort
+policyyear <- 2030
 v.affected_ages <- c(0:99) # affects all ages
 d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by 3%
 d.year <- 2025 # which year to start discounting from
@@ -18,8 +18,8 @@ source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE)
 source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE)
 
 
-malefile= "combined_male20000.RData"
-femalefile="combined_female20000.RData"
+malefile= paste0("combined_",policyyear,"_male20000.RData")
+femalefile=paste0("combined_",policyyear,"_female20000.RData")
 
 # Load and format files for females
 load(paste0(mainDir, "output/",femalefile))
@@ -35,6 +35,35 @@ dfM_ND=reformat_model_outputs(l.results_ND)
 
 
 
+
+# Specify the policy year
+  # Change this to whatever year you need
+
+# Create the main policy year folder within TCPoutput
+dir.create(file.path(paste0(mainDir,"output/TCPoutput"), paste0("policy_", policyyear)), 
+           recursive = TRUE, 
+           showWarnings = FALSE)
+
+# Define the subfolder names from your image
+subfolders <- c(
+  "deaths_averted",
+  "dual_use_prevalence",
+  "economic",
+  "lys_gained",
+  "smoking_prevalence",
+  "vaping_prevalence"
+)
+
+# Create each subfolder within the policy year folder
+for (folder in subfolders) {
+  dir.create(file.path("output/TCPoutput", paste0("policy_", policyyear), folder), 
+             recursive = TRUE, 
+             showWarnings = FALSE)
+}
+
+# Confirmation message
+cat("Created TCPoutput/policy_", policyyear, " folder with subfolders:\n", sep = "")
+cat(paste("  -", subfolders), sep = "\n")
 
 # Functions ---------------------------------------------------------------
 
@@ -194,7 +223,7 @@ create_costoutcome_csv <- function(datafM, datafF, outcome_vars, outcome_var_nam
 # create files ------------------------------------------------------------
 
 #prevalences
-setwd(paste0(mainDir,"output/TCPoutput/smoking_prevalence"))
+setwd(paste0(mainDir,"output/TCPoutput/policy_",policyyear,"/smoking_prevalence"))
 create_comparison_csv(dfM[[1]], dfF[[1]], "main", "C", output_file = "sp_overall_real.csv")
 create_comparison_csv(dfM[[1]], dfF[[1]], "best", "C", output_file = "sp_overall_opt.csv")
 create_comparison_csv(dfM[[1]], dfF[[1]], "worst", "C", output_file = "sp_overall_pess.csv")
@@ -205,7 +234,7 @@ create_comparison_csv(dfM_ND[[1]], dfF_ND[[1]], "main", "C", output_file = "sp_n
 create_comparison_csv(dfM_ND[[1]], dfF_ND[[1]], "best", "C", output_file = "sp_nodep_opt.csv")
 create_comparison_csv(dfM_ND[[1]], dfF_ND[[1]], "worst", "C", output_file = "sp_nodep_pess.csv")
 
-setwd(paste0(mainDir,"output/TCPoutput/vaping_prevalence"))
+setwd(paste0(mainDir,"output/TCPoutput/policy_",policyyear,"/vaping_prevalence"))
 create_comparison_csv(dfM[[1]], dfF[[1]], "main", "E", output_file = "vp_overall_real.csv")
 create_comparison_csv(dfM[[1]], dfF[[1]], "best", "E", output_file = "vp_overall_opt.csv")
 create_comparison_csv(dfM[[1]], dfF[[1]], "worst", "E", output_file = "vp_overall_pess.csv")
@@ -216,7 +245,7 @@ create_comparison_csv(dfM_ND[[1]], dfF_ND[[1]], "main", "E", output_file = "vp_n
 create_comparison_csv(dfM_ND[[1]], dfF_ND[[1]], "best", "E", output_file = "vp_nodep_opt.csv")
 create_comparison_csv(dfM_ND[[1]], dfF_ND[[1]], "worst", "E", output_file = "vp_nodep_pess.csv")
 
-setwd(paste0(mainDir,"output/TCPoutput/dual_use_prevalence"))
+setwd(paste0(mainDir,"output/TCPoutput/policy_",policyyear,"/dual_use_prevalence"))
 create_comparison_csv(dfM[[1]], dfF[[1]], "main", "CE", output_file = "dup_overall_real.csv")
 create_comparison_csv(dfM[[1]], dfF[[1]], "best", "CE", output_file = "dup_overall_opt.csv")
 create_comparison_csv(dfM[[1]], dfF[[1]], "worst", "CE", output_file = "dup_overall_pess.csv")
@@ -228,32 +257,53 @@ create_comparison_csv(dfM_ND[[1]], dfF_ND[[1]], "best", "CE", output_file = "dup
 create_comparison_csv(dfM_ND[[1]], dfF_ND[[1]], "worst", "CE", output_file = "dup_nodep_pess.csv")
 
 #LYG
-setwd(paste0(mainDir,"output/TCPoutput/lys_gained"))
-create_outcome_csv(dfM[[3]], dfF[[3]], "cLYG_new_disc", "cLYG", "main", output_file="lyg_overall_real.csv")
-create_outcome_csv(dfM[[3]], dfF[[3]], "cLYG_new_disc", "cLYG", "best", output_file="lyg_overall_opt.csv")
-create_outcome_csv(dfM[[3]], dfF[[3]], "cLYG_new_disc", "cLYG", "worst", output_file="lyg_overall_pess.csv")
-create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cLYG_new_disc", "cLYG", "main", output_file="lyg_dep_real.csv")
-create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cLYG_new_disc", "cLYG", "best", output_file="lyg_dep_opt.csv")
-create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cLYG_new_disc", "cLYG", "worst", output_file="lyg_dep_pess.csv")
-create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cLYG_new_disc", "cLYG", "main", output_file="lyg_nodep_real.csv")
-create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cLYG_new_disc", "cLYG", "best", output_file="lyg_nodep_opt.csv")
-create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cLYG_new_disc", "cLYG", "worst", output_file="lyg_nodep_pess.csv")
+setwd(paste0(mainDir,"output/TCPoutput/policy_",policyyear,"/lys_gained"))
+create_outcome_csv(dfM[[3]], dfF[[3]], "cLYG_new_disc", "cLYG", "main", output_file="lyg_overall_real_disc.csv")
+create_outcome_csv(dfM[[3]], dfF[[3]], "cLYG_new_disc", "cLYG", "best", output_file="lyg_overall_opt_disc.csv")
+create_outcome_csv(dfM[[3]], dfF[[3]], "cLYG_new_disc", "cLYG", "worst", output_file="lyg_overall_pess_disc.csv")
+create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cLYG_new_disc", "cLYG", "main", output_file="lyg_dep_real_disc.csv")
+create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cLYG_new_disc", "cLYG", "best", output_file="lyg_dep_opt_disc.csv")
+create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cLYG_new_disc", "cLYG", "worst", output_file="lyg_dep_pess_disc.csv")
+create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cLYG_new_disc", "cLYG", "main", output_file="lyg_nodep_real_disc.csv")
+create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cLYG_new_disc", "cLYG", "best", output_file="lyg_nodep_opt_disc.csv")
+create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cLYG_new_disc", "cLYG", "worst", output_file="lyg_nodep_pess_disc.csv")
+
+create_outcome_csv(dfM[[3]], dfF[[3]], "cLYG_new", "cLYG", "main", output_file="lyg_overall_real.csv")
+create_outcome_csv(dfM[[3]], dfF[[3]], "cLYG_new", "cLYG", "best", output_file="lyg_overall_opt.csv")
+create_outcome_csv(dfM[[3]], dfF[[3]], "cLYG_new", "cLYG", "worst", output_file="lyg_overall_pess.csv")
+create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cLYG_new", "cLYG", "main", output_file="lyg_dep_real.csv")
+create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cLYG_new", "cLYG", "best", output_file="lyg_dep_opt.csv")
+create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cLYG_new", "cLYG", "worst", output_file="lyg_dep_pess.csv")
+create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cLYG_new", "cLYG", "main", output_file="lyg_nodep_real.csv")
+create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cLYG_new", "cLYG", "best", output_file="lyg_nodep_opt.csv")
+create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cLYG_new", "cLYG", "worst", output_file="lyg_nodep_pess.csv")
+
 
 #deaths averted
-setwd(paste0(mainDir,"output/TCPoutput/deaths_averted"))
-create_outcome_csv(dfM[[3]], dfF[[3]], "cSAD_averted_new_disc", "deaths_avoided", "main", output_file="da_overall_real.csv")
-create_outcome_csv(dfM[[3]], dfF[[3]], "cSAD_averted_new_disc", "deaths_avoided", "best", output_file="da_overall_opt.csv")
-create_outcome_csv(dfM[[3]], dfF[[3]], "cSAD_averted_new_disc", "deaths_avoided", "worst", output_file="da_overall_pess.csv")
-create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cSAD_averted_new_disc", "deaths_avoided", "main", output_file="da_dep_real.csv")
-create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cSAD_averted_new_disc", "deaths_avoided", "best", output_file="da_dep_opt.csv")
-create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cSAD_averted_new_disc", "deaths_avoided", "worst", output_file="da_dep_pess.csv")
-create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cSAD_averted_new_disc", "deaths_avoided", "main", output_file="da_nodep_real.csv")
-create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cSAD_averted_new_disc", "deaths_avoided", "best", output_file="da_nodep_opt.csv")
-create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cSAD_averted_new_disc", "deaths_avoided", "worst", output_file="da_nodep_pess.csv")
+setwd(paste0(mainDir,"output/TCPoutput/policy_",policyyear,"/deaths_averted"))
+create_outcome_csv(dfM[[3]], dfF[[3]], "cSAD_averted_new_disc", "deaths_avoided", "main", output_file="da_overall_real_disc.csv")
+create_outcome_csv(dfM[[3]], dfF[[3]], "cSAD_averted_new_disc", "deaths_avoided", "best", output_file="da_overall_opt_disc.csv")
+create_outcome_csv(dfM[[3]], dfF[[3]], "cSAD_averted_new_disc", "deaths_avoided", "worst", output_file="da_overall_pess_disc.csv")
+create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cSAD_averted_new_disc", "deaths_avoided", "main", output_file="da_dep_real_disc.csv")
+create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cSAD_averted_new_disc", "deaths_avoided", "best", output_file="da_dep_opt_disc.csv")
+create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cSAD_averted_new_disc", "deaths_avoided", "worst", output_file="da_dep_pess_disc.csv")
+create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cSAD_averted_new_disc", "deaths_avoided", "main", output_file="da_nodep_real_disc.csv")
+create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cSAD_averted_new_disc", "deaths_avoided", "best", output_file="da_nodep_opt_disc.csv")
+create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cSAD_averted_new_disc", "deaths_avoided", "worst", output_file="da_nodep_pess_disc.csv")
+
+create_outcome_csv(dfM[[3]], dfF[[3]], "cSAD_averted_new", "deaths_avoided", "main", output_file="da_overall_real.csv")
+create_outcome_csv(dfM[[3]], dfF[[3]], "cSAD_averted_new", "deaths_avoided", "best", output_file="da_overall_opt.csv")
+create_outcome_csv(dfM[[3]], dfF[[3]], "cSAD_averted_new", "deaths_avoided", "worst", output_file="da_overall_pess.csv")
+create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cSAD_averted_new", "deaths_avoided", "main", output_file="da_dep_real.csv")
+create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cSAD_averted_new", "deaths_avoided", "best", output_file="da_dep_opt.csv")
+create_outcome_csv(dfM_D[[3]], dfF_D[[3]], "cSAD_averted_new", "deaths_avoided", "worst", output_file="da_dep_pess.csv")
+create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cSAD_averted_new", "deaths_avoided", "main", output_file="da_nodep_real.csv")
+create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cSAD_averted_new", "deaths_avoided", "best", output_file="da_nodep_opt.csv")
+create_outcome_csv(dfM_ND[[3]], dfF_ND[[3]], "cSAD_averted_new", "deaths_avoided", "worst", output_file="da_nodep_pess.csv")
 
 
 # cost outcomes
-setwd(paste0(mainDir,"output/TCPoutput/economic"))
+setwd(paste0(mainDir,"output/TCPoutput/policy_",policyyear,"/economic"))
 create_costoutcome_csv(dfM[[3]], dfF[[3]],outcome_vars = c("cMedCosts", "cSocCosts", "cProd","cNonhealth"), outcome_var_names = c("healthcare", "overall", "productivity","consumer"),policy_scenario_name = "main", output_file = "econ_overall_real.csv")
 create_costoutcome_csv(dfM[[3]], dfF[[3]],outcome_vars = c("cMedCosts", "cSocCosts", "cProd","cNonhealth"), outcome_var_names = c("healthcare", "overall", "productivity","consumer"),policy_scenario_name = "best", output_file = "econ_overall_opt.csv")
 create_costoutcome_csv(dfM[[3]], dfF[[3]],outcome_vars = c("cMedCosts", "cSocCosts", "cProd","cNonhealth"), outcome_var_names = c("healthcare", "overall", "productivity","consumer"),policy_scenario_name = "worst", output_file = "econ_overall_pess.csv")
