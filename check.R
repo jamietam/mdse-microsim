@@ -1,3 +1,147 @@
+rm(list = ls()) 
+outputdir="/Users/srs475/Library/CloudStorage/Dropbox-UniversityofMichigan/Sarah Skolnick/GitHub/mdse-microsim/output"
+
+load(paste0(outputdir,"/8_2028rnc_8females_depression_1000_02.28.26_08.41AM.RData"))
+
+years <- as.character(2025:2030)
+
+comparison <- data.frame(
+  Year     = years,
+  Baseline = sapply(years, function(y) l.results[["baseline"]][["v.SAD_new"]][[y]]),
+  Main     = sapply(years, function(y) l.results[["main"]][["v.SAD_new"]][[y]])
+)
+comparison$Diff <- comparison$Main - comparison$Baseline
+print(comparison)
+
+load(paste0(outputdir,file="/15_2028rnc_15females_depression_1000_03.01.26_03.59PM.RData"))
+
+years <- as.character(2025:2030)
+
+comparison <- data.frame(
+  Year     = years,
+  Baseline = sapply(years, function(y) l.results[["baseline"]][["v.SAD_new"]][[y]]),
+  Main     = sapply(years, function(y) l.results[["main"]][["v.SAD_new"]][[y]])
+)
+comparison$Diff <- comparison$Main - comparison$Baseline
+print(comparison)
+
+
+rm(list = ls()) 
+#this doesn't work right now?
+# Sys.setenv(RGL_USE_NULL=TRUE) 
+# Sys.setenv('R_MAX_VSIZE'=64000000000)
+# Set working directory
+mainDir = "/Users/srs475/Library/CloudStorage/Dropbox-UniversityofMichigan/Sarah Skolnick/GitHub/mdse-microsim/"
+# mainDir = "/Users/jt936/Dropbox/GitHub/mdse-microsim/"
+# mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" 
+setwd(mainDir)
+
+# specify the output files you want to combine:
+gender <- 2      # 1 for male and 2 for female
+policyyear <- 2028
+
+policylabel <- as.character(policyyear)
+genderlabel <- ifelse(gender == 1, "male", "female")
+genderstr   <- ifelse(gender == 1, "males", "females")
+
+file_names <- sort(list.files(
+  "output",
+  pattern = paste0("^[0-9]+_", policyyear, "rnc_[0-9]+", genderstr, "_depression_1000.*\\.RData$"),
+  full.names = TRUE
+))
+
+# Initialize the results list
+results_list <- list()
+
+# Load each file and append the results to the results_list
+for (file_name in file_names) {
+  load(file_name)
+  results_list <- append(results_list, list(
+    list(l.results = l.results, l.results_D = l.results_D, l.results_ND = l.results_ND)
+  ))
+}
+
+years <- as.character(2025:2030)
+
+for (i in 1:20) {
+  comparison <- data.frame(
+    Year     = years,
+    Baseline = sapply(years, function(y) results_list[[i]][["l.results"]][["baseline"]][["v.SAD_new"]][[y]]),
+    Main     = sapply(years, function(y) results_list[[i]][["l.results"]][["main"]][["v.SAD_new"]][[y]])
+  )
+  
+  comparison$Diff <- comparison$Main - comparison$Baseline
+  
+  cat("\n=== results_list[[", i, "]] ===\n")
+  print(comparison)
+}
+
+
+
+
+
+
+
+rm(list = ls()) 
+policyyearinput=2028
+mainDir = "/Users/srs475/Library/CloudStorage/Dropbox-UniversityofMichigan/Sarah Skolnick/GitHub/mdse-microsim/"
+#
+load(paste0(mainDir, "output/","combined_", policyyearinput, "_female20000.RData"))
+
+years <- as.character(2025:2030)
+
+comparison <- data.frame(
+  Year     = years,
+  Baseline = sapply(years, function(y) l.results[["baseline"]][["v.SAD_new"]][[y]]),
+  Main     = sapply(years, function(y) l.results[["main"]][["v.SAD_new"]][[y]])
+)
+
+print(comparison)
+
+load(paste0(mainDir, "output/","combined_", policyyearinput, "_male20000.RData"))
+
+years <- as.character(2025:2030)
+
+comparison <- data.frame(
+  Year     = years,
+  Baseline = sapply(years, function(y) l.results[["baseline"]][["v.SAD_new"]][[y]]),
+  Main     = sapply(years, function(y) l.results[["main"]][["v.SAD_new"]][[y]])
+)
+comparison$Diff <- comparison$Main - comparison$Baseline
+print(comparison)
+
+
+
+parallel::detectCores()
+library(parallel)
+library(doParallel)
+library(foreach)
+
+cl <- makeCluster(detectCores() - 1)  # Leave 1 core free for your OS
+registerDoParallel(cl)
+
+stopCluster(cl)
+
+
+
+
+years <- as.character(2030:2041)
+
+for (i in 1:20) {
+  comparison <- data.frame(
+    Year     = years,
+    Baseline = sapply(years, function(y) results_list[[i]][["l.results"]][["baseline"]][["v.SAD_new"]][[y]]),
+    Main     = sapply(years, function(y) results_list[[i]][["l.results"]][["main"]][["v.SAD_new"]][[y]])
+  )
+  
+  comparison$Diff <- comparison$Main - comparison$Baseline
+  
+  cat("\n=== results_list[[", i, "]] ===\n")
+  print(comparison)
+}
+
+
+
 ## Clean up the workspace and set main working directory
 rm(list = ls()) 
 #this doesn't work right now?
@@ -15,10 +159,10 @@ run_scenarios = 1 # set to 0 if you want to use pre-generated results, set to 1 
 
 #set seed
 #seednew <<- 1
-n.i <- 1000 # number of people per birth cohort
+n.i <- 100 # number of people per birth cohort
 #n.i <- 100
 #2027, 2028, 2029, 2030, 2035, 2040
-policyyear <- 2028
+policyyear <- 2040
 v.affected_ages <- c(0:99) # affects all ages
 d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by 3%
 d.year <- 2025 # which year to start discounting from
@@ -87,31 +231,9 @@ df.calib_targets <- do.call(rbind, lapply(names(l.calib_targets), function(statu
   cbind(data.frame(l.calib_targets[[status]]), status = status)
 }))
 
-# run all scenarios and save results OR use pre-generated results
-if (run_scenarios == 0) {  # choose the files you want to use for both genders here:
-  #combined files
-  malefile= "combined_male20000.RData"
-  femalefile="combined_female20000.RData"
-  
-  # Load and format files for females
-  load(paste0(mainDir, "output/",femalefile))
-  dfF=reformat_model_outputs(l.results)
-  dfF_D=reformat_model_outputs(l.results_D)
-  dfF_ND=reformat_model_outputs(l.results_ND)
-  
-  # Load and format files for males
-  load(paste0(mainDir, "output/",malefile))  
-  dfM=reformat_model_outputs(l.results)
-  dfM_D=reformat_model_outputs(l.results_D)
-  dfM_ND=reformat_model_outputs(l.results_ND)
-  
-  ## GENERATE FIGURES AND TABLES
-  source(paste0(mainDir,"R/07_figures_tables_combined_gender.R"), echo=TRUE)
-  
-} else {
-  print(n.i)
-  for (runnum in 1:20) {
-  seednew <<- runnum
+print(n.i)
+for (runnum in 1:20) {
+  seednew <<- 1
   # Run the model -----------------------------------------------------------
   t.init = Sys.time()
   t.init1 = Sys.time()
@@ -120,7 +242,7 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE) 
   source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
   
-
+  
   allresults <- lapply(scenarios, run_policy)
   names(allresults) <- scenarios
   
@@ -144,7 +266,7 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   args <- c("males",n.i, 2100) # Parameters for HPC vs non-HPC setup
   source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE) 
   source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE) # microsimulation model and probability functions
-
+  
   allresults <- lapply(scenarios, run_policy)
   names(allresults) <- scenarios
   
@@ -163,9 +285,8 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   dfM=reformat_model_outputs(l.results)
   dfM_D=reformat_model_outputs(l.results_D)
   dfM_ND=reformat_model_outputs(l.results_ND)
-  }
-  ## GENERATE FIGURES AND TABLES
-  print(Sys.time() - t.init1)
-  source(paste0(mainDir,"R/07_figures_tables_combined_gender.R"), echo=TRUE)
-
 }
+## GENERATE FIGURES AND TABLES
+print(Sys.time() - t.init1)
+source(paste0(mainDir,"R/07_figures_tables_combined_gender.R"), echo=TRUE)
+
