@@ -15,10 +15,10 @@ run_scenarios = 1 # set to 0 if you want to use pre-generated results, set to 1 
 
 #set seed
 #seednew <<- 1
-n.i <- 1000 # number of people per birth cohort
+n.i <- 10000 # number of people per birth cohort
 #n.i <- 100
 #2027, 2028, 2029, 2030, 2035, 2040
-policyyear <- 2028
+policyyear <- 2027
 v.affected_ages <- c(0:99) # affects all ages
 d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by 3%
 d.year <- 2025 # which year to start discounting from
@@ -56,7 +56,7 @@ params <- list(
   # p.EX_Sens.15= c( 1-0.63,1-0.65,0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5,0.15,1),
   # Dep_Sens= c( 1-0.63,1-0.65,0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5,0.1,0), #main effects but depression different
   # Dep_base= c( 1,1, 1, 1, 1, 1, 1,1, 1,1,0.1,0) #status quo with different depression
-  # # # #Sensitivity analysis (Depression)
+  # # # # #Sensitivity analysis (Depression)
   
   #FDA
   #FDA_est = c(1-0.63,1-0.65,"FDA",0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5), #expected
@@ -110,7 +110,7 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   
 } else {
   print(n.i)
-  for (runnum in 1:20) {
+  for (runnum in 1:2) {
   seednew <<- runnum
   # Run the model -----------------------------------------------------------
   t.init = Sys.time()

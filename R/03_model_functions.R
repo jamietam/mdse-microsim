@@ -571,7 +571,7 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   }
   #cessation policy effects
   if (!is.null(l.policy_effects) && l.policy_effects[["rr.cess_1"]]!=1){
-    p.CF[17:100,paste0(policyyear)] <- l.policy_effects[["rr.cess_1"]]
+    p.CF[16:100,paste0(policyyear)] <- l.policy_effects[["rr.cess_1"]]
     p.CF[,paste0((policyyear+1):2100)] <- l.policy_effects[["rr.cess_s"]]
   }
   #Vaping initiation
