@@ -10,18 +10,34 @@ mainDir = "/Users/srs475/Library/CloudStorage/Dropbox-UniversityofMichigan/Sarah
 setwd(mainDir)
 
 # specify the output files you want to combine:
-gender <- 2      # 1 for male and 2 for female
-policyyear <- 2028
+gender <- 1      # 1 for male and 2 for female
+policyyear <- 2027
 
 policylabel <- as.character(policyyear)
 genderlabel <- ifelse(gender == 1, "male", "female")
 genderstr   <- ifelse(gender == 1, "males", "females")
 
-file_names <- sort(list.files(
-  "output",
-  pattern = paste0("^[0-9]+_", policyyear, "rnc_[0-9]+", genderstr, "_depression_1000.*\\.RData$"),
-  full.names = TRUE
-))
+# load("output/1_2027rnc_1females_depression_10000_03.11.26_01.24AM.RData")
+# load("output/2_2027rnc_2females_depression_10000_03.13.26_09.12AM.RData")
+# 
+# file_names <- sort(list.files(
+#   "output",
+#   pattern = paste0("^[0-9]+_", policyyear, "rnc_[0-9]+", genderstr, "_depression_1000.*\\.RData$"),
+#   full.names = TRUE
+# ))
+
+if (gender==1){
+file_names <- c(
+  #males
+  "output/1_2027rnc_1males_depression_10000_03.11.26_11.51AM.RData",
+  "output/2_2027rnc_2males_depression_10000_03.13.26_08.20PM.RData")
+}else{
+  file_names <- c(
+    #males
+    "output/1_2027rnc_1females_depression_10000_03.11.26_01.24AM.RData",
+    "output/2_2027rnc_2females_depression_10000_03.13.26_09.12AM.RData")
+  }
+
 
 # Initialize the results list
 results_list <- list()

@@ -14,7 +14,7 @@ calibration = 0 # need to set this to 0 so main_calib works and outputs proper m
 run_scenarios = 1 # set to 0 if you want to use pre-generated results, set to 1 to simulate all scenarios
 
 #set seed
-seednew <<- 1
+seednew <<- 2
 n.i <- 10000 # number of people per birth cohort
 #n.i <- 100
 #2027, 2028, 2029, 2030, 2035, 2040
@@ -90,8 +90,8 @@ df.calib_targets <- do.call(rbind, lapply(names(l.calib_targets), function(statu
 # run all scenarios and save results OR use pre-generated results
 if (run_scenarios == 0) {  # choose the files you want to use for both genders here:
   #combined files
-  malefile= "combined_male20000.RData"
-  femalefile="combined_female20000.RData"
+  malefile= "combined_2027_male2000.RData"
+  femalefile="combined_2027_female2000.RData"
   
   # Load and format files for females
   load(paste0(mainDir, "output/",femalefile))
@@ -133,7 +133,7 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   }
   names(l.results) <- names(l.results_D) <- names(l.results_ND) <- scenarios
   
-  save(l.results, l.results_D, l.results_ND, file = paste0("output/",runnum,"_",policyyear,"rnc_",seednew, whichgender,"_depression","_",n.i,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".RData"))
+  save(l.results, l.results_D, l.results_ND, file = paste0("output/",seednew,"_",policyyear,"rnc_",seednew, whichgender,"_depression","_",n.i,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".RData"))
   dfF=reformat_model_outputs(l.results)
   dfF_D=reformat_model_outputs(l.results_D)
   dfF_ND=reformat_model_outputs(l.results_ND)
@@ -157,7 +157,7 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   }
   names(l.results) <- names(l.results_D) <- names(l.results_ND) <- scenarios
   
-  save(l.results, l.results_D, l.results_ND, file = paste0("output/",runnum,"_",policyyear,"rnc_", seednew ,whichgender,"_depression","_",n.i,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".RData"))
+  save(l.results, l.results_D, l.results_ND, file = paste0("output/",seednew,"_",policyyear,"rnc_", seednew ,whichgender,"_depression","_",n.i,"_",format(as.POSIXct(Sys.time()), "%m.%d.%y_%I.%M%p"),".RData"))
   dfM=reformat_model_outputs(l.results)
   dfM_D=reformat_model_outputs(l.results_D)
   dfM_ND=reformat_model_outputs(l.results_ND)
