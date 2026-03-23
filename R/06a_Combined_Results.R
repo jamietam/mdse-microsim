@@ -10,7 +10,7 @@ mainDir = "/Users/srs475/Library/CloudStorage/Dropbox-UniversityofMichigan/Sarah
 setwd(mainDir)
 
 # specify the output files you want to combine:
-gender <- 1      # 1 for male and 2 for female
+gender <- 2      # 1 for male and 2 for female
 policyyear <- 2027
 
 policylabel <- as.character(policyyear)
@@ -29,13 +29,13 @@ genderstr   <- ifelse(gender == 1, "males", "females")
 if (gender==1){
 file_names <- c(
   #males
-  "output/1_2027rnc_1males_depression_10000_03.11.26_11.51AM.RData",
-  "output/2_2027rnc_2males_depression_10000_03.13.26_08.20PM.RData")
+  "output/1_2027rnc_1males_depression_10000_03.17.26_04.25PM.RData",
+  "output/2_2027rnc_2males_depression_10000_03.18.26_04.58PM.RData")
 }else{
   file_names <- c(
     #males
-    "output/1_2027rnc_1females_depression_10000_03.11.26_01.24AM.RData",
-    "output/2_2027rnc_2females_depression_10000_03.13.26_09.12AM.RData")
+    "output/1_2027rnc_1females_depression_10000_03.17.26_04.00AM.RData",
+    "output/2_2027rnc_2females_depression_10000_03.18.26_06.34AM.RData")
   }
 
 
@@ -100,7 +100,7 @@ l.results    <- combined_results$combined_l_results
 l.results_D  <- combined_results$combined_l_results_D
 l.results_ND <- combined_results$combined_l_results_ND
 
-n <- 1000 * length(results_list)
+n <- 10000 * length(results_list)
 
 save(l.results, l.results_D, l.results_ND,
      file = paste0("output/combined_", policylabel, "_", genderlabel, n, ".RData"))

@@ -30,6 +30,9 @@ source(paste0(mainDir,"R/02_model_inputs.R"), echo=FALSE)
 source(paste0(mainDir,"R/03_model_functions.R"), echo = FALSE)
 load(paste0(mainDir,"data/nsduh_calib_targets_both.RData")) # Load NSDUH data
 
+df.calib_targets <- do.call(rbind, lapply(names(l.calib_targets), function(status) {
+  cbind(data.frame(l.calib_targets[[status]]), status = status)
+}))
 load(paste0(mainDir, "output/","1_2027rnc_1males_depression_10000_03.11.26_11.51AM.RData"))  
 dfM=reformat_model_outputs(l.results)
 dfM_D=reformat_model_outputs(l.results_D)
@@ -58,60 +61,127 @@ df.prevs_D$population="D"
 df.prevs$population="T"
 df.prevs_comb<-rbind(df.prevs,df.prevs_D,df.prevs_ND)
 
+#calculate depressions averted: prevalence of depression each year time population for taht year
+df.prevs_D<- df.prevs_comb %>%
+  filter(population=="T", age == 18.99, status=="D")%>%select(year,prev,scenario)
+pop_sums <- colSums(pop)
+merged_df <- merge(data.frame(year = names(pop_sums), population1 = pop_sums, stringsAsFactors = FALSE), df.prevs_D, by = "year")
+# Multiplying the population by the prevalence for each year
+merged_df$result <- merged_df$population1 * merged_df$prev
 
-nc=ncol(dfM[[3]])
-Health=dfM[[3]][,6:nc]+dfF[[3]][,6:nc]
-Health=cbind(dfM[[3]][,1:2],Health)
-Health_D=dfM_D[[3]][,6:nc]+dfF_D[[3]][,6:nc]
-Health_D=cbind(dfM_D[[3]][,1:2],Health_D)
-Health_ND=dfM_ND[[3]][,6:nc]+dfF_ND[[3]][,6:nc]
-Health_ND=cbind(dfM_ND[[3]][,1:2],Health_ND)
-#combine by depression status
-Health_ND$population="ND"
-Health_D$population="D"
-Health$population="T"
-
-
-Health_comb<-rbind(Health,Health_D,Health_ND)
-
-df.Health_comb<-Health_comb%>% filter(scenario %in% c("main"), population%in% c("D"))
+diffDprev=merged_df$prev[merged_df$year==2100 & merged_df$scenario=="baseline"]-merged_df$prev[merged_df$year==2100 & merged_df$scenario=="main"]
+diffDprev=merged_df$prev[merged_df$year==2100 & merged_df$scenario=="baseline"]-merged_df$prev[merged_df$year==2100 & merged_df$scenario=="main"]
+diffDprev=merged_df$prev[merged_df$year==2100 & merged_df$scenario=="baseline"]-merged_df$prev[merged_df$year==2100 & merged_df$scenario=="main"]
 
 
-df.prevs_comb_1<-df.prevs_comb%>% filter(age==18.99,scenario %in% c("main", "baseline"), population=="T",status == "D")
+compute_scenario_difference <- function(df, scenario_a, scenario_b) {
+  df_a <- subset(df, scenario == scenario_a)
+  df_b <- subset(df, scenario == scenario_b)
+  colnames(df_a)[which(colnames(df_a) == "result")] <- "result_a"
+  colnames(df_b)[which(colnames(df_b) == "result")] <- "result_b"
+  merged_df <- merge(df_a, df_b, by = "year")
+  merged_df$difference <- merged_df$result_b - merged_df$result_a
+  merged_df$scenario_comparison <- paste0(scenario_a)
+  result_df <- merged_df[, c("year", "result_a", "result_b", "difference", "scenario_comparison")]
+  return(result_df)
+}
+
+# Combine all scenario differences into one dataframe
+depression_difference <- bind_rows(
+  compute_scenario_difference(merged_df, "main",  "baseline"),
+  compute_scenario_difference(merged_df, "worst", "baseline"),
+  compute_scenario_difference(merged_df, "best",  "baseline")
+)
+
+# Cumulative sum from 2027 to 2100 for each scenario
+depression_difference_cumsum <- depression_difference %>%
+  filter(year >= 2027 & year <= 2100) %>%
+  arrange(scenario_comparison, year) %>%
+  group_by(scenario_comparison) %>%
+  mutate(cumsum_difference = cumsum(difference)) %>%
+  ungroup()
+
+depression_difference_cumsum_p<- subset(depression_difference_cumsum, year==2100)
+# cum_dep<-data.frame(sum(depressiondifference$difference[depressiondifference$year%in% c(2028:2100)]))
+# 
+# depressiondifference$cumsum<-cumsum(depressiondifference$difference)
+# depressiondifference$year <- as.numeric(depressiondifference$year)
+
+# nc=ncol(dfM[[3]])
+# Health=dfM[[3]][,6:nc]+dfF[[3]][,6:nc]
+# Health=cbind(dfM[[3]][,1:2],Health)
+# Health_D=dfM_D[[3]][,6:nc]+dfF_D[[3]][,6:nc]
+# Health_D=cbind(dfM_D[[3]][,1:2],Health_D)
+# Health_ND=dfM_ND[[3]][,6:nc]+dfF_ND[[3]][,6:nc]
+# Health_ND=cbind(dfM_ND[[3]][,1:2],Health_ND)
+# #combine by depression status
+# Health_ND$population="ND"
+# Health_D$population="D"
+# Health$population="T"
+# 
+# 
+# Health_comb<-rbind(Health,Health_D,Health_ND)
+# 
+# df.Health_comb<-Health_comb%>% filter(scenario %in% c("main"), population%in% c("D"))
 
 
-Depression_2016_2023_baseline <-ggplot() +
-  geom_line(data = df.prevs_comb_1, 
-            aes(x = year, y = prev, color = scenario, linetype = scenario)) +
-  scale_y_continuous(name = "Prevalence (%)", limits = c(0.09, 0.12)) +
-  scale_x_continuous(name = "Year", limits = c(2027, 2100)) +
-  labs(title = "Prevalence of Depression") +
-  scale_color_manual(values = c("main"     = "blue", 
-                                "baseline" = "blue"),
-                     name = "",
-                     labels = c("main"     = "Nicotine Product Standard", 
-                                "baseline" = "Status Quo")) +
-  scale_linetype_manual(values = c("main"     = "dashed", 
-                                   "baseline" = "solid"),
-                        name = "",
-                        labels = c("main"     = "Nicotine Product Standard", 
-                                   "baseline" = "Status Quo")) +
+df.prevs_comb_1<-df.prevs_comb%>% filter(age==18.99,scenario %in% c("main", "baseline","best","worst"), population=="T",status == "D")
+
+df_filtered2 <- subset(df.prevs_comb_1, status == "D" & age == 18.99 & year==2100) #check percentage
+df_filtered <- subset(df.prevs_comb_1, status == "D" & age == 18.99) %>%
+  select(year, status, population, scenario, prev) %>%
+  pivot_wider(names_from = scenario, values_from = prev)
+
+Depression_2016_2023_baseline <- ggplot() +
+  geom_pointrange(data = subset(df.calib_targets, status == "D" & age == 18.99),
+                  aes(x = survey_year, y = prev, ymin = prev_lowCI, ymax = prev_highCI, color = "NSDUH Data"),
+                  size = .5, alpha = 0.5) +
+  geom_line(data = df_filtered, aes(x = year, y = main,     color = "Nicotine Product Standard"), size = 1, linetype = "dashed") +
+  geom_line(data = df_filtered, aes(x = year, y = baseline, color = "Status Quo"),                size = 1) +
+  geom_ribbon(data = df_filtered,
+              aes(x = year, ymin = worst, ymax = best),
+              fill = "lightblue", alpha = 0.6) +
+  scale_color_manual(values = c("NSDUH Data"                = "black",
+                                "Nicotine Product Standard"  = "blue",
+                                "Status Quo"                 = "black"),
+                     breaks = c("NSDUH Data", "Nicotine Product Standard", "Status Quo")) +
+  labs(title = "Prevalence of MD",
+       x     = "Year",
+       y     = "MD Prevalence",
+       color = "") +
+  scale_x_continuous(limits = c(2005, 2100), breaks = c(2005, seq(2025, 2100, 25))) +
+  scale_y_continuous(limits = c(0.06, 0.12), breaks = seq(0.06, 0.12, 0.02)) +
   theme_minimal() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom", legend.direction = "horizontal") +
+  guides(
+    color = guide_legend(override.aes = list(linetype = c("dashed", "solid", "solid"), size = .5), keywidth = 2.5, keyheight = 1),
+    linetype = guide_legend(override.aes = list(size = .5), keywidth = 2.5, keyheight = 1)
+  )
+depression_difference_cumsum <- depression_difference_cumsum %>%
+  mutate(year = as.numeric(year))
 
-Depression_sad <-ggplot() +
-  geom_line(data = df.Health_comb, 
-            aes(x = year, y = cSAD_averted_new/1000000), color = "blue") +
-  scale_y_continuous(name = "Deaths Averted (in millions)") +
-  scale_x_continuous(name = "Year", limits = c(2027, 2100))+
-  labs(title = "Cummulative Deaths Averted") +
+depression_difference_cumsum_wide <- depression_difference_cumsum %>%
+  select(year, scenario_comparison, cumsum_difference) %>%
+  pivot_wider(names_from = scenario_comparison, values_from = cumsum_difference)
+
+Depression_sad <- ggplot() +
+  geom_ribbon(data = depression_difference_cumsum_wide,
+              aes(x = year, ymin = worst / 1000000, ymax = best / 1000000),
+              fill = "lightblue", alpha = 0.6) +
+  geom_line(data = subset(depression_difference_cumsum, scenario_comparison == "main"),
+            aes(x = year, y = cumsum_difference / 1000000), color = "blue", size = 1, linetype = "dashed") +
+  scale_y_continuous(name = "Cumulative MD cases averted (in millions)") +
+  scale_x_continuous(name = "Year", limits = c(2025, 2100), breaks = c(2025, seq(2025, 2100, 25))) +
+  labs(title = "Cumulative MD cases averted") +
   theme_minimal()
 
 Depression_2016_2023_baselinelegend<-Depression_2016_2023_baseline
 shared_legend <-get_legend(Depression_2016_2023_baselinelegend)
 Depression_2016_2023_baseline<-Depression_2016_2023_baseline+ theme(legend.position = "none")
 
-pdf(paste0("output/",figDir,"/Depressionfig.pdf"), width = 7, height = 5)
+pdf(paste0("output/Depressionfig.pdf"), width = 7, height = 5)
 grid.arrange(arrangeGrob(Depression_2016_2023_baseline, Depression_sad, ncol = 2,nrow=1), shared_legend,  # Add shared legend
              ncol = 1, heights = c(4, 0.5) )
 dev.off()
+
+
