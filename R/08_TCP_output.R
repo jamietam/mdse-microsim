@@ -5,8 +5,8 @@ setwd(mainDir)
 
 hpc        <- 0
 n.i        <- 20000
-policyyearinput <- 2031
-policyyear <- 2030
+policyyearinput <- 2027
+policyyear <- 2027
 v.affected_ages <- c(0:99)
 d.c <- d.u <- d.w <- 0.03
 d.year <- 2025
