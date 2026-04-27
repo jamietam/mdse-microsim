@@ -15,6 +15,8 @@
 # Costs:   function for the estimation of cost state values
 # Effs:    function for the estimation of state specific health outcomes (QALYs)
 
+INVALID_PROBS_FLAG <- -999999999999999
+
 mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE) {
 
   set.seed(seednew)    #735                                  # set the seed for every individual for the random number generator
@@ -25,7 +27,7 @@ mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE) 
                 dimnames = list(paste(bc, 1:n.i, sep = "."), # each individual, year of birth
                                 paste(0:n.t, sep = " ")))  
   m.M[, 1] <- v.M_1                                         # indicate the initial health state   
-  
+
   for (t in 1:n.t) {
     if (bc+t>2100){ # exit for loop if going past the year 2100
       break
@@ -34,8 +36,11 @@ mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE) 
     v.ysq <- ifelse(v.ysq>40 , 40, v.ysq) # Fix mortality after 40 years since quitting
     
     m.P <- probs(bc, t, v.ysq, m.M[, t])           # calculate the transition probabilities at cycle t 
+    if (length(m.P) == 1 && m.P == INVALID_PROBS_FLAG) {
+      return(INVALID_PROBS_FLAG)
+    }
     m.M[, t+1] <- samplev(m.P, 1)      # sample the next health state and store that state in matrix m.M 
-  }                                                       # close the loop for the time points 
+  }                                                       # close the loop for the time points
   
   if (TS.out == TRUE) {  # create a  matrix of transitions across states
     TS <- paste(m.M, cbind(m.M[, -1], NA), sep = "->") # transitions from one state to the other
@@ -134,12 +139,38 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["FQD", M_t == "FQH"] <- (1-a_p.FX.ysq[t,yr,v.ysq[M_t == "FQH"]])*(p.HD[t,yr])
   m.p_t["X", M_t == "FQH"] <- a_p.FX.ysq[t,yr,v.ysq[M_t == "FQH"]]
   
-  ##from NDO state
+  ##from NOD state
   m.p_t["NOD", M_t == "NOD"] <- (1-p.NX[t,yr])*(1-p.NC_D[t,yr]-rr.OD.ED*p.NO.NE[t,yr]-p.DR[t])
+  # if ((1-p.NX[t,yr])*(1-p.NC_D[t,yr]-rr.OD.ED*p.NO.NE[t,yr]-p.DR[t]) < 0) {
+  # if (t == 18 && yr == 51) {
+  #   print("----------")
+  #   print(paste0(t, " ", yr))
+  #   print(p.NX[t, yr])
+  #   print(p.NC_D[t,yr])
+  #   print(rr.OD.ED)
+  #   print(p.NO.NE[t,yr])
+  #   print(p.DR[t])
+  #   print(p.DR)
+  #   print("----------")
+
+  # }
   m.p_t["COD", M_t == "NOD"] <- (1-p.NX[t,yr])*(p.NC_D[t,yr])
+  # if (((1-p.NX[t,yr])*(p.NC_D[t,yr])) < 0) {
+  #   print("B")
+  # }
   m.p_t["NED", M_t == "NOD"] <- (1-p.NX[t,yr])*(rr.OD.ED*p.NO.NE[t,yr])
+  # if ( (1-p.NX[t,yr])*(rr.OD.ED*p.NO.NE[t,yr]) < 0) {
+  #   print("C")
+  # }
   m.p_t["NOR", M_t == "NOD"] <- (1-p.NX[t,yr])*(p.DR[t])
+
+  # if ((1-p.NX[t,yr])*(p.DR[t]) < 0) {
+  #   print("D")
+  # }
   m.p_t["X", M_t == "NOD"] <- p.NX[t,yr]
+  # if (p.NX[t,yr] < 0) {
+  #   print("E")
+  # }
   
   ##from CDO state
   m.p_t["COD", M_t == "COD"] <- (1-p.CX[t,yr])*(1-rr.CD.FD*p.CF[t,yr]-rr.OD.ED*p.CO.CE[t,yr]-p.DR[t]-p.CO.FE[t,yr])
@@ -259,18 +290,36 @@ probs <- function(bc, t, v.ysq, M_t) { # updates the transition probabilities of
   m.p_t["X" , M_t == "X"] <-  1		
   
   
-  # print birth cohort and age for debugging problematic transition probabilities
-  check_transition_probability(m.p_t,verbose=FALSE)
-  # if(any(colSums(m.p_t))!=1){
-  #   print(m.p_t)
-  #   #print(paste0("bc: ", bc, ", age: ",t, " year: ", yr, " M_t: ", M_t))
+  # a_P <- as.array(m.p_t)
+
+  # # Verify if a_P is 2D or 3D matrix
+  # n_dim <- length(dim(a_P))
+  # # If a_P is a 2D matrix, convert to a 3D array
+  # if (n_dim < 3){
+  #   a_P <- array(a_P, dim = list(nrow(a_P), ncol(a_P), 1),
+  #                dimnames = list(rownames(a_P), colnames(a_P), "Time independent"))
   # }
-  # print(m.p_t)
-  # print(paste0("bc: ", bc, ", age: ",t, " year: ", yr, " M_t: ", M_t))
-  # print(colSums(m.p_t))
-  check_sum_of_transition_array(t(m.p_t), n_rows=n.i, n_cycles= n.t, verbose = TRUE)
+  # # Check which entries are not valid
+  # m_indices_notvalid <- arrayInd(which(a_P < 0 | a_P > 1),
+  #                                dim(a_P))
+                                
+  # if(dim(m_indices_notvalid)[1] != 0) {
+  #   print(paste0("bc: ", bc, ", age: ",t, " year: ", yr))
+  #   print(m_indices_notvalid)
+  #   saveRDS(list(m_indices_notvalid=m_indices_notvalid, a_P=a_P),
+  #     file=paste0("/lcrc/project/EMEWS/improv/ncollier/repos/mdse-microsim/emews/scratch/invalid/invalid_", bc, "_", t, "_", yr, ".RDS"))
+  # }
+
+
+  result <- tryCatch({
+    check_transition_probability(m.p_t, err_stop=TRUE, verbose=FALSE)
+    check_sum_of_transition_array(t(m.p_t), n_rows=n.i, n_cycles= n.t, verbose = FALSE, err_stop=TRUE)
+    t(m.p_t)
+  }, error = function(e) {
+    INVALID_PROBS_FLAG
+  })
   
-  return(t(m.p_t)) 
+  return(result) 
 }       
 
 ## COSTS FUNCTION ----------------------------------------------------
@@ -475,8 +524,13 @@ filter_under_50 <- function(df) df[df[, "age"] < 50, ]
 # Write goodness-of-fit function to pass to calibration algorithm
 f_gof <- function(v.params){
   
-  l.model_prevs <- main_calib(v.params)[[2]]
-  
+  result <- main_calib(v.params)
+  if (length(result) == 1 && result == INVALID_PROBS_FLAG) {
+    return (INVALID_PROBS_FLAG)
+  }
+
+  l.model_prevs <- result[[2]]
+
   # Apply filtering to relevant e-cig states ages <50 to avoid NA / Inf log likelihood values
   l.calib_targets[c("NE","FE", "E_D", "NE_D", "CE_D", "FE_D")] <- lapply(l.calib_targets[c("NE","FE", "E_D", "NE_D", "CE_D", "FE_D")], filter_under_50)
   l.model_prevs[c("NE","FE", "E_D", "NE_D", "CE_D", "FE_D")] <- lapply(l.model_prevs[c("NE","FE", "E_D", "NE_D", "CE_D", "FE_D")], filter_under_50)
@@ -494,17 +548,26 @@ f_gof <- function(v.params){
   v.weights <- c(rep(1,length(1:n.target))) # can assign targets different weights
   # weighted sum
   GOF_overall <- sum(v.gof[1:n.target] * v.weights)
-  cat(GOF_overall)
+  # cat(GOF_overall)
   # return GOF
   return(GOF_overall)
 }
 
+rbind_with_check <- function(acc, new) {
+  if ((length(acc) == 1 && acc == INVALID_PROBS_FLAG) || ((length(new) == 1) && (new == INVALID_PROBS_FLAG))) {
+    return(INVALID_PROBS_FLAG)
+  } else {
+    return (rbind(acc, new))
+  }
+}
+
 main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model for parameter calibration; no policy effects
   t_init <- Sys.time() # Start timer
-  print(seednew)
+
   # Loop over parameter names and assign values dynamically
   for (param in rownames(m.calib_inputs)) {
-    assign(param, get_value(param,v.params))
+    # pos=1 assign to global env
+    assign(param, get_value(param,v.params), pos=1)
   }
   
   yearinc_p.HD <- round(yearinc_p.HD)
@@ -514,6 +577,10 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   p.DR[1:12] <- p.DR[100] <- 0 # final value = 0 because mortality prob = 1
   p.DR[13:65] <- p.DR_12.64
   p.DR[66:99] <- p.DR_65.99
+
+  # print(paste0("p.DR_12.64: ", p.DR_12.64))
+  # print(paste0("p.DR_65.99: ", p.DR_65.99))
+  # print(p.DR)
   
   ## Incidence
   # scale up incidence by year for youth and young adults ages 12-34 from 2016-2100 vs 2016-2022
@@ -536,14 +603,14 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   #Apply policy effects here
   #Initiation and Cessation for Healthy
   ## Initiation - No initiation after 25
-  p.NC = smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(s.NC_26.34,9),rep(0,65))
-  p.CF = smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
+  p.NC <<- smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(s.NC_26.34,9),rep(0,65))
+  p.CF <<- smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
   ## Cessation - No cessation before 18
   p.NC[,119:201] = smk_init[,119:201]*c(rep(s.NC_18.23_9.17,18),rep(s.NC_18.23_18.25,8),rep(s.NC_18.23_26.34,9),rep(0,65))
   p.CF[,119:201] = smk_cess[,119:201]*c(rep(0,16),rep(s.CF_18.23_18.25,10), rep(s.CF_18.23_26.34,9),rep(s.CF_18.23_35.49,15),rep(s.CF_18.23_50.64,15),rep(s.CF_18.23_65.99,35))
   ## Initiation and Cessation for Depressed scaling factors - No initiation after 25 
   ## Cessation - No cessation before 18
-  p.NC_D = smk_init*c(rep(s.NC_D_9.17,18),rep(s.NC_D_18.25,8),rep(s.NC_D_26.34,9),rep(0,65))
+  p.NC_D <<- smk_init*c(rep(s.NC_D_9.17,18),rep(s.NC_D_18.25,8),rep(s.NC_D_26.34,9),rep(0,65))
   # Vaping transition probabilities
   p.NO.NE[13:18,c("2020","2021")] <- p.NO.NE_20.21_12.17
   p.NO.NE[13:18,paste0(2022:endyear)] <- p.NO.NE_22.23_12.17
@@ -591,17 +658,19 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   }
   
   if (!is.null(l.policy_effects) && l.policy_effects[["s.EX"]]!=1){
-    p.EX<-p.NX+((p.NX-p.CX)*l.policy_effects[["s.EX"]])
+    p.EX<<-p.NX+((p.NX-p.CX)*l.policy_effects[["s.EX"]])
   }else{
     #non smoker vaping mortality
-    p.EX<-p.NX
+    p.EX<<-p.NX
   }  
   
   
   p.CF[p.CF > 1] <- 1 # replace any cessation probabilities that are greater than 1 with 1
 
+
+
   # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
-  m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
+  m.M <-foreach (i=cohorts, .combine='rbind_with_check', .packages='darthtools',
                  .export=c('mds_microsim','probs','get_prevs_combined',
                            'n.i','n.t','v.n','n.s','v.M_1',
                            'p.NC','p.CF','p.NC_D','p.NX','p.EX','p.CX','a_p.FX.ysq',
@@ -610,15 +679,24 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
                            'p.NO.NE', 'p.CO.CE', 'p.FO.FE',
                            'p.NE.NQ', 'p.CE.CQ', 'p.FE.FQ',
                            'p.NQ.NE', 'p.CQ.CE', 'p.FQ.FE',
-                           'p.CO.FE','rr.OD.ED','seednew')) %dopar% {
-                             mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
+                           'p.CO.FE','rr.OD.ED','seednew', 'INVALID_PROBS_FLAG')) %dopar% {
+                              val <- mds_microsim(i, v.M_1, n.i, n.t, v.n)
+                              if (length(val) > 1) {
+                                val$m.M
+                              } else {
+                                val
+                              }
                            }
   
+  if (length(m.M) == 1 && m.M == INVALID_PROBS_FLAG) {
+    return (m.M)
+  }
   # To run in serial for debugging purposes, uncomment the line below, and comment out the 'foreach' loop above
   # m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
-  
+  cat(("1 ...........\n"))
   # Convert matrix from cohort-age to cohort-calendaryear (cy)
   m.M_cy <- cohortage_to_cohortyear(m.M)
+  cat(("2 ...........\n"))
   colnames(m.M_cy) <- c(min(cohorts):(max(cohorts)+100))
   
   # Output prevalence results as a list
@@ -631,8 +709,8 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   
   l.model_prevs <- lapply(l.model_prevs, reorder_by_age) # re-order the age groups from 18.25, 18.99, 26.34, etc
 
-  cat(paste0("\n  ", v.params," "))
-  print(Sys.time() - t_init) # End timer
+  #cat(paste0("\n  ", v.params," "))
+  #print(Sys.time() - t_init) # End timer
 
   return(list(m.M,l.model_prevs,p.NC,p.CF,p.NC_D,rr.CD.FD, p.EX))
   
