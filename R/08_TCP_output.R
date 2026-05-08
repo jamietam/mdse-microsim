@@ -161,10 +161,10 @@ create_econ_csv <- function(datafM, datafF, datafM_icer, datafF_icer, policy_sce
   # --- Merge and calculate final cost columns ---
   COSTS <- merge(econ_all, icer_all, by = c("scenario", "gender"))
   
-  COSTS$healthcare_both   <- round(COSTS$icer_medLY  * COSTS$cLYG_new_disc / 1e9, 1)
-  COSTS$overall_both      <- round(COSTS$icer_socLY  * COSTS$cLYG_new_disc / 1e9, 1)
-  COSTS$productivity_both <- round(COSTS$icer_prodLY * COSTS$cLYG_new_disc / 1e9, 1)
-  COSTS$consumer_both     <- round(COSTS$icer_consLY * COSTS$cLYG_new_disc / 1e9, 1)
+  COSTS$healthcare_both   <- round(COSTS$icer_medLY  * COSTS$cLYG_new_disc  , 1)
+  COSTS$overall_both      <- round(COSTS$icer_socLY  * COSTS$cLYG_new_disc , 1)
+  COSTS$productivity_both <- round(COSTS$icer_prodLY * COSTS$cLYG_new_disc , 1)
+  COSTS$consumer_both     <- round(COSTS$icer_consLY * COSTS$cLYG_new_disc , 1)
   
   
   out <- COSTS %>%
