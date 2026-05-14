@@ -14,11 +14,13 @@ calibration = 0 # need to set this to 0 so main_calib works and outputs proper m
 run_scenarios = 1 # set to 0 if you want to use pre-generated results, set to 1 to simulate all scenarios
 
 #set seed
-seednew <<- 2
-n.i <- 10000 # number of people per birth cohort
+for (seedi in c(1:20)){
+  print(seedi)
+seednew <<- seedi
+n.i <- 1000 # number of people per birth cohort
 #n.i <- 100
 #2027, 2028, 2029, 2030, 2035, 2040
-policyyear <- 2030
+policyyear <- 2027
 v.affected_ages <- c(0:99) # affects all ages
 d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by 3%
 d.year <- 2027 # which year to start discounting from
@@ -164,6 +166,7 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   
   ## GENERATE FIGURES AND TABLES
   print(Sys.time() - t.init1)
-  source(paste0(mainDir,"R/07_figures_tables_combined_gender.R"), echo=TRUE)
+  #source(paste0(mainDir,"R/07_figures_tables_combined_gender.R"), echo=TRUE)
 
+}
 }

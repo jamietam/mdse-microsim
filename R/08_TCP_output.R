@@ -6,10 +6,10 @@ setwd(mainDir)
 hpc        <- 0
 n.i        <- 20000
 policyyearinput <- 2027
-policyyear <- 2027
+policyyear <- 2028
 v.affected_ages <- c(0:99)
 d.c <- d.u <- d.w <- 0.03
-d.year <- 2025
+d.year <- 2027
 args   <- c("females", n.i, 2100)
 
 source(paste0(mainDir, "R/01_environment.R"),   echo = FALSE)
@@ -232,10 +232,10 @@ for (i in seq_along(scenarios)) {
   }
 }
 
-datafM=M[[3]]
-datafF=F[[3]]
-datafM_icer=M[[4]]
-datafF_icer=F[[4]]
-policy_scenario_name="main"
-output_file
+# datafM=M[[3]]
+# datafF=F[[3]]
+# datafM_icer=M[[4]]
+# datafF_icer=F[[4]]
+# policy_scenario_name="main"
+# output_file
 

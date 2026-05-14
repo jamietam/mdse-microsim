@@ -727,15 +727,15 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   if (is.null(l.policy_effects)) {
     v.X = apply(m.M,2,function(x) sum(x=="X" ,na.rm=TRUE))
     v.X_D = apply(keep_X_with_left_D(m.M),2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's just among people who are depressed
-    baselinev.X=v.X
-    baselinev.X_D=v.X_D
+    baselinev.X <<-v.X
+    baselinev.X_D <<-v.X_D
     
   } else {
     
     v.X = apply(m.M,2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's
     v.X_D = apply(keep_X_with_left_D(m.M),2,function(x) sum(x=="X" ,na.rm=TRUE)) # iterate across each year (column=2) and sum up the X's just among people who are depressed
-    small_diff <- abs(baselinev.X - v.X) < 3
-    small_diff_D <- abs(baselinev.X_D - v.X_D) < 3
+    small_diff <- abs(baselinev.X - v.X) < 0
+    small_diff_D <- abs(baselinev.X_D - v.X_D) < 0
     
     v.X[small_diff] <- baselinev.X[small_diff]
     v.X_D[small_diff_D] <- baselinev.X_D[small_diff_D]
@@ -772,22 +772,22 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   # Person life-years scaled to US population estimates
   #if life years differen
   if (is.null(l.policy_effects)) {
-    v.lifeyears_totalpop = colSums(m.personyears_totalpop)[paste0(d.year:max(cohorts))]
-    v.lifeyears_Dpop = colSums(m.personyears_Dpop)[paste0(d.year:max(cohorts))]
-    v.lifeyears_notDpop = colSums(m.personyears_notDpop)[paste0(d.year:max(cohorts))]
+    v.lifeyears_totalpop  = colSums(m.personyears_totalpop)[paste0(d.year:max(cohorts))]
+    v.lifeyears_Dpop  = colSums(m.personyears_Dpop)[paste0(d.year:max(cohorts))]
+    v.lifeyears_notDpop  = colSums(m.personyears_notDpop)[paste0(d.year:max(cohorts))]
     
     #save baseline scenarios values
-    baselinev.lifeyears_totalpop=v.lifeyears_totalpop
-    baselinev.lifeyears_Dpop=v.lifeyears_Dpop
-    baselinev.lifeyears_notDpop=v.lifeyears_notDpop
+    baselinev.lifeyears_totalpop<<-v.lifeyears_totalpop
+    baselinev.lifeyears_Dpop<<-v.lifeyears_Dpop
+    baselinev.lifeyears_notDpop<<-v.lifeyears_notDpop
   } else {
     v.lifeyears_totalpop = colSums(m.personyears_totalpop)[paste0(d.year:max(cohorts))]
     v.lifeyears_Dpop = colSums(m.personyears_Dpop)[paste0(d.year:max(cohorts))]
     v.lifeyears_notDpop = colSums(m.personyears_notDpop)[paste0(d.year:max(cohorts))]
     
-    small_diff <- abs(baselinev.lifeyears_totalpop - v.lifeyears_totalpop) < 1000
-    small_diff_D <- abs(baselinev.lifeyears_Dpop - v.lifeyears_Dpop) < 1000
-    small_diff_notDpop <- abs(baselinev.lifeyears_notDpop - v.lifeyears_notDpop) < 1000
+    small_diff <- abs(baselinev.lifeyears_totalpop - v.lifeyears_totalpop) < 0
+    small_diff_D <- abs(baselinev.lifeyears_Dpop - v.lifeyears_Dpop) < 0
+    small_diff_notDpop <- abs(baselinev.lifeyears_notDpop - v.lifeyears_notDpop) < 0
     
     
     v.lifeyears_totalpop[small_diff] <- baselinev.lifeyears_totalpop[small_diff]
@@ -889,19 +889,19 @@ main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run mode
   print(Sys.time() - t_init) # End timer
 
   # Output results as two lists: one for general population, and one for depressed population
-  l.results <- list(m.M=m.M, l.model_prevs = l.model_prevs, m.cuw=m.cuw, 
+  l.results <- list(l.model_prevs = l.model_prevs, m.cuw=m.cuw, 
                     v.lifeyears=v.lifeyears,
                     v.SAD_new=v.X_totalpop, v.lifeyears_pop_new = v.lifeyears_totalpop, v.SAD_new_disc=v.X_totalpop_disc, v.lifeyears_pop_new_disc = v.lifeyears_totalpop_disc, 
                     init = p.NC, cess = p.CF, v.deathrate= v.deathrate,
                     v.X=v.X)
 
-  l.results_D <- list(m.M=m.M,l.model_prevs = l.model_prevs_D, m.cuw=m.cuw_D, 
+  l.results_D <- list(l.model_prevs = l.model_prevs_D, m.cuw=m.cuw_D, 
                       v.lifeyears=v.lifeyears_D,
                       v.SAD_new=v.X_Dpop, v.lifeyears_pop_new = v.lifeyears_Dpop, v.SAD_new_disc=v.X_Dpop_disc, v.lifeyears_pop_new_disc = v.lifeyears_Dpop_disc,
                       init = p.NC_D, cess = rr.CD.FD*p.CF, v.deathrate_D= v.deathrate_D,
                       v.X=v.X_D)
 
-  l.results_notD <- list(m.M=m.M,l.model_prevs=l.model_prevs_notD, m.cuw=m.cuw_notD , 
+  l.results_notD <- list(l.model_prevs=l.model_prevs_notD, m.cuw=m.cuw_notD , 
                          v.lifeyears = v.lifeyears_notD, 
                          v.SAD_new=v.X_notDpop, v.lifeyears_pop_new = v.lifeyears_notDpop, v.SAD_new_disc=v.X_notDpop_disc, v.lifeyears_pop_new_disc = v.lifeyears_notDpop_disc,
                          init = p.NC, cess = p.CF,  v.deathrate_notD= v.deathrate_notD,

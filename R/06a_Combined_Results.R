@@ -10,7 +10,7 @@ mainDir = "/Users/srs475/Library/CloudStorage/Dropbox-UniversityofMichigan/Sarah
 setwd(mainDir)
 
 # specify the output files you want to combine:
-gender <- 2      # 1 for male and 2 for female
+gender <- 1      # 1 for male and 2 for female
 policyyear <- 2027
 
 policylabel <- as.character(policyyear)
@@ -27,16 +27,22 @@ genderstr   <- ifelse(gender == 1, "males", "females")
 # ))
 
 if (gender==1){
-file_names <- c(
-  #males
-  "output/1_2027rnc_1males_depression_10000_03.17.26_04.25PM.RData",
-  "output/2_2027rnc_2males_depression_10000_03.18.26_04.58PM.RData")
-}else{
   file_names <- c(
     #males
-    "output/1_2027rnc_1females_depression_10000_03.17.26_04.00AM.RData",
-    "output/2_2027rnc_2females_depression_10000_03.18.26_06.34AM.RData")
-  }
+    "output/1_2027rnc_1males_depression_5000_05.12.26_09.57PM.RData",
+    "output/2_2027rnc_2males_depression_5000_05.12.26_11.33PM.RData",
+    "output/3_2027rnc_3males_depression_5000_05.13.26_11.02AM.RData",
+    "output/4_2027rnc_4males_depression_5000_05.13.26_12.17PM.RData"
+  )
+} else {
+  file_names <- c(
+    #females
+    "output/1_2027rnc_1females_depression_5000_05.12.26_07.34PM.RData",
+    "output/2_2027rnc_2females_depression_5000_05.12.26_10.35PM.RData",
+    "output/3_2027rnc_3females_depression_5000_05.13.26_10.25AM.RData",
+    "output/4_2027rnc_4females_depression_5000_05.13.26_11.39AM.RData"
+  )
+}
 
 
 # Initialize the results list
