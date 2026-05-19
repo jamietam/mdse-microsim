@@ -8,7 +8,7 @@ mainDir = "/Users/srs249/University of Michigan Dropbox/Sarah Skolnick/GitHub/md
 # mainDir = "/Users/jt936/Dropbox/GitHub/mdse-microsim/"
 # mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" 
 setwd(mainDir)
-
+#LUIS MAKING CHANGES FOR GITHUB TUTORIAL
 hpc = 0
 calibration = 0 # need to set this to 0 so main_calib works and outputs proper matrix for main function
 run_scenarios = 0 # set to 0 if you want to use pre-generated results, set to 1 to simulate all scenarios
