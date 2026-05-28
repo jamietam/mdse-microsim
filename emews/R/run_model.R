@@ -1,13 +1,24 @@
 library(jsonlite)
 
-run <- function(mainDir, result_file, input_string, port) {
-
-    
-
+run <- function(mainDir, result_file, input_string) {
     n.cores <- Sys.getenv("MDSE_NUM_CORES")
-    cat(paste0("n.cores: ", n.cores, " port: ", port, "\n"))
-    cl <- makeCluster(as.numeric(n.cores), port=as.numeric(port), type = "FORK") # , outfile = "./log_file.txt")
-    registerDoParallel(cl)
+    
+    i <- 0
+    cl <- NULL
+    while (i < 10) {
+        port <- as.integer(system("/gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-zen3/gcc-13.2.0/python-3.11.6-v7avskv/bin/python3 -c 'import socket; s=socket.socket(); s.bind((\"\", 0)); print(s.getsockname()[1]); s.close()'", intern = TRUE))
+        cat(paste0("n.cores: ", n.cores, " port: ", port, "\n"))
+        tryCatch({
+            cl <- makeCluster(as.numeric(n.cores), port=port, type = "FORK") # , outfile = "./log_file.txt")
+            registerDoParallel(cl)
+            i <- 11
+        }, error = function(cond) {
+            i <- i + 1
+            if (i == 10) {
+                stop(cond)
+            }
+        })
+    }
 
     v.target_names <<- names(l.calib_targets) # number of calibration targets
     n.target <<- length(v.target_names)
@@ -34,4 +45,4 @@ source(paste0(mainDir,"/R/01_environment.R"), echo=FALSE)
 source(paste0(mainDir,"/R/02_model_inputs.R"), echo=FALSE)
 source(paste0(mainDir,"/R/03_model_functions.R"), echo=FALSE) # microsimulation model and probability functions
 
-run(cli_args[6], cli_args[4], cli_args[5], cli_args[7])
+run(cli_args[6], cli_args[4], cli_args[5])

@@ -570,6 +570,7 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
     assign(param, get_value(param,v.params), pos=1)
   }
   
+  print(class(yearinc_p.HD))
   yearinc_p.HD <- round(yearinc_p.HD)
   
   # Recovery

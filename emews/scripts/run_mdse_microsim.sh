@@ -43,7 +43,7 @@ MDSE_CODE_DIR=$6
 
 cd $TURBINE_OUTPUT
 
-readonly PORT=$(python3 -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()')
+# readonly PORT=$(python3 -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()')
 
 arg_array=( "$EMEWS_PROJECT_ROOT/R/run_model.R" 
             "$GENDER"
@@ -51,8 +51,7 @@ arg_array=( "$EMEWS_PROJECT_ROOT/R/run_model.R"
             "$NUM_INDIV"
             "$RESULT_FILE"
             "$PARAMS"
-            "$MDSE_CODE_DIR"
-            "$PORT" )
+            "$MDSE_CODE_DIR" )
 
 
 echo $( which Rscript )
