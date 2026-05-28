@@ -1,31 +1,23 @@
 ## Clean up the workspace and set main working directory
 rm(list = ls()) 
-#this doesn't work right now?
-# Sys.setenv(RGL_USE_NULL=TRUE) 
-#Sys.setenv('R_MAX_VSIZE'=64000000000)
+
 # Set working directory
 mainDir = "/Users/srs475/Library/CloudStorage/Dropbox-UniversityofMichigan/Sarah Skolnick/GitHub/mdse-microsim/"
-# mainDir = "/Users/jt936/Dropbox/GitHub/mdse-microsim/"
-# mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" 
+
 setwd(mainDir)
 
 hpc = 0
 calibration = 0 # need to set this to 0 so main_calib works and outputs proper matrix for main function
 run_scenarios = 1 # set to 0 if you want to use pre-generated results, set to 1 to simulate all scenarios
 
-#set seed
-for (seedi in c(1:20)){
-  print(seedi)
-seednew <<- seedi
-n.i <- 1000 # number of people per birth cohort
-#n.i <- 100
-#2027, 2028, 2029, 2030, 2035, 2040
+#set seed 
+seednew <<- 1
+n.i <- 10000 # number of people per birth cohort
 policyyear <- 2027
 v.affected_ages <- c(0:99) # affects all ages
-d.c <- d.u <- d.w <- 0.03              # equal discounting of costs and QALYs by 3%
+d.c <- d.u <- d.w <- 0.03 # equal discounting of costs and QALYs by 3%
 d.year <- 2027 # which year to start discounting from
 
-#1000 lyg and 2 deaths averted
 
 args <- c("females",n.i, 2100) #no need to change this for now
 source(paste0(mainDir,"R/01_environment.R"), echo=FALSE) #
@@ -58,28 +50,6 @@ params <- list(
   # p.EX_Sens.15= c( 1-0.63,1-0.65,0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5,0.15,1),
   # Dep_Sens= c( 1-0.63,1-0.65,0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5,0.1,0), #main effects but depression different
   # Dep_base= c( 1,1, 1, 1, 1, 1, 1,1, 1,1,0.1,0) #status quo with different depression
-  # # # # #Sensitivity analysis (Depression)
-  
-  #FDA
-  #FDA_est = c(1-0.63,1-0.65,"FDA",0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5), #expected
-  #initiation (1st,subsequent): -0.63, -0.65
-  #cessation:0.36,0.34
-  #dual: 0.61, 0.51
-  #switching:0.56,0.58
-  #vape init:0.5, 0.5
-  #FDA_best = c(1-0.83,1-0.85,"FDA", 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2), #best
-  #initiation (1st,subsequent): -0.83, -0.85
-  #cessation:0.61,0.56
-  #dual:0.25, 0.19
-  #switching:0.84, 0.85
-  #vape init: 0.21, 0.2
-  #FDA_worst = c(1-0.38,1-0.39,"FDA", 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75) #worse case
-  #initiation (1st,subsequent): -0.38, -0.39
-  #cessation:0.11, 0.11
-  #dual:0.9, 0.82
-  #switching:0.22,0.25
-  #vape init: 0.72, 0.75
-  #Sensitivity analysis
 )
 
 scenarios <- names(params)
@@ -169,4 +139,4 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   #source(paste0(mainDir,"R/07_figures_tables_combined_gender.R"), echo=TRUE)
 
 }
-}
+

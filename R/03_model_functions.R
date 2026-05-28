@@ -590,13 +590,12 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   p.CO.FE[13:91,paste0((policyyear+1):endyear)] <- l.policy_effects[["p.CO.FE_s"]]
   }
   
-  if (!is.null(l.policy_effects) && l.policy_effects[["s.EX"]]!=1){
+  #Vaping mortality effects. Baseline scenario assumes .1
+  if (is.null(l.policy_effects)){
+    p.EX<-p.NX+((p.NX-p.CX)*0.1)
+  }else{ 
     p.EX<-p.NX+((p.NX-p.CX)*l.policy_effects[["s.EX"]])
-  }else{
-    #non smoker vaping mortality
-    p.EX<-p.NX
-  }  
-  
+  }
   
   p.CF[p.CF > 1] <- 1 # replace any cessation probabilities that are greater than 1 with 1
 
