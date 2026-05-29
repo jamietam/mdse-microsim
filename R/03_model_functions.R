@@ -1024,7 +1024,7 @@ reformat_model_outputs <- function(l.results){
            aLYpop_new,cLYpop_new,aSAD_new,cSAD_new,
            aLYpop_new_disc,cLYpop_new_disc,aSAD_new_disc,cSAD_new_disc
            ) %>%
-    rename(
+    dplyr::rename(
       baseline_aLY= aLY, 
       baseline_cLY=cLY, 
       baseline_aMort_perLY=aMort_perLY, 

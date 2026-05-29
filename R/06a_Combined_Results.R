@@ -1,46 +1,27 @@
 
 rm(list = ls()) 
-#this doesn't work right now?
-# Sys.setenv(RGL_USE_NULL=TRUE) 
-# Sys.setenv('R_MAX_VSIZE'=64000000000)
+
 # Set working directory
 mainDir = "/Users/srs475/Library/CloudStorage/Dropbox-UniversityofMichigan/Sarah Skolnick/GitHub/mdse-microsim/"
-# mainDir = "/Users/jt936/Dropbox/GitHub/mdse-microsim/"
-# mainDir = "/gpfs/gibbs/project/tam_jamie/jt936/mds-microsim/" 
+
 setwd(mainDir)
 
 # specify the output files you want to combine:
-gender <- 1      # 1 for male and 2 for female
+gender <- 2      # 1 for male and 2 for female
 policyyear <- 2027
-
-policylabel <- as.character(policyyear)
 genderlabel <- ifelse(gender == 1, "male", "female")
-genderstr   <- ifelse(gender == 1, "males", "females")
-
-# load("output/1_2027rnc_1females_depression_10000_03.11.26_01.24AM.RData")
-# load("output/2_2027rnc_2females_depression_10000_03.13.26_09.12AM.RData")
-# 
-# file_names <- sort(list.files(
-#   "output",
-#   pattern = paste0("^[0-9]+_", policyyear, "rnc_[0-9]+", genderstr, "_depression_1000.*\\.RData$"),
-#   full.names = TRUE
-# ))
 
 if (gender==1){
   file_names <- c(
     #males
-    "output/1_2027rnc_1males_depression_5000_05.12.26_09.57PM.RData",
-    "output/2_2027rnc_2males_depression_5000_05.12.26_11.33PM.RData",
-    "output/3_2027rnc_3males_depression_5000_05.13.26_11.02AM.RData",
-    "output/4_2027rnc_4males_depression_5000_05.13.26_12.17PM.RData"
+    "output/1_2027rnc_1males_depression_10000_05.27.26_03.18AM.RData",
+    "output/2_2027rnc_2males_depression_10000_05.28.26_12.48AM.RData"
   )
 } else {
   file_names <- c(
     #females
-    "output/1_2027rnc_1females_depression_5000_05.12.26_07.34PM.RData",
-    "output/2_2027rnc_2females_depression_5000_05.12.26_10.35PM.RData",
-    "output/3_2027rnc_3females_depression_5000_05.13.26_10.25AM.RData",
-    "output/4_2027rnc_4females_depression_5000_05.13.26_11.39AM.RData"
+    "output/1_2027rnc_1females_depression_10000_05.26.26_07.37PM.RData",
+    "output/2_2027rnc_2females_depression_10000_05.27.26_04.41PM.RData"
   )
 }
 
@@ -109,4 +90,4 @@ l.results_ND <- combined_results$combined_l_results_ND
 n <- 10000 * length(results_list)
 
 save(l.results, l.results_D, l.results_ND,
-     file = paste0("output/combined_", policylabel, "_", genderlabel, n, ".RData"))
+     file = paste0("output/combined_", policyyear, "_", genderlabel, n, ".RData"))

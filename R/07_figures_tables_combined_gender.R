@@ -652,11 +652,8 @@ df.prevs_comb2 <- df.prevs_comb %>%
     population == "D" & status == "E" ~ "E_D",
     TRUE ~ status  # Keep the existing value if no condition above is met
   ))
-# library(ggplot2)
-# library(gridExtra)
-# library(grid)
 
-# Initial plot creation similar to your code
+
 NCFE_total <- ggplot() +
   geom_pointrange(data = subset(df.calib_targets, age == 18.99 & 
                                   (status != "E" | survey_year >= 2020) & 

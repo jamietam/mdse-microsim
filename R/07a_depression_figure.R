@@ -1,6 +1,9 @@
+rm(list = ls()) 
 
-mainDir <- "//Users/srs475/Library/CloudStorage/Dropbox-UniversityofMichigan/Sarah Skolnick/GitHub/mdse-microsim/"
-setwd(file.path(mainDir))
+mainDir = "/Users/srs475/Library/CloudStorage/Dropbox-UniversityofMichigan/Sarah Skolnick/GitHub/mdse-microsim/"
+
+setwd(mainDir)
+
 
 library(plyr)
 library(dplyr)
@@ -12,7 +15,6 @@ load("data/mdseprevs0523.rda")
 
 # Data visualization and results figures -------------------------------------------------------------------
 library(ggplot2)
-library(reshape)
 library(grid)
 library(gridBase)
 library(gridExtra)
@@ -48,9 +50,9 @@ eFigure3 <- ggplot(efig3_data,
   scale_y_continuous(name = "Prevalence",
                      limits = c(0, 0.30),
                      breaks = seq(0, 0.28, 0.02)) +
-  scale_x_continuous(name = "Year",
-                     limits = c(min(xaxisbreaks), max(xaxisbreaks)),
-                     breaks = xaxisbreaks) +
+  # scale_x_continuous(name = "Year",
+  #                    limits = c(min(xaxisbreaks), max(xaxisbreaks)),
+  #                    breaks = xaxisbreaks) +
   labs(title = "",
        shape = "Age", color = "Age", fill = "Age") +
   theme_bw() +
