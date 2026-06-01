@@ -7,7 +7,7 @@ mainDir = "/Users/srs475/Library/CloudStorage/Dropbox-UniversityofMichigan/Sarah
 setwd(mainDir)
 
 # specify the output files you want to combine:
-gender <- 2      # 1 for male and 2 for female
+gender <- 1      # 1 for male and 2 for female
 policyyear <- 2027
 genderlabel <- ifelse(gender == 1, "male", "female")
 
