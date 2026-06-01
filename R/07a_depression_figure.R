@@ -18,7 +18,6 @@ library(ggplot2)
 library(grid)
 library(gridBase)
 library(gridExtra)
-library(plyr)
 
 # Prepare data for all three age groups, Total population, status=="D"
 efig3_data <- subset(mdseprevs, 
@@ -66,7 +65,7 @@ eFigure3 <- ggplot(efig3_data,
     panel.grid.minor = element_line(color = "gray95")
   )
 
-jpeg(filename = paste0("eFigure3_MDEprev_", date, ".jpg"),
+jpeg(filename = paste0("output/eFigure3_MDEprev_.jpg"),
      width = 9, height = 4, units = "in", res = 1000)
 print(eFigure3)
 dev.off()
