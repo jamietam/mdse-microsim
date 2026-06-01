@@ -11,7 +11,7 @@ calibration = 0 # need to set this to 0 so main_calib works and outputs proper m
 run_scenarios = 0 # set to 0 if you want to use pre-generated results, set to 1 to simulate all scenarios
 
 #set seed 
-seednew <<- 1
+seednew <<- 2
 n.i <- 10000 # number of people per birth cohort
 policyyear <- 2027
 v.affected_ages <- c(0:99) # affects all ages
