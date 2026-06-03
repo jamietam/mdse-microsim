@@ -19,10 +19,10 @@ Rscript on the existing MDSE R code.
                 ┌───────────────────────────────────────────────────────────┐
                 │                       swift-t (MPI)                       │
                 │                                                           │
-   HPC job ───► │  ┌──────────────┐    params    ┌──────────────────────┐   │
+   HPC job ───► │  ┌──────────────┐     gof      ┌──────────────────────┐   │
                 │  │ ga.swift     │ ───────────► │ python/ga.py (DEAP)  │   │
                 │  │ (workflow)   │              │   resident task      │   │
-                │  │              │ ◄─── gof ─── │   via EQ-Py          │   │
+                │  │              │ ◄─ params ── │   via EQ-Py          │   │
                 │  └──────┬───────┘              └──────────────────────┘   │
                 │         │ obj() per individual                            │
                 │         ▼                                                 │
