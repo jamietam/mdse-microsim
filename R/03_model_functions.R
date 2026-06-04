@@ -16,7 +16,7 @@
 # Effs:    function for the estimation of state specific health outcomes (QALYs)
 
 mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE) {
-
+set.seed(seednew)
   v.ysq <- rep(n.i, 0) # vector counting how many years since quit
   
   # create the matrix capturing the state name/costs/health outcomes for all individuals at each time point 
@@ -599,19 +599,19 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   p.CF[p.CF > 1] <- 1 # replace any cessation probabilities that are greater than 1 with 1
 
   # Simulate for each birth cohort with parallelization: row = each person within birth cohort, columns = ages 0:99
-  m.M <- foreach(i = cohorts, .combine = 'rbind', .packages = 'darthtools',
-                 .options.RNG = seednew,
-                 .export = c('mds_microsim','probs','get_prevs_combined',
-                             'n.i','n.t','v.n','n.s','v.M_1',
-                             'p.NC','p.CF','p.NC_D','p.NX','p.EX','p.CX','a_p.FX.ysq',
-                             'p.HD', 'p.DR', 'p.RD',
-                             'rr.CH.CD','rr.CR.CD','rr.CD.FD',
-                             'p.NO.NE', 'p.CO.CE', 'p.FO.FE',
-                             'p.NE.NQ', 'p.CE.CQ', 'p.FE.FQ',
-                             'p.NQ.NE', 'p.CQ.CE', 'p.FQ.FE',
-                             'p.CO.FE','rr.OD.ED','seednew')) %dorng% {
-                               mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
-                             }
+  m.M <-foreach (i=cohorts, .combine='rbind', .packages='darthtools',
+                 .export=c('mds_microsim','probs','get_prevs_combined',
+                           'n.i','n.t','v.n','n.s','v.M_1',
+                           'p.NC','p.CF','p.NC_D','p.NX','p.EX','p.CX','a_p.FX.ysq',
+                           'p.HD', 'p.DR', 'p.RD',
+                           'rr.CH.CD','rr.CR.CD','rr.CD.FD',
+                           'p.NO.NE', 'p.CO.CE', 'p.FO.FE',
+                           'p.NE.NQ', 'p.CE.CQ', 'p.FE.FQ',
+                           'p.NQ.NE', 'p.CQ.CE', 'p.FQ.FE',
+                           'p.CO.FE','rr.OD.ED','seednew')) %dopar% {
+                             mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M
+                           }
+  
   
   # To run in serial for debugging purposes, uncomment the line below, and comment out the 'foreach' loop above
   # m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))

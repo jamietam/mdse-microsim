@@ -16,16 +16,24 @@ if (gender==1){
     #males
     # "output/1_2027rnc_1males_depression_10000_05.27.26_03.18AM.RData",
     # "output/2_2027rnc_2males_depression_10000_05.28.26_12.48AM.RData"
-    "output/1_2027rnc_1males_depression_10000_05.31.26_04.32AM.RData",
-    "output/2_2027rnc_2males_depression_10000_06.01.26_11.17AM.RData"
+    # "output/1_2027rnc_1males_depression_10000_05.31.26_04.32AM.RData",
+    # "output/2_2027rnc_2males_depression_10000_06.01.26_11.17AM.RData"
+    # "output/1_2027rnc_1males_depression_10000_06.01.26_07.24PM.RData",
+    # "output/2_2027rnc_2males_depression_10000_06.01.26_10.20PM.RData"
+    "output/1_2027rnc_1males_depression_10000_06.04.26_03.49PM.RData",
+    "output/2_2027rnc_2males_depression_10000_06.03.26_05.42PM.RData"
   )
 } else {
   file_names <- c(
     #females
     # "output/1_2027rnc_1females_depression_10000_05.26.26_07.37PM.RData",
     # "output/2_2027rnc_2females_depression_10000_05.27.26_04.41PM.RData"
-    "output/1_2027rnc_1females_depression_10000_05.30.26_06.15PM.RData",
-    "output/2_2027rnc_2females_depression_10000_06.01.26_12.32AM.RData"
+    # "output/1_2027rnc_1females_depression_10000_05.30.26_06.15PM.RData",
+    # "output/2_2027rnc_2females_depression_10000_06.01.26_12.32AM.RData"
+    # "output/1_2027rnc_1females_depression_10000_06.01.26_05.56PM.RData",
+    # "output/2_2027rnc_2females_depression_10000_06.01.26_09.14PM.RData"
+    "output/1_2027rnc_1females_depression_10000_06.04.26_05.01AM.RData",
+    "output/2_2027rnc_2females_depression_10000_06.02.26_11.10PM.RData"
   )
 }
 

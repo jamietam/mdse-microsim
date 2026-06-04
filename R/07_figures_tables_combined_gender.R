@@ -93,30 +93,49 @@ merged_df$result <- merged_df$population1 * merged_df$prev
 diffDprev=merged_df$prev[merged_df$year==2100 & merged_df$scenario=="baseline"]-merged_df$prev[merged_df$year==2100 & merged_df$scenario=="main"]
 
 compute_scenario_difference <- function(df, scenario_a, scenario_b) {
-  # Subset dataframes for each scenario
   df_a <- subset(df, scenario == scenario_a)
   df_b <- subset(df, scenario == scenario_b)
-  # Rename columns to avoid conflicts during merging
   colnames(df_a)[which(colnames(df_a) == "result")] <- "result_a"
   colnames(df_b)[which(colnames(df_b) == "result")] <- "result_b"
-  # Merge the dataframes by year
   merged_df <- merge(df_a, df_b, by = "year")
-  # Calculate the difference between scenarios
   merged_df$difference <- merged_df$result_b - merged_df$result_a
-  # Select relevant columns
-  result_df <- merged_df[, c("year", "result_a", "result_b", "difference")]
+  merged_df$scenario_comparison <- paste0(scenario_a)
+  result_df <- merged_df[, c("year", "result_a", "result_b", "difference", "scenario_comparison")]
   return(result_df)
 }
 
-depressiondifference=compute_scenario_difference(merged_df,"main","baseline")
-cum_dep<-data.frame(sum(depressiondifference$difference[depressiondifference$year%in% c(2028:2100)]))
+# Combine all scenario differences into one dataframe
+depression_difference <- bind_rows(
+  compute_scenario_difference(merged_df, "main",  "baseline"),
+  compute_scenario_difference(merged_df, "worst", "baseline"),
+  compute_scenario_difference(merged_df, "best",  "baseline")
+)
+
+# Cumulative sum from 2027 to 2100 for each scenario
+depression_difference_cumsum <- depression_difference %>%
+  filter(year >= 2027 & year <= 2100) %>%
+  arrange(scenario_comparison, year) %>%
+  group_by(scenario_comparison) %>%
+  mutate(cumsum_difference = cumsum(difference)) %>%
+  ungroup()
+
+df.prevs_D<- df.prevs_comb %>%
+  filter(population=="T", age == 18.99, status=="D")%>%select(year,prev,scenario)
+diffDprevworst=merged_df$prev[merged_df$year==2100 & merged_df$scenario=="baseline"]-merged_df$prev[merged_df$year==2100 & merged_df$scenario=="worst"]
+diffDprevbest=merged_df$prev[merged_df$year==2100 & merged_df$scenario=="baseline"]-merged_df$prev[merged_df$year==2100 & merged_df$scenario=="best"]
+diffDprev=merged_df$prev[merged_df$year==2100 & merged_df$scenario=="baseline"]-merged_df$prev[merged_df$year==2100 & merged_df$scenario=="main"]
+
+summary_table <- subset(depression_difference_cumsum, year == 2100) %>%
+  select(scenario_comparison, result_a, result_b, difference, cumsum_difference) %>%
+  mutate(prev_diff_pct = c(diffDprev*100, diffDprevworst*100, diffDprevbest*100))
+
 
 # add first sheet and write the data
 addWorksheet(wb, "1a.Prevalance_allgender_MDSE")
 writeData(wb, "1a.Prevalance_allgender_MDSE", df.MDSE)
 
 addWorksheet(wb, "Depression_difference_poptotal")
-writeData(wb, "Depression_difference_poptotal", cum_dep)
+writeData(wb, "Depression_difference_poptotal", summary_table)
 
 
 # HEALTH OUTCOMES ---------------------------------------------------------
@@ -347,7 +366,7 @@ writeData(wb, "1a.Table3_COSTS_new", resultsMDSE_fC_new)
 
 merged_df_sens<- merge(df.prevs_depsens, COSTS_depsens, by = "scenario")
 merged_df_sens1<- merge(merged_df_sens, sensitivity4, by = "scenario")
-merged_df_sens1<- merged_df_sens1[c("scenario","D","MED_cost_US_new","cLYG_new")]
+merged_df_sens1<- merged_df_sens1[c("scenario","D","cSAD_averted_new.y","MED_cost_US_new","cLYG_new")]
 df.depsens <- merged_df_sens1[rev(rownames(merged_df_sens1)), ]
 addWorksheet(wb, "1b.eTable7_depsens")
 writeData(wb, "1b.eTable7_depsens", df.depsens)

@@ -11,7 +11,7 @@ calibration = 0 # need to set this to 0 so main_calib works and outputs proper m
 run_scenarios = 0 # set to 0 if you want to use pre-generated results, set to 1 to simulate all scenarios
 
 #set seed 
-seednew <<- 2
+seednew <<- 1
 n.i <- 10000 # number of people per birth cohort
 policyyear <- 2027
 v.affected_ages <- c(0:99) # affects all ages
@@ -35,7 +35,7 @@ load(paste0(mainDir,"data/nsduh_calib_targets_both.RData")) # Load NSDUH data
 params <- list(
   baseline = NULL,
   # baseline2 =  c(1,1, 1, 1, 1, 1, 1,1, 1,1,0.1,1),
-   worst = c(1-0.38,1-0.39, 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75,0.1,1), #worst case
+  worst = c(1-0.38,1-0.39, 0.11, 0.11, 0.9, 0.82, 0.22,0.25, 0.38*0.72,0.39*0.75,0.1,1), #worst case
   main = c(1-0.63,1-0.65,0.36,0.34, 0.61, 0.51, 0.56,0.58, 0.63*0.5, 0.65*0.5,0.1,1), #expected
   best = c(1-0.83,1-0.85, 0.61,0.56,0.25, 0.19, 0.84, 0.85, 0.85*0.21,0.85*0.2,0.1,1), #best case
   MPRPM = c( 0, 0, 100, 100, 1, 1, 1,1, 1,1,0.1,1),
