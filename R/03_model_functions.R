@@ -521,35 +521,67 @@ gof_norm_loglike <- function(target_mean, target_sd, model_output){
 # Apply filtering to relevant elements - drop age groups 50+ for e-cig use among depressed due to NA in log likelihood
 filter_under_50 <- function(df) df[df[, "age"] < 50, ]
 
+# Helper function for f_gof: Consistently filter specific e-cig states
+prepare_calib_data <- function(data_list) {
+  ecig_states <- c("NE", "FE", "E_D", "NE_D", "CE_D", "FE_D")  # Only attempt to apply filter_under_50 to states present in the list
+  states_to_filter <- intersect(ecig_states, names(data_list))
+  data_list[states_to_filter] <- lapply(data_list[states_to_filter], filter_under_50)
+  return(data_list)
+}
+
+# Helper function for f_gof: Calculate single period GOF log-likelihood
+calc_period_gof <- function(calibtargets, modelprevs, start_yr, end_yr, is_exclusive_end = FALSE) {
+  v.gof_period <- numeric(length(calibtargets))
+  for (r in 1:length(calibtargets)) {
+    if (is_exclusive_end) {    # Dynamically match whether the upper year boundary is < or <=
+      idx_t <- calibtargets[[r]][,"survey_year"] >= start_yr & calibtargets[[r]][,"survey_year"] < end_yr
+      idx_m <- modelprevs[[r]][,"year"] >= start_yr & modelprevs[[r]][,"year"] < end_yr
+    } else {
+      idx_t <- calibtargets[[r]][,"survey_year"] >= start_yr & calibtargets[[r]][,"survey_year"] <= end_yr
+      idx_m <- modelprevs[[r]][,"year"] >= start_yr & modelprevs[[r]][,"year"] <= end_yr
+    }
+    v.gof_period[r] <- gof_norm_loglike(
+      target_mean  = calibtargets[[r]][idx_t, "prev"],
+      model_output = modelprevs[[r]][idx_m, "prev"],
+      target_sd    = calibtargets[[r]][idx_t, "se"]
+    )
+  }
+  return(v.gof_period)
+}
+
 # Write goodness-of-fit function to pass to calibration algorithm
 f_gof <- function(v.params){
   
   result <- main_calib(v.params)
   if (length(result) == 1 && result == INVALID_PROBS_FLAG) {
-    return (INVALID_PROBS_FLAG)
+    return(INVALID_PROBS_FLAG)
   }
-
   l.model_prevs <- result[[2]]
-
-  # Apply filtering to relevant e-cig states ages <50 to avoid NA / Inf log likelihood values
-  l.calib_targets[c("NE","FE", "E_D", "NE_D", "CE_D", "FE_D")] <- lapply(l.calib_targets[c("NE","FE", "E_D", "NE_D", "CE_D", "FE_D")], filter_under_50)
-  l.model_prevs[c("NE","FE", "E_D", "NE_D", "CE_D", "FE_D")] <- lapply(l.model_prevs[c("NE","FE", "E_D", "NE_D", "CE_D", "FE_D")], filter_under_50)
   
-  v.gof <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
- 
-  for (r in 1:length(l.calib_targets)){ # use log likelihood as metric
-    gof = gof_norm_loglike(target_mean = l.calib_targets[[r]][,"prev"],
-                           model_output = subset(l.model_prevs[[r]],l.model_prevs[[r]][,"year"]>=calib_startyear & l.model_prevs[[r]][,"year"]<=endyear)[,"prev"],
-                           target_sd = l.calib_targets[[r]][,"se"])
-    v.gof[r] <-gof
-  }
+  # Assign different weights to 2005-2019 vs 2020-2023 survey years 
+  # --- Period 1: 2005-2019 (Exclusive upper boundary) ---
+  v.gof1 <- calc_period_gof(
+    calibtargets     = prepare_calib_data(l.calib_targets), # Apply filtering to relevant e-cig states ages <50 to avoid NA / Inf log likelihood values
+    modelprevs       = prepare_calib_data(l.model_prevs), 
+    start_yr         = calib_startyear, 
+    end_yr           = calib_splityear, 
+    is_exclusive_end = TRUE
+  )
+  # --- Period 2: 2020-2023 (Inclusive upper boundary) ---
+  v.gof2 <- calc_period_gof(
+    calibtargets     = prepare_calib_data(l.calib_targets), 
+    modelprevs       = prepare_calib_data(l.model_prevs), 
+    start_yr         = calib_splityear, 
+    end_yr           = endyear, 
+    is_exclusive_end = FALSE
+  )
   
-  # OVERALL
-  v.weights <- c(rep(1,length(1:n.target))) # can assign targets different weights
-  # weighted sum
+  # Double the weights for year 2020 onwards, the year when e-cig data became available in NSDUH
+  v.gof <- v.gof1 + 2 * v.gof2 
+  # OVERALL: Assign target weights and compute weighted sum
+  v.weights   <- rep(1, n.target) 
   GOF_overall <- sum(v.gof[1:n.target] * v.weights)
-  # cat(GOF_overall)
-  # return GOF
+  
   return(GOF_overall)
 }
 
