@@ -4,33 +4,44 @@
 ## Run the model ---------------------------------------------------  
 l.model_prevs<-main_calib(v.params,NULL)[[2]]
 
-# Apply filtering to relevant e-cig states ages <50 to avoid NA / Inf log likelihood values
-l.calib_targets_under_50 <- l.calib_targets
-l.model_prevs_under_50 <- l.model_prevs
-l.calib_targets_under_50[c("NE","FE", "E_D", "NE_D", "CE_D", "FE_D")] <- lapply(l.calib_targets_under_50[c("NE","FE", "E_D", "NE_D", "CE_D", "FE_D")], filter_under_50)
-l.model_prevs_under_50[c("NE","FE", "E_D", "NE_D", "CE_D", "FE_D")] <- lapply(l.model_prevs_under_50[c("NE","FE", "E_D", "NE_D", "CE_D", "FE_D")], filter_under_50)
+# 1. Calculate Log-Likelihood for Period 1: 2005-2019 
+v.gof1 <- calc_period_gof(
+  calibtargets     = prepare_calib_data(l.calib_targets), 
+  modelprevs       = prepare_calib_data(l.model_prevs), 
+  start_yr         = calib_startyear, 
+  end_yr           = calib_splityear, 
+  is_exclusive_end = TRUE
+)
 
-v.gof <- v.ssd <- numeric(n.target)   # Calculate goodness-of-fit of model outputs to targets
+# 2. Calculate Log-Likelihood for Period 2: 2020-2023 
+v.gof2 <- calc_period_gof(
+  calibtargets     = prepare_calib_data(l.calib_targets), 
+  modelprevs       = prepare_calib_data(l.model_prevs), 
+  start_yr         = calib_splityear, 
+  end_yr           = endyear, 
+  is_exclusive_end = FALSE
+)
 
-for (r in 1:length(l.calib_targets)){ # sum of squared differences - removes model years after 2022 (where we don't have NSDUH data for calibration)
-  if (names(l.calib_targets)[r] %in% c("NE","FE", "E_D", "NE_D", "CE_D", "FE_D")){
-    gof = gof_norm_loglike(target_mean = l.calib_targets_under_50[[r]][,"prev"],
-                           model_output = subset(l.model_prevs_under_50[[r]],l.model_prevs_under_50[[r]][,"year"]>=calib_startyear & l.model_prevs_under_50[[r]][,"year"]<=endyear)[,"prev"],
-                           target_sd = l.calib_targets_under_50[[r]][,"se"])
-    
-  } else {
-    gof = gof_norm_loglike(target_mean = l.calib_targets[[r]][,"prev"],
-                         model_output = subset(l.model_prevs[[r]],l.model_prevs[[r]][,"year"]>=calib_startyear & l.model_prevs[[r]][,"year"]<=endyear)[,"prev"],
-                         target_sd = l.calib_targets[[r]][,"se"])
-  }
-  ssd <- sum((l.calib_targets[[r]][,"prev"] - subset(l.model_prevs[[r]],l.model_prevs[[r]][,2]>=calib_startyear & l.model_prevs[[r]][,2]<=endyear)[,"prev"])^2) # prevalence by age group
-  v.gof[r] <- gof
-  v.ssd[r] <- ssd
+# Combine periods and double the weights for years 2020 onwards
+v.gof <- v.gof1 + 2 * v.gof2
+
+# 3. Calculate Sum of Squared Differences (SSD)
+v.ssd <- numeric(n.target)
+for (r in 1:length(l.calib_targets)) {
+  idx_m    <- l.model_prevs[[r]][, 2] >= calib_startyear & l.model_prevs[[r]][, 2] <= endyear
+  v.ssd[r] <- sum((l.calib_targets[[r]][, "prev"] - l.model_prevs[[r]][idx_m, "prev"])^2)
 }
-names(v.gof) <- paste0(names(l.calib_targets),".loglik")
-names(v.ssd) <- paste0(names(l.calib_targets),".ssd")
-loglik_value <- sum(v.gof)
-ssd_value <- sum(v.ssd)
+
+# Assign names to tracking vectors
+names(v.gof)  <- paste0(names(l.calib_targets), ".loglik")
+names(v.ssd)  <- paste0(names(l.calib_targets), ".ssd")
+
+# --- INTEGRATED WEIGHTS SYSTEM ---
+v.weights    <- rep(1, n.target)            
+loglik_value <- sum(v.gof * v.weights)      
+ssd_value    <- sum(v.ssd * v.weights)      
+
+# Display results
 print(loglik_value)
 print(v.gof)
 print(ssd_value)
@@ -393,7 +404,11 @@ grid.table(cbind(c(v.gof, loglik_value), c(v.ssd, ssd_value)),rows=c(names(l.cal
 plot.new()                        
 text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
 text(.5, 1.0, "Calibration parameters", font=2, cex=1.5)
-grid.table(df.calib[df.calib$calib == 1, ]) #only calibrated parameters
+grid.table(df.calib[1:19, ],theme = ttheme_default(base_size = 9)) #only calibrated parameters
+plot.new()                        
+text(.9, 0.5, paste0("mds_microsim \n",whichgender), font=1, cex=1.5)
+text(.5, 1.0, "Calibration parameters", font=2, cex=1.5)
+grid.table(df.calib[20:nrow(df.calib), ],theme = ttheme_default(base_size = 9)) #only calibrated parameters
 grid_arrange_shared_legend(list(CED_total,CED_18.25),2,"")
 grid_arrange_shared_legend(list(N_age, C_age, F_age),3,"Smoking distribution")
 grid_arrange_shared_legend(list(D_age, D_total),2,"MDE")
