@@ -14,6 +14,7 @@ if (whichgender=="females"){
 }
 
 calib_startyear <-2005
+calib_splityear <- 2020
 endyear <- as.numeric(args[3]) 
 cohorts <- 1900:as.numeric(args[3])            # last cohort is the last calendar year
 n.i   <- as.numeric(args[2])                   # number of simulated individuals per run (cohort) - eventually want to run 10,000
