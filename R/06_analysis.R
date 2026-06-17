@@ -13,7 +13,9 @@ run_scenarios = 1 # set to 0 if you want to use pre-generated results, set to 1 
 #set seed 
 #seednew <<- 1
 n.i <- 10000 # number of people per birth cohort
-policyyear <- 2027
+for(yri in c(2028)){ #2030,2035,2040
+
+policyyear <- yri
 v.affected_ages <- c(0:99) # affects all ages
 d.c <- d.u <- d.w <- 0.03 # equal discounting of costs and QALYs by 3%
 d.year <- 2027 # which year to start discounting from
@@ -139,5 +141,6 @@ if (run_scenarios == 0) {  # choose the files you want to use for both genders h
   print(Sys.time() - t.init1)
   #source(paste0(mainDir,"R/07_figures_tables_combined_gender.R"), echo=TRUE)
 
+}
 }
 }
