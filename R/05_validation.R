@@ -45,14 +45,14 @@ select_param <- function(param_name) {
 # Initiation and cessation probabilities
 s.NC_9.17 <- select_param("s.NC_9.17")
 s.NC_18.25 <- select_param("s.NC_18.25")
-s.CF_18.25 <- select_param("s.CF_18.25")
+s.CF_15.25 <- select_param("s.CF_15.25")
 s.CF_26.34 <- select_param("s.CF_26.34")
 s.CF_35.49 <- select_param("s.CF_35.49")
 s.CF_50.64 <- select_param("s.CF_50.64")
 s.CF_65.99 <- select_param("s.CF_65.99")
 
 p.NC <- smk_init * c(rep(s.NC_9.17, 18), rep(s.NC_18.25, 8), rep(0, 74))
-p.CF <- smk_cess * c(rep(0, 16), rep(s.CF_18.25, 10), rep(s.CF_26.34, 9), rep(s.CF_35.49, 15), rep(s.CF_50.64, 15), rep(s.CF_65.99, 35))
+p.CF <- smk_cess * c(rep(0, 16), rep(s.CF_15.25, 10), rep(s.CF_26.34, 9), rep(s.CF_35.49, 15), rep(s.CF_50.64, 15), rep(s.CF_65.99, 35))
 
 s.NC_D_9.17 <- select_param("s.NC_D_9.17")
 s.NC_D_18.25 <- select_param("s.NC_D_18.25")
