@@ -48,4 +48,5 @@ dev_history.R
 
 # Mac "Desktop services" files
 .DS_Store
-output*
+#output*
+.DS_Store

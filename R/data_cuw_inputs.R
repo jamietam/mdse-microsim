@@ -1,11 +1,11 @@
-mainDir <- "/Users/jt936/Dropbox/GitHub/mdse-microsim/"
+mainDir <- "/Users/srs249/University of Michigan Dropbox/Sarah Skolnick/GitHub/mdse-microsim/"
 setwd(file.path(mainDir))
 
 library(openxlsx)
 library(ggplot2)
 library(survey)
 
-whichgender="males"
+whichgender="females"
 
 ## Price index for inflating to 2023 USD
 # healthcare
@@ -73,46 +73,46 @@ dev.off()
 # Utilities ---------------------------------------------------------------
 if (whichgender=="females"){
   # not depressed, no e-cig
-  u.NOH <- u.NOR <- u.NQH <- u.NQR <- c(rep(1,18),rep(0.839,7),rep(0.824,20), rep(0.797,20),rep(0.7625,35))
-  u.COH <- u.COR <- u.CQH <- u.CQR <- c(rep(1,18),rep(0.826,7),rep(0.816,20), rep(0.776,20),rep(0.7405,35))
-  u.FOH <- u.FOR <- u.FQH <- u.FQR <- c(rep(1,18),rep(0.843,7),rep(0.816,20), rep(0.787,20),rep(0.7405,35))
+  u.NOH <- u.NOR <- u.NQH <- u.NQR <- c(rep(1,18),rep(0.839,7),rep(0.821,20), rep(0.795,20),rep(0.7605,35))
+  u.COH <- u.COR <- u.CQH <- u.CQR <- c(rep(1,18),rep(0.829,7),rep(0.804,20), rep(0.773,20),rep(0.724,35))
+  u.FOH <- u.FOR <- u.FQH <- u.FQR <- c(rep(1,18),rep(0.832,7),rep(0.816,20), rep(0.778,20),rep(0.7405,35))
   
   # depressed, no e-cig
-  u.NOD <- u.NQD <- c(rep(1,18),rep(0.824,7),rep(0.804,20), rep(0.776,20),rep(0.7405,35))
-  u.COD <- u.CQD <- c(rep(1,18),rep(0.817,7),rep(0.799,20), rep(0.759,20),rep(0.706,35))
-  u.FOD <- u.FQD <- c(rep(1,18),rep(0.829,7),rep(0.801,20), rep(0.773,20),rep(0.724,35))
+  u.NOD <- u.NQD <- c(rep(1,18),rep(0.824,7),rep(0.801,20), rep(0.773,20),rep(0.7095,35))
+  u.COD <- u.CQD <- c(rep(1,18),rep(0.817,7),rep(0.793,20), rep(0.757,20),rep(0.7075,35))
+  u.FOD <- u.FQD <- c(rep(1,18),rep(0.826,7),rep(0.799,20), rep(0.761,20),rep(0.7095,35))
   
   # not depressed, e-cig
-  u.NEH <- u.NER <- c(rep(1,18),rep(0.839,7),rep(0.816,20), rep(0.767,20),rep(0.7625,35))
-  u.CEH <- u.CER <- c(rep(1,18),rep(0.829,7),rep(0.811,20), rep(0.773,20),rep(0.7685,35))
-  u.FEH <- u.FER <- c(rep(1,18),rep(0.826,7),rep(0.816,20), rep(0.777,20),rep(0.7685,35))
+  u.NEH <- u.NER <- c(rep(1,18),rep(0.839,7),rep(0.821,20), rep(0.776,20),rep(0.7605,35))
+  u.CEH <- u.CER <- c(rep(1,18),rep(0.817,7),rep(0.8,20), rep(0.767,20),rep(0.7405,35))
+  u.FEH <- u.FER <- c(rep(1,18),rep(0.821,7),rep(0.816,20), rep(0.777,20),rep(0.764,35))
   
   # depressed, e-cig
-  u.NED <- c(rep(1,18),rep(0.824,7),rep(0.8,20), rep(0.777,20),rep(0.7,35))
-  u.CED <- c(rep(1,18),rep(0.817,7),rep(0.798,20), rep(0.759,20),rep(0.7095,35))
-  u.FED <- c(rep(1,18),rep(0.823,7),rep(0.8,20), rep(0.767,20),rep(0.724,35))
+  u.NED <- c(rep(1,18),rep(0.824,7),rep(0.8,20), rep(0.776,20),rep(0.7075,35))
+  u.CED <- c(rep(1,18),rep(0.799,7),rep(0.798,20), rep(0.755,20),rep(0.7095,35))
+  u.FED <- c(rep(1,18),rep(0.821,7),rep(0.798,20), rep(0.759,20),rep(0.7095,35))
   
 } else {
   # males
   # not depressed, no e-cig
-  u.NOH <- u.NOR <- u.NQH <- u.NQR <- c(rep(1,18),rep(0.843,7),rep(0.821,20), rep(0.795,20),rep(0.7625,35))
-  u.COH <- u.COR <- u.CQH <- u.CQR <- c(rep(1,18),rep(0.839,7),rep(0.811,20), rep(0.773,20),rep(0.7095,35))
-  u.FOH <- u.FOR <- u.FQH <- u.FQR <- c(rep(1,18),rep(0.843,7),rep(0.816,20), rep(0.778,20),rep(0.7405,35))
+  u.NOH <- u.NOR <- u.NQH <- u.NQR <- c(rep(1,18),rep(0.843,7),rep(0.821,20), rep(0.787,20),rep(0.7405,35))
+  u.COH <- u.COR <- u.CQH <- u.CQR <- c(rep(1,18),rep(0.832,7),rep(0.804,20), rep(0.773,20),rep(0.7095,35))
+  u.FOH <- u.FOR <- u.FQH <- u.FQR <- c(rep(1,18),rep(0.843,7),rep(0.811,20), rep(0.776,20),rep(0.724,35))
   
   # depressed, no e-cig
-  u.NOD <- u.NQD <- c(rep(1,18),rep(0.829,7),rep(0.801,20), rep(0.773,20),rep(0.7095,35))
-  u.COD <- u.CQD <- c(rep(1,18),rep(0.817,7),rep(0.793,20), rep(0.755,20),rep(0.7075,35))
-  u.FOD <- u.FQD <- c(rep(1,18),rep(0.829,7),rep(0.801,20), rep(0.767,20),rep(0.7095,35))
+  u.NOD <- u.NQD <- c(rep(1,18),rep(0.826,7),rep(0.8,20), rep(0.761,20),rep(0.7075,35))
+  u.COD <- u.CQD <- c(rep(1,18),rep(0.8,7),rep(0.781,20), rep(0.717,20),rep(0.706,35))
+  u.FOD <- u.FQD <- c(rep(1,18),rep(0.826,7),rep(0.8,20), rep(0.757,20),rep(0.7075,35))
   
   # not depressed, e-cig
-  u.NEH <- u.NER <- c(rep(1,18),rep(0.839,7),rep(0.821,20), rep(0.778,20),rep(0.724,35))
-  u.CEH <- u.CER <- c(rep(1,18),rep(0.821,7),rep(0.804,20), rep(0.787,20),rep(0.7405,35))
-  u.FEH <- u.FER <- c(rep(1,18),rep(0.832,7),rep(0.811,20), rep(0.767,20),rep(0.7605,35))
+  u.NEH <- u.NER <- c(rep(1,18),rep(0.839,7),rep(0.816,20), rep(0.767,20),rep(0.7075,35))
+  u.CEH <- u.CER <- c(rep(1,18),rep(0.817,7),rep(0.801,20), rep(0.767,20),rep(0.764,35))
+  u.FEH <- u.FER <- c(rep(1,18),rep(0.832,7),rep(0.811,20), rep(0.773,20),rep(0.7725,35))
   
   # depressed, e-cig
-  u.NED <- c(rep(1,18),rep(0.823,7),rep(0.801,20), rep(0.761,20),rep(0.7625,35))
-  u.CED <- c(rep(1,18),rep(0.817,7),rep(0.798,20), rep(0.767,20),rep(0.7075,35))
-  u.FED <- c(rep(1,18),rep(0.824,7),rep(0.801,20), rep(0.759,20),rep(0.724,35))
+  u.NED <- c(rep(1,18),rep(0.824,7),rep(0.801,20), rep(0.767,20),rep(0.7625,35))
+  u.CED <- c(rep(1,18),rep(0.805,7),rep(0.793,20), rep(0.757,20),rep(0.6995,35))
+  u.FED <- c(rep(1,18),rep(0.823,7),rep(0.799,20), rep(0.759,20),rep(0.7095,35))
 }
 
 # Create a helper function to generate each combination

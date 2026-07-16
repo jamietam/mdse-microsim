@@ -1,19 +1,42 @@
-#specify the output files you want to combine:
-gender=1 #1 for male and 2 for female
 
-if (gender==1){genderlabel="male"
-file_names <- c(
-  #males
-  "output/rnc_1males_depression_10000_05.06.25_08.06AM.RData",
-  "output/rnc_2males_depression_10000_05.04.25_09.34PM.RData"#,
-)
-}else{genderlabel="female"
-file_names <- c(
-  #males
-  "output/rnc_1females_depression_10000_05.05.25_09.14PM.RData",
-  "output/rnc_2females_depression_10000_05.04.25_10.37AM.RData"#,
-)
+rm(list = ls()) 
+
+# Set working directory
+mainDir = "/Users/srs475/Library/CloudStorage/Dropbox-UniversityofMichigan/Sarah Skolnick/GitHub/mdse-microsim/"
+
+setwd(mainDir)
+
+# specify the output files you want to combine:
+gender <- 1      # 1 for male and 2 for female
+policyyear <- 2027
+genderlabel <- ifelse(gender == 1, "male", "female")
+
+if (gender==1){
+  file_names <- c(
+    #males
+    # "output/1_2027rnc_1males_depression_10000_05.27.26_03.18AM.RData",
+    # "output/2_2027rnc_2males_depression_10000_05.28.26_12.48AM.RData"
+    # "output/1_2027rnc_1males_depression_10000_05.31.26_04.32AM.RData",
+    # "output/2_2027rnc_2males_depression_10000_06.01.26_11.17AM.RData"
+    # "output/1_2027rnc_1males_depression_10000_06.01.26_07.24PM.RData",
+    # "output/2_2027rnc_2males_depression_10000_06.01.26_10.20PM.RData"
+    "output/1_2027rnc_1males_depression_10000_06.04.26_03.49PM.RData",
+    "output/2_2027rnc_2males_depression_10000_06.03.26_05.42PM.RData"
+  )
+} else {
+  file_names <- c(
+    #females
+    # "output/1_2027rnc_1females_depression_10000_05.26.26_07.37PM.RData",
+    # "output/2_2027rnc_2females_depression_10000_05.27.26_04.41PM.RData"
+    # "output/1_2027rnc_1females_depression_10000_05.30.26_06.15PM.RData",
+    # "output/2_2027rnc_2females_depression_10000_06.01.26_12.32AM.RData"
+    # "output/1_2027rnc_1females_depression_10000_06.01.26_05.56PM.RData",
+    # "output/2_2027rnc_2females_depression_10000_06.01.26_09.14PM.RData"
+    "output/1_2027rnc_1females_depression_10000_06.04.26_05.01AM.RData",
+    "output/2_2027rnc_2females_depression_10000_06.02.26_11.10PM.RData"
+  )
 }
+
 
 # Initialize the results list
 results_list <- list()
@@ -27,21 +50,9 @@ for (file_name in file_names) {
 }
 
 # Helper functions to combine elements
-
-combine_model_prevs <- function(dfs) {
-  combined_df <- Reduce(`+`, dfs) / length(dfs)
-  return(combined_df)
-}
-
-combine_vectors <- function(vectors) {
-  combined_vec <- Reduce(`+`, vectors) / length(vectors)
-  return(combined_vec)
-}
-
-combine_data_frames <- function(dfs) {
-  combined_df <- Reduce(`+`, dfs) / length(dfs)
-  return(combined_df)
-}
+combine_model_prevs <- function(dfs) Reduce(`+`, dfs) / length(dfs)
+combine_vectors     <- function(vectors) Reduce(`+`, vectors) / length(vectors)
+combine_data_frames <- function(dfs) Reduce(`+`, dfs) / length(dfs)
 
 combine_result_elements <- function(result_elements) {
   combined <- list()
@@ -53,64 +64,42 @@ combine_result_elements <- function(result_elements) {
     names(result_elements[[1]][["l.model_prevs"]])
   )
   
-  combined[["m.cuw"]] <- combine_data_frames(lapply(result_elements, `[[`, "m.cuw"))
-  combined[["v.lifeyears"]] <- combine_vectors(lapply(result_elements, `[[`, "v.lifeyears"))
-  combined[["v.SAD_old"]] <- combine_vectors(lapply(result_elements, `[[`, "v.SAD_old"))
-  combined[["v.yll_old"]] <- combine_vectors(lapply(result_elements, `[[`, "v.yll_old"))
-  combined[["v.SAD_old_disc"]] <- combine_vectors(lapply(result_elements, `[[`, "v.SAD_old_disc"))
-  combined[["v.yll_old_disc"]] <- combine_vectors(lapply(result_elements, `[[`, "v.yll_old_disc"))
-  combined[["v.VAD_old"]] <- combine_vectors(lapply(result_elements, `[[`, "v.VAD_old"))
-  combined[["v.VAD_old_disc"]] <- combine_vectors(lapply(result_elements, `[[`, "v.VAD_old_disc"))
-  combined[["v.lifeyears_pop_new"]] <- combine_vectors(lapply(result_elements, `[[`, "v.lifeyears_pop_new"))
-  combined[["v.SAD_new"]] <- combine_vectors(lapply(result_elements, `[[`, "v.SAD_new"))
-  combined[["v.lifeyears_pop_new_disc"]] <- combine_vectors(lapply(result_elements, `[[`, "v.lifeyears_pop_new_disc"))
-  combined[["v.SAD_new_disc"]] <- combine_vectors(lapply(result_elements, `[[`, "v.SAD_new_disc"))
-  combined[["m.prev_C"]] <- combine_data_frames(lapply(result_elements, `[[`, "m.prev_C"))
-  combined[["m.prev_F"]] <- combine_data_frames(lapply(result_elements, `[[`, "m.prev_F"))
-  combined[["m.prev_N"]] <- combine_data_frames(lapply(result_elements, `[[`, "m.prev_N"))
-  combined[["init"]] <- combine_data_frames(lapply(result_elements, `[[`, "init"))
-  combined[["cess"]] <- combine_data_frames(lapply(result_elements, `[[`, "cess"))
-  combined[["v.deathrate"]] <- combine_vectors(lapply(result_elements, `[[`, "v.deathrate"))
-
+  vec_fields <- c("v.lifeyears", "v.SAD_old", "v.yll_old", "v.SAD_old_disc", "v.yll_old_disc",
+                  "v.VAD_old", "v.VAD_old_disc", "v.lifeyears_pop_new", "v.SAD_new",
+                  "v.lifeyears_pop_new_disc", "v.SAD_new_disc", "v.deathrate")
+  df_fields  <- c("m.cuw", "m.prev_C", "m.prev_F", "m.prev_N", "init", "cess")
+  
+  for (f in vec_fields) combined[[f]] <- combine_vectors(lapply(result_elements, `[[`, f))
+  for (f in df_fields)  combined[[f]] <- combine_data_frames(lapply(result_elements, `[[`, f))
   
   return(combined)
 }
 
-combine_results_by_scenario <- function(results_list, scenario_name) {
-  combined_results <- list()
-  
-  results_elements <- lapply(results_list, function(res) res[[scenario_name]])
-  combined_results <- combine_result_elements(results_elements)
-  
-  return(combined_results)
-}
-
 combine_all_results <- function(results_list) {
-  combined_l_results <- list()
-  combined_l_results_D <- list()
-  combined_l_results_ND <- list()
-  
   scenarios <- names(results_list[[1]][["l.results"]])
   
-  for (scenario in scenarios) {
-    combined_l_results[[scenario]] <- combine_results_by_scenario(lapply(results_list, `[[`, "l.results"), scenario)
-    combined_l_results_D[[scenario]] <- combine_results_by_scenario(lapply(results_list, `[[`, "l.results_D"), scenario)
-    combined_l_results_ND[[scenario]] <- combine_results_by_scenario(lapply(results_list, `[[`, "l.results_ND"), scenario)
+  combine_scenario <- function(slot) {
+    setNames(
+      lapply(scenarios, function(s) combine_result_elements(lapply(results_list, function(r) r[[slot]][[s]]))),
+      scenarios
+    )
   }
   
-  combined_results <- list(combined_l_results = combined_l_results, combined_l_results_D = combined_l_results_D, combined_l_results_ND = combined_l_results_ND)
-  return(combined_results)
+  list(
+    combined_l_results    = combine_scenario("l.results"),
+    combined_l_results_D  = combine_scenario("l.results_D"),
+    combined_l_results_ND = combine_scenario("l.results_ND")
+  )
 }
 
 # Combine all results
 combined_results <- combine_all_results(results_list)
 
-l.results <- combined_results$combined_l_results
-l.results_D <- combined_results$combined_l_results_D
+l.results    <- combined_results$combined_l_results
+l.results_D  <- combined_results$combined_l_results_D
 l.results_ND <- combined_results$combined_l_results_ND
 
-n=10000*length(results_list)
-# Save the combined results
-save(l.results, l.results_D, l.results_ND,
-     file = paste0("output/combined_",genderlabel,n,".RData"))
+n <- 10000 * length(results_list)
 
+save(l.results, l.results_D, l.results_ND,
+     file = paste0("output/combined_", policyyear, "_", genderlabel, n, ".RData"))
