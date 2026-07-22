@@ -6,12 +6,14 @@
 2. In line 17, determine which gender ('males' vs 'females'), the number of people simulated per birth cohort (1000, 10000, etc.) and the final year of simulation (2016, 2050, 2100, etc.), and how many calibration initial parameter sets (40, 100, etc.) you want to run results for. The number of calibration initial parameter sets are irrelevant unless running '04_calibration.R'.
 
 ## Calibration: 
-**04_calibration.R**
+For EMEWS based GA calibration see [`emews/README.md`](emews/README.md)
+
+<!-- **04_calibration.R**
 1. Set the main working directory as 'mainDir'.
 2. If running the calibration on a personal computer or using the High Performance Computing (HPC) Open OnDemand interface, set hpc=0. If running the analysis on the HPC clusters, set hpc=1.
 3. Determine which parameters you want to calibration for by editing lines 27-95 in '02_model_inputs.R'. This is done by changing the fourth value in each parameter vector to either 0 (do not calibrate) or 1 (do calibrate). The second and third values in the parameter vector specify the upper and lower bounds for searching the parameter space to identify the best fitting parameter value. 
 4. The script will perform calibration and then use the best fit (lowest goodness-of-fit (GOF) value) parameter set to run the model.
-5. The model results using the best fitting parameter set will be produced for comparison with National Survey on Drug Use and Health (NSDUH) data by sourcing '05_validation.R'. Results will be stored in the 'outputs' directory.
+5. The model results using the best fitting parameter set will be produced for comparison with National Survey on Drug Use and Health (NSDUH) data by sourcing '05_validation.R'. Results will be stored in the 'outputs' directory. -->
 
 ## Policy simulation: 
 **06_analysis.R**
