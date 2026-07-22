@@ -157,15 +157,15 @@ if (whichgender == "males") {
     "yearinc_p.HD" = c(2016, 2012.5, 2018.5, 1))
 } 
 colnames(m.calib_inputs) =c("value","lower","upper","calib")  
-emews.top100 <- read.csv("data-raw/top100_params.csv")
-emews.top100 <-emews.top100[,-c(1,42)] # remove columns for generation and gof
+# emews.top100 <- read.csv("data-raw/top100_params.csv")
+# emews.top100 <-emews.top100[,-c(1,42)] # remove columns for generation and gof
 # merge top and bottom row of emews results into inputs
-m.calib_inputs <- merge(m.calib_inputs,cbind(t(emews.top100[1,]),t(emews.top100[100,])),by="row.names")
-rownames(m.calib_inputs) <- m.calib_inputs[,1]
-m.calib_inputs[,"calib"] = 1
+# m.calib_inputs <- merge(m.calib_inputs,cbind(t(emews.top100[1,]),t(emews.top100[100,])),by="row.names")
+# rownames(m.calib_inputs) <- m.calib_inputs[,1]
+# m.calib_inputs[,"calib"] = 1
 # choose which set of calibrated parameters to generate results for
-# v.params <- m.calib_inputs[m.calib_inputs[,"calib"]==1,][,"value"]  # run with original parameter values
-v.params <- m.calib_inputs[m.calib_inputs[,"calib"]==1,][,"1"]  # run with top row of emews results
+v.params <- m.calib_inputs[m.calib_inputs[,"calib"]==1,][,"value"]  # run with original parameter values
+# v.params <- m.calib_inputs[m.calib_inputs[,"calib"]==1,] # [,"1"]  # run with top row of emews results
 # v.params <- m.calib_inputs[m.calib_inputs[,"calib"]==1,][,"100"] # run model with bottom row of emews results  
 
 n.param <- length(v.params) # number of parameters to calibrate
