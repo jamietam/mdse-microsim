@@ -4,19 +4,19 @@
 # install CRAN packages
 options(repos = c(CRAN = "https://cran.rstudio.com"))
 packages <- c('stringr','splines','foreach','doParallel','ggplot2','gridBase','gridExtra','grid','ggrepel',
-              'lhs','matrixStats','backports', 'ellipse','tidyr','dplyr','reshape2','ggnewscale',
-              'purrr','openxlsx','tibble','cowplot') 
+              'lhs','matrixStats','backports','devtools','ellipse','tidyr','dplyr','reshape2','ggnewscale',
+              'purrr','openxlsx','tibble','cowplot', 'doRNG') 
 installed_packages <- packages %in% rownames(installed.packages())
 if (any(installed_packages == FALSE)) {
   install.packages(packages[!installed_packages])
 }
 # install GitHub packages
-# if ('darthtools' %in% rownames(installed.packages())==FALSE){
-#   devtools::install_github("DARTH-git/darthtools")
-# }
-# if ('dampack' %in% rownames(installed.packages())==FALSE){
-#   devtools::install_github("DARTH-git/dampack")
-# }
+if ('darthtools' %in% rownames(installed.packages())==FALSE){
+  devtools::install_github("DARTH-git/darthtools")
+}
+if ('dampack' %in% rownames(installed.packages())==FALSE){
+  devtools::install_github("DARTH-git/dampack")
+}
 # load all packages
 lapply(c(packages, 'darthtools','dampack'), library, character.only=TRUE)
 

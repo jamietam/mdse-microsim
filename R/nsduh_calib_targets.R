@@ -6,7 +6,7 @@ load("data/mdseprevs0523.rda")
 
 mdseprevs<-mdseprevs[order(mdseprevs$age),]
 
-whichgender = "males"
+whichgender = "both"
 
 # mds_microsim targets c("N","C","F","D","E","NE","CE","FE","N_D","C_D","F_D","E_D","NE_D","CE_D","FE_D")
 l.calib_targets <- vector(mode = "list")
@@ -25,6 +25,14 @@ l.calib_targets$E_D <- as.matrix(subset(mdseprevs, sex==whichgender & status=="E
 l.calib_targets$NE_D <- as.matrix(subset(mdseprevs, sex==whichgender & status=="NE" & subpopulation=="Dpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
 l.calib_targets$CE_D <- as.matrix(subset(mdseprevs, sex==whichgender & status=="CE" & subpopulation=="Dpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
 l.calib_targets$FE_D <- as.matrix(subset(mdseprevs, sex==whichgender & status=="FE" & subpopulation=="Dpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
+l.calib_targets$N_ND <- as.matrix(subset(mdseprevs, sex==whichgender & status=="N" & subpopulation=="notDpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+l.calib_targets$C_ND <- as.matrix(subset(mdseprevs, sex==whichgender & status=="C" & subpopulation=="notDpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
+l.calib_targets$F_ND <- as.matrix(subset(mdseprevs, sex==whichgender & status=="F" & subpopulation=="notDpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
+l.calib_targets$E_ND <- as.matrix(subset(mdseprevs, sex==whichgender & status=="E" & subpopulation=="notDpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+l.calib_targets$NE_ND <- as.matrix(subset(mdseprevs, sex==whichgender & status=="NE" & subpopulation=="notDpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
+l.calib_targets$CE_ND <- as.matrix(subset(mdseprevs, sex==whichgender & status=="CE" & subpopulation=="notDpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
+l.calib_targets$FE_ND <- as.matrix(subset(mdseprevs, sex==whichgender & status=="FE" & subpopulation=="notDpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")])
+
 
 # targets for NO, CO, FO, NE, CE, FE, NQ, CQ, FQ
 # l.calib_targets$NO <- as.matrix(subset(mdseprevs, sex==whichgender & status=="NO" & subpopulation=="totalpop")[,c("age", "survey_year","prev","se","prev_lowCI","prev_highCI")],rownames.force = NA)
