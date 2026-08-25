@@ -719,13 +719,9 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
                               }
                            }
   
-<<<<<<< HEAD
   if (length(m.M) == 1 && m.M == INVALID_PROBS_FLAG) {
     return (m.M)
   }
-=======
-  
->>>>>>> b9bbe618ac30ef9ace886d386d6ed139e2a7c0d1
   # To run in serial for debugging purposes, uncomment the line below, and comment out the 'foreach' loop above
   # m.M <- do.call(rbind, lapply(cohorts, function(i) { mds_microsim(i, v.M_1, n.i, n.t, v.n)$m.M }))
   cat(("1 ...........\n"))
