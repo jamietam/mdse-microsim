@@ -636,7 +636,7 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   #Initiation and Cessation for Healthy
   ## Initiation - No initiation after 25
   p.NC <<- smk_init*c(rep(s.NC_9.17,18),rep(s.NC_18.25,8),rep(s.NC_26.34,9),rep(0,65))
-  p.CF <<- smk_cess*c(rep(0,16),rep(s.CF_18.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
+  p.CF <<- smk_cess*c(rep(0,16),rep(s.CF_15.25,10), rep(s.CF_26.34,9),rep(s.CF_35.49,15),rep(s.CF_50.64,15),rep(s.CF_65.99,35))
   ## Cessation - No cessation before 18
   p.NC[,119:201] = smk_init[,119:201]*c(rep(s.NC_18.23_9.17,18),rep(s.NC_18.23_18.25,8),rep(s.NC_18.23_26.34,9),rep(0,65))
   p.CF[,119:201] = smk_cess[,119:201]*c(rep(0,16),rep(s.CF_18.23_15.25,10), rep(s.CF_18.23_26.34,9),rep(s.CF_18.23_35.49,15),rep(s.CF_18.23_50.64,15),rep(s.CF_18.23_65.99,35))
@@ -691,9 +691,9 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
   
   #Vaping mortality effects. Baseline scenario assumes .1
   if (is.null(l.policy_effects)){
-    p.EX<-p.NX+((p.NX-p.CX)*0.1)
+    p.EX<<-p.NX+((p.NX-p.CX)*0.1)
   }else{ 
-    p.EX<-p.NX+((p.NX-p.CX)*l.policy_effects[["s.EX"]])
+    p.EX<<-p.NX+((p.NX-p.CX)*l.policy_effects[["s.EX"]])
   }
   
   p.CF[p.CF > 1] <- 1 # replace any cessation probabilities that are greater than 1 with 1
@@ -749,8 +749,16 @@ main_calib <- function(v.params,l.policy_effects=NULL) { # v.params: run model f
 
 ## MAIN POLICY FUNCTIONS ------------------------------------------
 main <- function(v.params, l.policy_effects=NULL, policy) { # v.params: run model for parameter calibration; l.policy_effects: policy effects
-  t_init <- Sys.time() 
+  t_init <- Sys.time()
   l.main_calib_outputs<-main_calib(v.params,l.policy_effects)
+  # Same guard as f_gof: main_calib returns a length-1 INVALID_PROBS_FLAG when
+  # this parameter set / policy drives a transition probability out of range.
+  # Return the usual shape with empty results so the caller can record the run
+  # instead of failing on l.main_calib_outputs[[1]].
+  if (length(l.main_calib_outputs) == 1 && l.main_calib_outputs == INVALID_PROBS_FLAG) {
+    cat(paste0("\n  Scenario: ", policy, " - INVALID_PROBS_FLAG, returning empty results"))
+    return(list(l.results = NULL, l.results_D = NULL, l.results_notD = NULL))
+  }
   m.M<-l.main_calib_outputs[[1]]
   l.model_prevs<-l.main_calib_outputs[[2]]
   #p.NC,p.CF,p.NC_D,rr.CD.FD. for outputs later
