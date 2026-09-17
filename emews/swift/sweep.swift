@@ -64,7 +64,7 @@ main() {
     // run_prerequisites() => {
     string upf_lines[] = file_lines(upf);
     foreach s, i in upf_lines {
-        obj(s, i);
+        obj(s, i + 1);
     }
     // }
 }
