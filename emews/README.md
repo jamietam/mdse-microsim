@@ -11,6 +11,13 @@ Swift/T as the workflow engine, EQ/Py to embed a Python DEAP-based GA inside Swi
 *resident task*, and per-individual model evaluations are run as Bash subprocesses that invoke
 Rscript on the existing MDSE R code.
 
+> **Looking for the parameter sweep?** This directory also holds a second, separate
+> workflow that runs the model over a fixed list of parameter sets and policy
+> scenarios — one run per line of a UPF — and saves the full outputs rather than a
+> goodness-of-fit score. See [`docs/sweep-workflow.md`](docs/sweep-workflow.md).
+> The two workflows share the `launch.py` / Bash / Rscript plumbing but have their
+> own launcher, Swift script and R entry point.
+
 ---
 
 ## 1. High-level architecture
@@ -44,27 +51,43 @@ goodness-of-fit value.
 
 ## 2. Directory layout
 
+Files marked **[sweep]** belong to the sweep workflow rather than the GA; everything
+unmarked is the GA, and `launch.py` / `emews_utils.sh` / `EQ-Py` are shared.
+
 ```
 emews/
 ├── README.md                         ← this file
-├── data/cfgs/improv_ga.cfg           ← experiment / GA configuration
+├── docs/
+│   └── sweep-workflow.md             ← [sweep] how to configure and run the sweep
+├── data/
+│   ├── cfgs/improv_ga.cfg            ← experiment / GA configuration
+│   ├── cfgs/local_sweep.cfg          ← [sweep] experiment / sweep configuration
+│   └── upfs/                         ← [sweep] UPF inputs (gitignored — generated, can be large)
 ├── etc/
 │   ├── emews_utils.sh                ← log_script, check_directory_exists helpers
 │   └── algo_params_utils.sh          ← (unused here) param-file rewriter
-├── ext/EQ-Py/                        ← vendored EMEWS EQ/Py bridge (eqpy.py + EQPy.swift)
+├── ext/
+│   ├── EQ-Py/                        ← vendored EMEWS EQ/Py bridge (eqpy.py + EQPy.swift)
+│   └── emews/emews.swift             ← vendored EMEWS Swift/T library (parse_json_list)
 ├── python/
 │   ├── ga.py                         ← DEAP GA driver (resident task)
 │   ├── ga_algorithms.py              ← eaMuPlusLambda + eaSimple (with checkpoint/log hooks)
-│   └── launch.py                     ← Python wrapper that invokes run_mdse_microsim.sh
+│   └── launch.py                     ← run() for the GA, run_sweep() for the sweep
 ├── R/
 │   ├── create_init_pop.R             ← writes calib_inputs.csv (initial bounds + names)
-│   └── run_model.R                   ← per-evaluation R entry point (sources MDSE model)
+│   ├── run_model.R                   ← per-evaluation R entry point (f_gof → one scalar)
+│   ├── run_model_sweep.R             ← [sweep] per-run R entry point (main → one .RData)
+│   └── test/                         ← diagnostics (policy_arithmetic_check.R and its write-up)
 ├── scripts/
 │   ├── improv_env.sh                 ← module loads & env for the Improv cluster
-│   └── run_mdse_microsim.sh          ← Bash wrapper around Rscript run_model.R
+│   ├── local_env.sh                  ← [sweep] leaves conda so the system R is used
+│   ├── run_mdse_microsim.sh          ← Bash wrapper around Rscript run_model.R
+│   └── run_mdse_microsim_sweep.sh    ← [sweep] Bash wrapper around Rscript run_model_sweep.R
 └── swift/
     ├── ga.swift                      ← Swift/T workflow
-    └── improv_run_ga.sh              ← submission script (sets env, generates ga_cfg.yaml, calls swift-t)
+    ├── improv_run_ga.sh              ← submission script (sets env, generates ga_cfg.yaml, calls swift-t)
+    ├── sweep.swift                   ← [sweep] Swift/T workflow: one obj() per UPF line
+    └── local_run_sweep.sh            ← [sweep] launcher (sets env, copies inputs, calls swift-t)
 ```
 
 At runtime, an experiment directory is created at `emews/experiments/<EXPID>/` containing:
