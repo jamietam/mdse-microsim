@@ -126,7 +126,7 @@ export TURBINE_DIRECTIVE="#PBS -l place=free"
 export TURBINE_PRELAUNCH="Rscript $EMEWS_PROJECT_ROOT/R/create_init_pop.R $TURBINE_OUTPUT ${EMEWS_PROJECT_ROOT}/../ $CFG_GENDER $CFG_END_YEAR $CFG_NUM_PERSONS"
 
 
-CMD_LINE_ARGS="-num_p=${CFG_NUM_PERSONS} -gender=${CFG_GENDER} -end_year=${CFG_END_YEAR} -ga_cfg=$DEAP_CFG"
+CMD_LINE_ARGS="-num_p=${CFG_NUM_PERSONS} -gender=${CFG_GENDER} -end_year=${CFG_END_YEAR} -ga_cfg=$DEAP_CFG -r_file=run_model.R"
 
 # Add any script variables that you want to log as
 # part of the experiment meta data to the USER_VARS array,

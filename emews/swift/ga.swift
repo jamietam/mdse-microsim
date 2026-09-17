@@ -21,6 +21,7 @@ string ga_cfg_file = argv("ga_cfg");
 int ni = string2int(argv("num_p"));
 string gender = argv("gender");
 int end_year = string2int(argv("end_year"));
+string r_file = argv("r_file");
 
 string run_model_template = """
 from launch import run
@@ -32,8 +33,9 @@ end_year = "%s"
 ni = %d
 result_file = "%s"
 run_id = "%s"
+r_file = "%s"
 
-run(param_line, gender, end_year, ni, result_file, run_id)
+run(param_line, gender, end_year, ni, result_file, run_id, r_file)
 
 with open(result_file) as fin:
     gof = fin.readline().strip()
@@ -44,7 +46,7 @@ os.unlink(result_file)
     string run_id = "%d_%d" % (iter, run);
     result_f = "%s/tmp/%i_%i_result.txt" % (turbine_output, iter, run);
 
-    string code = run_model_template % (param_line, gender, end_year, ni, result_f, run_id);
+    string code = run_model_template % (param_line, gender, end_year, ni, result_f, run_id, r_file);
     result = python_persist(code, "gof");
 }
 

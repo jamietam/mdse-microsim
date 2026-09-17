@@ -40,12 +40,13 @@ NUM_INDIV=$3
 RESULT_FILE=$4
 PARAMS=$5
 MDSE_CODE_DIR=$6
+R_FILE=$7
 
 cd $TURBINE_OUTPUT
 
 # readonly PORT=$(python3 -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()')
 
-arg_array=( "$EMEWS_PROJECT_ROOT/R/run_model.R" 
+arg_array=( "$EMEWS_PROJECT_ROOT/R/$R_FILE" 
             "$GENDER"
             "$END_YEAR"
             "$NUM_INDIV"
