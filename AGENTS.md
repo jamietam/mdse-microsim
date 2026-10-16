@@ -74,5 +74,5 @@ Sweep workflow (`emews/swift/sweep.swift`, `emews/scripts/run_mdse_microsim_swee
 ## Workflow preferences (owner request)
 
 - Ask before editing any file (use `question` tool) — do not edit unannounced.
-- Make changes on a separate branch by default, not on `main`/`master`.
+- Make changes on a separate branch off the current branch by default (not directly on the current branch); docs-only changes to `AGENTS.md` are exempt.
 - Commit without asking for confirmation once edits are approved.
