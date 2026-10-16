@@ -18,7 +18,7 @@
 INVALID_PROBS_FLAG <- -999999999999999
 
 mds_microsim <- function(bc,v.M_1, n.i, n.t, v.n, TR.out = TRUE, TS.out = TRUE) {
-set.seed(seednew)
+  set.seed(seednew)
   v.ysq <- rep(n.i, 0) # vector counting how many years since quit
   
   # create the matrix capturing the state name/costs/health outcomes for all individuals at each time point 
@@ -38,7 +38,9 @@ set.seed(seednew)
     if (length(m.P) == 1 && m.P == INVALID_PROBS_FLAG) {
       return(INVALID_PROBS_FLAG)
     }
-    m.M[, t+1] <- samplev(m.P, 1)      # sample the next health state and store that state in matrix m.M 
+    # darthtools 0.4.0: samplev(m_Probs, m = 1); post-0.4.0 GitHub: samplev(m_Probs)
+    # Call with one arg so both arities work (m defaults to 1 in 0.4.0).
+    m.M[, t+1] <- samplev(m.P)
   }                                                       # close the loop for the time points
   
   if (TS.out == TRUE) {  # create a  matrix of transitions across states
